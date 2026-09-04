@@ -8,28 +8,18 @@ use App\Models\Group;
 
 class CostumeController extends Controller
 {
-    // parāda visus tērpa vienības, kas piešķirtas konkrētam lietotājam 
+    // parāda dalībniekam piešķirtās tērpu vienības konkrētajā grupā
     public function index(Group $group)
     {
         abort_unless(auth()->user()->inGroup($group), 403);
 
         $items = auth()->user()
-            ->assignedCostumeItems() // make sure this relationship exists in User model
+            ->assignedCostumeItems()
             ->with('costume')
             ->whereHas('costume', fn($query) => $query->where('group_id', $group->id))
             ->get();
 
         return view('member.index', compact('items', 'group'));
-    }
-
-    // parāda visus tērpa vienības, kas piešķirtas konkrētam lietotājam
-    public function assigned()
-    {
-        $items = CostumeItem::where('assigned_to', auth()->id())
-            ->with('costume')
-            ->get();
-
-        return view('member.assigned', compact('items'));
     }
 
     // noņem tērpa vienību no lietotāja
