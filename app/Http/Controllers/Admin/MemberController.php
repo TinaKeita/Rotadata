@@ -20,6 +20,9 @@ class MemberController extends Controller
 
     public function store(Request $request)
     {
+        $adminGroup = auth()->user()->adminGroups()->first();
+        abort_if(is_null($adminGroup), 403, 'You do not have a group yet.');
+
         $request->validate([
             'name' => 'required',
             'email' => 'required|email|unique:users,email|max:255'
@@ -28,18 +31,15 @@ class MemberController extends Controller
         ]);
 
         $tempPassword = Str::random(12);
-        $member = User::create([ 
+        $member = User::create([
             'name' => $request->name,
             'email' => $request->email,
             'password' => Hash::make($tempPassword)
         ]);
-        
+
         $member->assignRole('member');
-        
-        $adminGroup = auth()->user()->adminGroups()->first();
-        if ($adminGroup) {
-            $adminGroup->members()->attach($member->id);
-        }
+
+        $adminGroup->members()->attach($member->id);
 
         // sūtīt e pastu ziņu ar paroli
         try {
@@ -79,14 +79,14 @@ class MemberController extends Controller
 
     public function show(User $user)
     {
+        $this->authorize('view', $user);
+
         return view('admin.members.show', compact('user'));
     }
 
     public function destroy(User $user)
     {
-        if ($user->id === auth()->id()) {
-            return back()->with('error', 'You cannot delete yourself.');
-        }
+        $this->authorize('delete', $user);
 
         $user->delete();
         return redirect()->route('admin.members.index')

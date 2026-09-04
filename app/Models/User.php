@@ -61,5 +61,23 @@ class User extends Authenticatable
         return $this->hasMany(CostumeItem::class, 'assigned_to');
     }
 
+    // vai šis lietotājs ir šīs grupas administrators (skolotājs)
+    public function ownsGroup(Group $group): bool
+    {
+        return $group->admin_id === $this->id;
+    }
 
+    // vai šis lietotājs ir šīs grupas dalībnieks (students)
+    public function inGroup(Group $group): bool
+    {
+        return $this->memberGroups()->whereKey($group->id)->exists();
+    }
+
+    // vai šis administrators pārvalda kādu grupu, kurā ir dotais dalībnieks
+    public function sharesGroupWithMember(User $member): bool
+    {
+        return $this->adminGroups()
+            ->whereHas('members', fn ($query) => $query->whereKey($member->id))
+            ->exists();
+    }
 }

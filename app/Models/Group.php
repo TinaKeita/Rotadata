@@ -12,7 +12,7 @@ class Group extends Model
     ];
     public function admin()
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(User::class, 'admin_id');
     }
 
     public function members()

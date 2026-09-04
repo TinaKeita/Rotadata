@@ -11,6 +11,8 @@ class CostumeController extends Controller
     // parāda visus tērpa vienības, kas piešķirtas konkrētam lietotājam 
     public function index(Group $group)
     {
+        abort_unless(auth()->user()->inGroup($group), 403);
+
         $items = auth()->user()
             ->assignedCostumeItems() // make sure this relationship exists in User model
             ->with('costume')
@@ -33,9 +35,7 @@ class CostumeController extends Controller
     // noņem tērpa vienību no lietotāja
     public function unassign(CostumeItem $item)
     {
-        if ($item->assigned_to !== auth()->id()) {
-            abort(403);
-        }
+        $this->authorize('unassignAsMember', $item);
 
         $item->update([
             'assigned_to' => null,

@@ -24,13 +24,18 @@ class ScanController extends Controller
             return view('scan.authenticate', compact('item'));
         }
 
+        // pieslēdzies, bet nav šīs grupas dalībnieks
+        if (! Auth::user()->inGroup($item->costume->group)) {
+            return view('scan.denied', compact('item'));
+        }
+
         return view('scan.confirm', compact('item'));
     }
 
     // pārbauda lietotāja paroli un pieslēdz viņu, lai zinātu, kas skenē
     public function authenticate(Request $request, $code)
     {
-        $item = CostumeItem::where('qr_code', $code)->firstOrFail();
+        $item = CostumeItem::with('costume.group')->where('qr_code', $code)->firstOrFail();
 
         $credentials = $request->validate([
             'email' => ['required', 'string', 'email'],
@@ -43,6 +48,15 @@ class ScanController extends Controller
             ]);
         }
 
+        // tikai šīs grupas dalībnieks drīkst turpināt
+        if (! Auth::user()->inGroup($item->costume->group)) {
+            Auth::logout();
+
+            throw ValidationException::withMessages([
+                'email' => 'You are not a member of this costume\'s group.',
+            ]);
+        }
+
         $request->session()->regenerate();
 
         return redirect("/scan/{$code}");
@@ -51,7 +65,7 @@ class ScanController extends Controller
     // piešķir tērpa vienību pašam pieslēgtajam lietotājam
     public function assign(Request $request, $code)
     {
-        $item = CostumeItem::where('qr_code', $code)->firstOrFail();
+        $item = CostumeItem::with('costume.group')->where('qr_code', $code)->firstOrFail();
 
         if (! Auth::check()) {
             return redirect("/scan/{$code}");
@@ -62,6 +76,8 @@ class ScanController extends Controller
 
             return view('scan.assigned', compact('item'));
         }
+
+        $this->authorize('claim', $item);
 
         $item->update([
             'assigned_to' => Auth::id(),

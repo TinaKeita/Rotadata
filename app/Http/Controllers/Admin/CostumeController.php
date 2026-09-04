@@ -17,7 +17,7 @@ class CostumeController extends Controller
 
         return view('admin.costumes.index', compact('costumes'));
     }
-    
+
     // forma jauna tērpa pievienošanai
     public function create()
     {
@@ -26,6 +26,9 @@ class CostumeController extends Controller
 
     public function store(Request $request)
     {
+        $group = auth()->user()->adminGroups()->first();
+        abort_if(is_null($group), 403, 'You do not have a group yet.');
+
         $request->validate([
             'name' => 'required|string|max:255',
             'quantity' => 'required|integer|min:1',
@@ -35,14 +38,14 @@ class CostumeController extends Controller
             'name' => $request->name,
             'quantity' => $request->quantity,
             'image' => null,
-            'group_id' => auth()->user()->adminGroups()->first()->id,
+            'group_id' => $group->id,
         ]);
 
         // izveido atsevišķas tērpa vienības
         for ($i = 0; $i < $request->quantity; $i++) {
             $costume->items()->create([
                 'qr_code' => Str::uuid(), // unikāls qr kods priekš katras vienības
-                'assigned_to' => null,    
+                'assigned_to' => null,
             ]);
         }
 
@@ -51,6 +54,8 @@ class CostumeController extends Controller
 
     public function show(Costume $costume)
     {
+        $this->authorize('view', $costume);
+
         $items = $costume->items()->with('user')->get();
 
         return view('admin.costumes.show', compact('costume', 'items'));
@@ -58,6 +63,8 @@ class CostumeController extends Controller
 
     public function destroy(Costume $costume)
     {
+        $this->authorize('delete', $costume);
+
         $costume->delete();
 
         return redirect()->route('admin.costumes.index')->with('success', 'Costume deleted.');
@@ -65,6 +72,8 @@ class CostumeController extends Controller
 
     public function unassign(CostumeItem $item)
     {
+        $this->authorize('unassignAsAdmin', $item);
+
         $item->update([
             'assigned_to' => null,
             'assigned_at' => null,
