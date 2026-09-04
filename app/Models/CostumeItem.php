@@ -13,6 +13,10 @@ class CostumeItem extends Model
         'assigned_at'
     ];
 
+    protected $casts = [
+        'assigned_at' => 'datetime',
+    ];
+
     public function costume()
     {
         return $this->belongsTo(Costume::class);

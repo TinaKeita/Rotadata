@@ -18,8 +18,9 @@ Route::get('/qr/{code}/download', function ($code) {
 })->name('qr.download');
 
 // Scan routes
-Route::get('/scan/{code}', [App\Http\Controllers\ScanController::class, 'show']);
-Route::post('/scan/{code}', [App\Http\Controllers\ScanController::class, 'assign']);
+Route::get('/scan/{code}', [App\Http\Controllers\ScanController::class, 'show'])->name('scan.show');
+Route::post('/scan/{code}/authenticate', [App\Http\Controllers\ScanController::class, 'authenticate'])->name('scan.authenticate');
+Route::post('/scan/{code}/assign', [App\Http\Controllers\ScanController::class, 'assign'])->name('scan.assign');
 
 
 Route::middleware('auth')->group(function () {

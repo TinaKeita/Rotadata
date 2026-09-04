@@ -4,36 +4,67 @@ namespace App\Http\Controllers;
 
 use App\Models\CostumeItem;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\ValidationException;
 
 class ScanController extends Controller
 {
+    // parāda noskenēto tērpa vienību un nākamo soli atkarībā no stāvokļa
     public function show($code)
+    {
+        $item = CostumeItem::with(['costume.group', 'user'])
+            ->where('qr_code', $code)
+            ->firstOrFail();
+
+        if ($item->assigned_to) {
+            return view('scan.assigned', compact('item'));
+        }
+
+        if (! Auth::check()) {
+            return view('scan.authenticate', compact('item'));
+        }
+
+        return view('scan.confirm', compact('item'));
+    }
+
+    // pārbauda lietotāja paroli un pieslēdz viņu, lai zinātu, kas skenē
+    public function authenticate(Request $request, $code)
     {
         $item = CostumeItem::where('qr_code', $code)->firstOrFail();
 
-        if ($item->assigned_to) {
-            return view('scan.assigned');
+        $credentials = $request->validate([
+            'email' => ['required', 'string', 'email'],
+            'password' => ['required', 'string'],
+        ]);
+
+        if (! Auth::attempt($credentials)) {
+            throw ValidationException::withMessages([
+                'email' => __('auth.failed'),
+            ]);
         }
 
-        $members = $item->costume->group->members;
+        $request->session()->regenerate();
 
-        return view('scan.assign', compact('item', 'members'));
+        return redirect("/scan/{$code}");
     }
 
+    // piešķir tērpa vienību pašam pieslēgtajam lietotājam
     public function assign(Request $request, $code)
     {
         $item = CostumeItem::where('qr_code', $code)->firstOrFail();
 
-        if ($item->assigned_to) {
-            return back()->with('error', 'Already assigned.');
+        if (! Auth::check()) {
+            return redirect("/scan/{$code}");
         }
 
-        $request->validate([
-            'user_id' => 'required|exists:users,id',
-        ]);
+        if ($item->assigned_to) {
+            $item->load(['costume.group', 'user']);
+
+            return view('scan.assigned', compact('item'));
+        }
 
         $item->update([
-            'assigned_to' => $request->user_id,
+            'assigned_to' => Auth::id(),
             'assigned_at' => now(),
         ]);
 
