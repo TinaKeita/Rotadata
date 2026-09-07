@@ -125,10 +125,7 @@ class ScanController extends Controller
 
         $this->authorize('claim', $item);
 
-        $item->update([
-            'assigned_to' => Auth::id(),
-            'assigned_at' => now(),
-        ]);
+        $item->assignTo(Auth::user(), Auth::user());
 
         return view('scan.success', compact('item'));
     }

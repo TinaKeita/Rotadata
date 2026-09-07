@@ -43,4 +43,23 @@
             <p class="py-6 text-center text-sm text-gray-500 dark:text-gray-400">No costumes assigned yet.</p>
         @endforelse
     </section>
+
+    @if($history->isNotEmpty())
+        <section class="mt-8">
+            <h3 class="mb-3 text-sm font-semibold uppercase tracking-[0.14em] text-gray-500 dark:text-gray-400">Past costumes</h3>
+            <ul class="space-y-2">
+                @foreach($history as $log)
+                    <li class="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 rounded-lg border border-gray-200 dark:border-gray-700 px-4 py-2.5 text-sm">
+                        <span class="font-medium text-gray-700 dark:text-gray-200">
+                            {{ $log->item?->code ?? '—' }}
+                            <span class="text-gray-400">· {{ $log->item?->costume?->name ?? 'costume removed' }}</span>
+                        </span>
+                        <span class="text-gray-500 dark:text-gray-400">
+                            {{ $log->assigned_at->format('d.m.Y') }} &rarr; {{ $log->returned_at->format('d.m.Y') }}
+                        </span>
+                    </li>
+                @endforeach
+            </ul>
+        </section>
+    @endif
 </x-app-layout>

@@ -86,6 +86,32 @@
                         </button>
                     </form>
                 </div>
+
+                @if($item->assignments->isNotEmpty())
+                    <details class="mt-3 border-t border-gray-100 pt-3 dark:border-gray-700/60">
+                        <summary class="cursor-pointer text-xs font-semibold text-brand-secondary dark:text-brand-light">
+                            History ({{ $item->assignments->count() }})
+                        </summary>
+                        <ul class="mt-2 space-y-2">
+                            @foreach($item->assignments as $log)
+                                <li class="text-xs text-gray-600 dark:text-gray-300">
+                                    <span class="font-semibold text-gray-800 dark:text-gray-100">{{ $log->user_name }}</span>
+                                    <span class="text-gray-400"> · </span>
+                                    {{ $log->assigned_at->format('d.m.Y') }}
+                                    &rarr;
+                                    @if($log->returned_at)
+                                        {{ $log->returned_at->format('d.m.Y') }}
+                                        <span class="text-gray-400">
+                                            ({{ $log->return_note === 'admin' ? 'taken back by ' . ($log->returnedBy->name ?? 'teacher') : 'returned by student' }})
+                                        </span>
+                                    @else
+                                        <span class="font-medium text-amber-600 dark:text-amber-400">still out</span>
+                                    @endif
+                                </li>
+                            @endforeach
+                        </ul>
+                    </details>
+                @endif
             </div>
         @endforeach
     </div>

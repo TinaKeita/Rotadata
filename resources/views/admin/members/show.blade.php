@@ -28,8 +28,56 @@
 
             <div class="flex items-center justify-between gap-4">
                 <dt class="font-medium text-gray-600 dark:text-gray-300">Created</dt>
-                <dd class="text-gray-800 dark:text-gray-200">{{ $user->created_at }}</dd>
+                <dd class="text-gray-800 dark:text-gray-200">{{ $user->created_at?->format('d.m.Y') }}</dd>
             </div>
         </dl>
+    </div>
+
+    @php
+        $currentlyHolds = $user->costumeAssignments->whereNull('returned_at');
+        $pastItems = $user->costumeAssignments->whereNotNull('returned_at');
+    @endphp
+
+    <div class="mt-5 max-w-2xl rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+        <h3 class="text-sm font-semibold text-gray-800 dark:text-gray-100">Currently holds ({{ $currentlyHolds->count() }})</h3>
+        @if($currentlyHolds->isEmpty())
+            <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">Nothing checked out.</p>
+        @else
+            <ul class="mt-2 space-y-2 text-sm">
+                @foreach($currentlyHolds as $log)
+                    <li class="flex items-center justify-between gap-4">
+                        <span class="font-medium text-gray-800 dark:text-gray-100">
+                            {{ $log->item?->code ?? '—' }}
+                            <span class="text-gray-400">· {{ $log->item?->costume?->name ?? 'deleted costume' }}</span>
+                        </span>
+                        <span class="text-gray-500 dark:text-gray-400">since {{ $log->assigned_at->format('d.m.Y') }}</span>
+                    </li>
+                @endforeach
+            </ul>
+        @endif
+    </div>
+
+    <div class="mt-5 max-w-2xl rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+        <h3 class="text-sm font-semibold text-gray-800 dark:text-gray-100">Past items ({{ $pastItems->count() }})</h3>
+        @if($pastItems->isEmpty())
+            <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">No returned items yet.</p>
+        @else
+            <ul class="mt-2 space-y-2 text-sm">
+                @foreach($pastItems as $log)
+                    <li class="flex flex-wrap items-center justify-between gap-x-4 gap-y-1">
+                        <span class="font-medium text-gray-800 dark:text-gray-100">
+                            {{ $log->item?->code ?? '—' }}
+                            <span class="text-gray-400">· {{ $log->item?->costume?->name ?? 'deleted costume' }}</span>
+                        </span>
+                        <span class="text-gray-500 dark:text-gray-400">
+                            {{ $log->assigned_at->format('d.m.Y') }} &rarr; {{ $log->returned_at->format('d.m.Y') }}
+                            @if($log->return_note === 'admin')
+                                <span class="text-gray-400">(taken back)</span>
+                            @endif
+                        </span>
+                    </li>
+                @endforeach
+            </ul>
+        @endif
     </div>
 </x-app-layout>

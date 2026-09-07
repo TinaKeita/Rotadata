@@ -61,6 +61,12 @@ class User extends Authenticatable
         return $this->hasMany(CostumeItem::class, 'assigned_to');
     }
 
+    // šī lietotāja pilna tērpu piešķiršanas vēsture, jaunākā pirmā
+    public function costumeAssignments()
+    {
+        return $this->hasMany(CostumeItemAssignment::class)->latest('assigned_at');
+    }
+
     // vai šis lietotājs ir šīs grupas administrators (skolotājs)
     public function ownsGroup(Group $group): bool
     {

@@ -37,9 +37,37 @@
                 Statistics
             </h3>
 
-            <div class="rounded-lg border border-dashed border-gray-300 px-4 py-10 text-center text-sm text-gray-500 dark:border-gray-600 dark:text-gray-400">
-                To be continued...
-            </div>
+            @php
+                $group = auth()->user()->adminGroups()->first();
+                $itemIds = $group
+                    ? \App\Models\CostumeItem::whereHas('costume', fn($q) => $q->where('group_id', $group->id))->pluck('id')
+                    : collect();
+                $totalItems = $itemIds->count();
+                $itemsOut = \App\Models\CostumeItemAssignment::whereIn('costume_item_id', $itemIds)->whereNull('returned_at')->count();
+                $itemsAvailable = max(0, $totalItems - $itemsOut);
+                $returnedRecently = \App\Models\CostumeItemAssignment::whereIn('costume_item_id', $itemIds)
+                    ->where('returned_at', '>=', now()->subDays(7))
+                    ->count();
+            @endphp
+
+            <dl class="grid grid-cols-2 gap-3">
+                <div class="rounded-lg border border-gray-200 px-4 py-3 dark:border-gray-700">
+                    <dt class="text-xs font-medium text-gray-500 dark:text-gray-400">Items total</dt>
+                    <dd class="mt-1 text-2xl font-semibold text-gray-800 dark:text-gray-100">{{ $totalItems }}</dd>
+                </div>
+                <div class="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 dark:border-amber-500/30 dark:bg-amber-900/15">
+                    <dt class="text-xs font-medium text-amber-700 dark:text-amber-300">Currently out</dt>
+                    <dd class="mt-1 text-2xl font-semibold text-amber-800 dark:text-amber-200">{{ $itemsOut }}</dd>
+                </div>
+                <div class="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 dark:border-emerald-500/30 dark:bg-emerald-900/15">
+                    <dt class="text-xs font-medium text-emerald-700 dark:text-emerald-300">Available</dt>
+                    <dd class="mt-1 text-2xl font-semibold text-emerald-800 dark:text-emerald-200">{{ $itemsAvailable }}</dd>
+                </div>
+                <div class="rounded-lg border border-gray-200 px-4 py-3 dark:border-gray-700">
+                    <dt class="text-xs font-medium text-gray-500 dark:text-gray-400">Returned (7 days)</dt>
+                    <dd class="mt-1 text-2xl font-semibold text-gray-800 dark:text-gray-100">{{ $returnedRecently }}</dd>
+                </div>
+            </dl>
         </div>
 
     </section>

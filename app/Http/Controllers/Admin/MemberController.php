@@ -81,6 +81,11 @@ class MemberController extends Controller
     {
         $this->authorize('view', $user);
 
+        $user->load([
+            'costumeAssignments.item.costume',
+            'costumeAssignments.returnedBy',
+        ]);
+
         return view('admin.members.show', compact('user'));
     }
 

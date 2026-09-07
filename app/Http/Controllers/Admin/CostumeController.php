@@ -60,7 +60,9 @@ class CostumeController extends Controller
     {
         $this->authorize('view', $costume);
 
-        $items = $costume->items()->with('user')->get();
+        $items = $costume->items()
+            ->with(['user', 'assignments.assignedBy', 'assignments.returnedBy'])
+            ->get();
 
         return view('admin.costumes.show', compact('costume', 'items'));
     }
@@ -98,10 +100,7 @@ class CostumeController extends Controller
     {
         $this->authorize('unassignAsAdmin', $item);
 
-        $item->update([
-            'assigned_to' => null,
-            'assigned_at' => null,
-        ]);
+        $item->release(auth()->user(), 'admin');
 
         return back()->with('success', 'Item unassigned successfully.');
     }

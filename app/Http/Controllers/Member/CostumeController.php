@@ -19,7 +19,15 @@ class CostumeController extends Controller
             ->whereHas('costume', fn($query) => $query->where('group_id', $group->id))
             ->get();
 
-        return view('member.index', compact('items', 'group'));
+        // pagātnes tērpi šajā grupā – jau atdotie
+        $history = auth()->user()
+            ->costumeAssignments()
+            ->whereNotNull('returned_at')
+            ->whereHas('item.costume', fn($query) => $query->where('group_id', $group->id))
+            ->with('item.costume')
+            ->get();
+
+        return view('member.index', compact('items', 'group', 'history'));
     }
 
     // noņem tērpa vienību no lietotāja
@@ -27,10 +35,7 @@ class CostumeController extends Controller
     {
         $this->authorize('unassignAsMember', $item);
 
-        $item->update([
-            'assigned_to' => null,
-            'assigned_at' => null,
-        ]);
+        $item->release(auth()->user(), 'self');
 
         return back()->with('success', 'Costume unassigned.');
     }
