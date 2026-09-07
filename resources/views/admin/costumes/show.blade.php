@@ -24,7 +24,12 @@
         </a>
     </div>
 
-    <div class="mb-6">
+    <div class="mb-6 flex flex-wrap items-center gap-3">
+        <a href="{{ route('admin.costumes.labels', $costume) }}" target="_blank" rel="noopener"
+            class="inline-flex items-center rounded-lg border border-brand-primary/25 bg-brand-light/50 px-4 py-2 text-sm font-semibold text-brand-accent transition hover:bg-brand-light/75 dark:border-brand-secondary/35 dark:bg-darkbrand-light/45 dark:text-brand-light">
+            Print label sheet
+        </a>
+
         <form action="{{ route('admin.costumes.destroy', $costume->id) }}" method="POST" onsubmit="return confirm('Are you sure you want to delete this costume?');">
             @csrf
             @method('DELETE')

@@ -65,6 +65,26 @@ class CostumeController extends Controller
         return view('admin.costumes.show', compact('costume', 'items'));
     }
 
+    // drukājama QR kodu lapa – visas tērpa vienības vienā A4 režģī
+    public function labels(Costume $costume, Request $request)
+    {
+        $this->authorize('view', $costume);
+
+        $filter = in_array($request->query('filter'), ['available', 'assigned'], true)
+            ? $request->query('filter')
+            : 'all';
+
+        $columns = max(2, min(4, (int) $request->query('cols', 3)));
+
+        $items = $costume->items()
+            ->when($filter === 'available', fn ($query) => $query->whereNull('assigned_to'))
+            ->when($filter === 'assigned', fn ($query) => $query->whereNotNull('assigned_to'))
+            ->orderBy('code')
+            ->get();
+
+        return view('admin.costumes.labels', compact('costume', 'items', 'filter', 'columns'));
+    }
+
     public function destroy(Costume $costume)
     {
         $this->authorize('delete', $costume);

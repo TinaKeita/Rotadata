@@ -71,6 +71,8 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
         ->name('costumes.items.unassign');
     Route::post('/costumes/items/{item}/regenerate-qr', [AdminCostumeController::class, 'regenerateQr'])
         ->name('costumes.items.regenerate-qr');
+    Route::get('/costumes/{costume}/labels', [AdminCostumeController::class, 'labels'])
+        ->name('costumes.labels');
     Route::resource('costumes', AdminCostumeController::class)
         ->only(['index', 'create', 'store', 'show', 'destroy']);
 
