@@ -85,4 +85,14 @@ class CostumeController extends Controller
 
         return back()->with('success', 'Item unassigned successfully.');
     }
+
+    // izveido jaunu QR kodu vienībai, ja fiziskā birka ir pazaudēta vai bojāta
+    public function regenerateQr(CostumeItem $item)
+    {
+        $this->authorize('regenerateQr', $item);
+
+        $item->update(['qr_code' => Str::uuid()]);
+
+        return back()->with('success', "A new QR code was generated for {$item->code}. Print and attach the new label — the old QR no longer works.");
+    }
 }

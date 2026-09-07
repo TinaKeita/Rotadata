@@ -13,6 +13,12 @@ class CostumeItemPolicy
         return $user->ownsGroup($item->costume->group);
     }
 
+    // skolotājs izveido jaunu QR kodu vienībai (kad fiziskā birka pazaudēta) – tikai savas grupas tērpiem
+    public function regenerateQr(User $user, CostumeItem $item): bool
+    {
+        return $user->ownsGroup($item->costume->group);
+    }
+
     // students atdod savu vienību – tikai to, kas piešķirta viņam pašam
     public function unassignAsMember(User $user, CostumeItem $item): bool
     {

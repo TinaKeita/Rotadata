@@ -14,7 +14,12 @@ class ScanController extends Controller
     {
         $item = CostumeItem::with(['costume.group', 'user'])
             ->where('qr_code', $code)
-            ->firstOrFail();
+            ->first();
+
+        // QR kods neatbilst nevienai vienībai – visticamāk vecā birka, kas aizstāta ar jaunu
+        if (! $item) {
+            return response()->view('scan.invalid', [], 404);
+        }
 
         if ($item->assigned_to) {
             return view('scan.assigned', compact('item'));

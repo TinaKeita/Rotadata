@@ -9,6 +9,12 @@
         </div>
     </x-slot>
 
+    @if(session('success'))
+        <div class="mb-4 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-700 dark:border-emerald-700/40 dark:bg-emerald-900/20 dark:text-emerald-300">
+            {{ session('success') }}
+        </div>
+    @endif
+
     <div class="mb-4">
         <a href="{{ route('admin.costumes.index') }}" class="inline-flex items-center gap-1.5 text-sm font-medium text-brand-secondary dark:text-brand-light hover:text-brand-accent dark:hover:text-white transition">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -66,6 +72,14 @@
                         class="inline-flex items-center rounded-lg border border-brand-primary/25 bg-brand-light/50 px-3 py-1.5 text-xs font-semibold text-brand-accent transition hover:bg-brand-light/75 dark:border-brand-secondary/35 dark:bg-darkbrand-light/45 dark:text-brand-light">
                         Download
                     </a>
+
+                    <form method="POST" action="{{ route('admin.costumes.items.regenerate-qr', $item) }}"
+                        onsubmit="return confirm('Generate a new QR code for {{ $item->code }}? The old printed label will stop working and must be replaced.');">
+                        @csrf
+                        <button type="submit" class="inline-flex items-center rounded-lg border border-amber-300 bg-amber-50 px-3 py-1.5 text-xs font-semibold text-amber-700 transition hover:bg-amber-100 dark:border-amber-500/40 dark:bg-amber-900/20 dark:text-amber-300 dark:hover:bg-amber-900/40">
+                            Regenerate QR
+                        </button>
+                    </form>
                 </div>
             </div>
         @endforeach

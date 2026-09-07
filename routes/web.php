@@ -69,6 +69,8 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     // Tērpi un to vienības
     Route::post('/costumes/items/{item}/unassign', [AdminCostumeController::class, 'unassign'])
         ->name('costumes.items.unassign');
+    Route::post('/costumes/items/{item}/regenerate-qr', [AdminCostumeController::class, 'regenerateQr'])
+        ->name('costumes.items.regenerate-qr');
     Route::resource('costumes', AdminCostumeController::class)
         ->only(['index', 'create', 'store', 'show', 'destroy']);
 
