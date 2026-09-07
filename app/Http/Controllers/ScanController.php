@@ -3,8 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Models\CostumeItem;
+use Illuminate\Auth\Events\Lockout;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
 class ScanController extends Controller
@@ -47,7 +50,12 @@ class ScanController extends Controller
             'password' => ['required', 'string'],
         ]);
 
+        // aizsardzība pret paroļu uzlaušanu ar mēģinājumu ierobežošanu
+        $this->ensureIsNotRateLimited($request, $code);
+
         if (! Auth::attempt($credentials)) {
+            RateLimiter::hit($this->throttleKey($request, $code));
+
             throw ValidationException::withMessages([
                 'email' => __('auth.failed'),
             ]);
@@ -56,15 +64,48 @@ class ScanController extends Controller
         // tikai šīs grupas dalībnieks drīkst turpināt
         if (! Auth::user()->inGroup($item->costume->group)) {
             Auth::logout();
+            RateLimiter::hit($this->throttleKey($request, $code));
 
             throw ValidationException::withMessages([
                 'email' => 'You are not a member of this costume\'s group.',
             ]);
         }
 
+        RateLimiter::clear($this->throttleKey($request, $code));
+
         $request->session()->regenerate();
 
         return redirect("/scan/{$code}");
+    }
+
+    // pārtrauc pieprasījumu, ja no šī e-pasta / ierīces jau bijis par daudz neveiksmīgu mēģinājumu
+    protected function ensureIsNotRateLimited(Request $request, string $code): void
+    {
+        if (! RateLimiter::tooManyAttempts($this->throttleKey($request, $code), 5)) {
+            return;
+        }
+
+        event(new Lockout($request));
+
+        $seconds = RateLimiter::availableIn($this->throttleKey($request, $code));
+
+        // ļauj skata slānim uz šo laiku atspējot formu
+        $request->session()->flash('scanLockSeconds', $seconds);
+
+        throw ValidationException::withMessages([
+            'email' => __('auth.throttle', [
+                'seconds' => $seconds,
+                'minutes' => ceil($seconds / 60),
+            ]),
+        ]);
+    }
+
+    // atslēga mēģinājumu skaitīšanai: e-pasts + ierīces IP + konkrētais QR kods
+    protected function throttleKey(Request $request, string $code): string
+    {
+        return Str::transliterate(
+            Str::lower((string) $request->input('email')).'|'.$request->ip().'|'.$code
+        );
     }
 
     // piešķir tērpa vienību pašam pieslēgtajam lietotājam

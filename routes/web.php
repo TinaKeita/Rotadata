@@ -18,7 +18,9 @@ Route::view('/', 'welcome');
 
 // QR koda skenēšana – dalībnieks apstiprina sevi ar paroli skenēšanas laikā
 Route::get('/scan/{code}', [ScanController::class, 'show'])->name('scan.show');
-Route::post('/scan/{code}/authenticate', [ScanController::class, 'authenticate'])->name('scan.authenticate');
+Route::post('/scan/{code}/authenticate', [ScanController::class, 'authenticate'])
+    ->middleware('throttle:20,1') // maks. 20 mēģinājumi minūtē no vienas ierīces
+    ->name('scan.authenticate');
 Route::post('/scan/{code}/assign', [ScanController::class, 'assign'])->name('scan.assign');
 
 // QR koda PNG lejupielāde – faila nosaukumā izmanto salasāmo kodu (piem. qr-BRU-01.png)
