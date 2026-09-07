@@ -3,7 +3,9 @@
     <x-slot name="header">
         <div class="flex flex-col gap-1">
             <h2 class="text-2xl font-semibold text-brand-accent dark:text-brand-light leading-tight">{{ $costume->name }} Inventory</h2>
-            <p class="text-sm text-gray-600 dark:text-gray-300">Track item assignment and download QR codes.</p>
+            <p class="text-sm text-gray-600 dark:text-gray-300">
+                Item codes use the prefix <span class="font-semibold">{{ $costume->code_prefix }}</span>. Track assignment and download QR codes.
+            </p>
         </div>
     </x-slot>
 
@@ -30,7 +32,10 @@
         @foreach($items as $item)
             <div class="rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800">
                 <div class="mb-3 flex items-start justify-between gap-3">
-                    <p class="text-sm font-semibold text-gray-800 dark:text-gray-100">Item #{{ $item->id }}</p>
+                    <p class="text-sm font-semibold text-gray-800 dark:text-gray-100">
+                        {{ $item->code }}
+                        <span class="ml-1 font-normal text-xs text-gray-400 dark:text-gray-500">#{{ $item->id }}</span>
+                    </p>
 
                     @if($item->assigned_to)
                         <div class="flex items-center gap-2">
@@ -52,7 +57,10 @@
                 </div>
 
                 <div class="flex flex-wrap items-end gap-4">
-                    {!! QrCode::size(120)->generate(url('/scan/'.$item->qr_code)) !!}
+                    <figure class="text-center">
+                        {!! QrCode::size(120)->generate(url('/scan/'.$item->qr_code)) !!}
+                        <figcaption class="mt-1 text-xs font-semibold tracking-wide text-gray-700 dark:text-gray-300">{{ $item->code }}</figcaption>
+                    </figure>
 
                     <a href="{{ route('qr.download', $item->qr_code) }}"
                         class="inline-flex items-center rounded-lg border border-brand-primary/25 bg-brand-light/50 px-3 py-1.5 text-xs font-semibold text-brand-accent transition hover:bg-brand-light/75 dark:border-brand-secondary/35 dark:bg-darkbrand-light/45 dark:text-brand-light">

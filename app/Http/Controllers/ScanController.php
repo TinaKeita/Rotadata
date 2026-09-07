@@ -84,6 +84,6 @@ class ScanController extends Controller
             'assigned_at' => now(),
         ]);
 
-        return view('scan.success');
+        return view('scan.success', compact('item'));
     }
 }

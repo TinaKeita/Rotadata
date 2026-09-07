@@ -4,7 +4,8 @@
 		<p class="text-xs font-semibold uppercase tracking-[0.16em]">Not allowed</p>
 		<h1 class="mt-1 text-lg font-semibold">You're not in this group</h1>
 		<p class="mt-2 text-sm text-red-700/90 dark:text-red-300/90">
-			This costume item belongs to <span class="font-semibold">{{ $item->costume->group->name }}</span>.
+			Item <span class="font-semibold">{{ $item->code }}</span> ({{ $item->costume->name }}) belongs to
+			<span class="font-semibold">{{ $item->costume->group->name }}</span>.
 			Only members of that group can claim it. Ask your teacher to add you to the group.
 		</p>
 	</div>

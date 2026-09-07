@@ -25,7 +25,7 @@
             <div class="flex items-center justify-between gap-4 rounded-xl border border-brand-secondary/15 dark:border-brand-light/20 bg-white dark:bg-gray-900/50 px-5 py-3.5 shadow-sm">
                 <div class="flex items-center gap-4 min-w-0">
                     <span class="shrink-0 rounded-md border border-brand-primary/25 dark:border-brand-light/25 bg-brand-light/50 dark:bg-darkbrand-light/40 px-2.5 py-0.5 text-xs font-semibold tracking-wide text-brand-accent dark:text-brand-light">
-                        #NR.{{ $item->id }}
+                        {{ $item->code ?? '#NR.'.$item->id }}
                     </span>
                     <span class="truncate text-base font-medium text-gray-900 dark:text-gray-100">
                         {{ $item->costume->name }}

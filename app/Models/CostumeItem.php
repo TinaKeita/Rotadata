@@ -9,6 +9,7 @@ class CostumeItem extends Model
     protected $fillable = [
         'costume_id',
         'qr_code',
+        'code',
         'assigned_to',
         'assigned_at'
     ];

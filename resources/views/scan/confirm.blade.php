@@ -8,10 +8,13 @@
     </div>
 
     <div class="mb-5 rounded-lg border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-700 dark:border-gray-700 dark:bg-gray-900/40 dark:text-gray-200">
-        <span class="font-semibold text-brand-accent dark:text-brand-light">{{ $item->costume->name }}</span>
-        @if($item->costume->group)
-            <span class="text-gray-500 dark:text-gray-400"> &middot; {{ $item->costume->group->name }}</span>
-        @endif
+        <div>
+            <span class="font-semibold text-brand-accent dark:text-brand-light">{{ $item->costume->name }}</span>
+            @if($item->costume->group)
+                <span class="text-gray-500 dark:text-gray-400"> &middot; {{ $item->costume->group->name }}</span>
+            @endif
+        </div>
+        <div class="mt-0.5 text-xs font-semibold tracking-wide text-gray-500 dark:text-gray-400">{{ $item->code }}</div>
     </div>
 
     <div class="flex items-center gap-3">

@@ -2,7 +2,13 @@
 	<div class="rounded-xl border border-emerald-300/80 bg-emerald-50 px-4 py-4 sm:px-5 sm:py-5 text-emerald-800 dark:border-emerald-500/40 dark:bg-emerald-900/20 dark:text-emerald-300">
 		<p class="text-xs font-semibold uppercase tracking-[0.16em]">Assignment status</p>
 		<h1 class="mt-1 text-lg font-semibold">Successfully assigned</h1>
-		<p class="mt-2 text-sm text-emerald-700/90 dark:text-emerald-300/90">The costume item is now linked to the selected member.</p>
+		<p class="mt-2 text-sm text-emerald-700/90 dark:text-emerald-300/90">
+			@isset($item)
+				<span class="font-semibold">{{ $item->code }}</span> ({{ $item->costume->name }}) is now linked to you.
+			@else
+				The costume item is now linked to you.
+			@endisset
+		</p>
 	</div>
 
 	<div class="mt-5">

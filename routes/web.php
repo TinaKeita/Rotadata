@@ -21,13 +21,15 @@ Route::get('/scan/{code}', [ScanController::class, 'show'])->name('scan.show');
 Route::post('/scan/{code}/authenticate', [ScanController::class, 'authenticate'])->name('scan.authenticate');
 Route::post('/scan/{code}/assign', [ScanController::class, 'assign'])->name('scan.assign');
 
-// QR koda PNG lejupielāde
+// QR koda PNG lejupielāde – faila nosaukumā izmanto salasāmo kodu (piem. qr-BRU-01.png)
 Route::get('/qr/{code}/download', function ($code) {
+    $label = \App\Models\CostumeItem::where('qr_code', $code)->value('code') ?? $code;
+
     $png = QrCode::format('png')->size(300)->generate(url('/scan/'.$code));
 
     return response($png)
         ->header('Content-Type', 'image/png')
-        ->header('Content-Disposition', 'attachment; filename="qr-'.$code.'.png"');
+        ->header('Content-Disposition', 'attachment; filename="qr-'.$label.'.png"');
 })->name('qr.download');
 
 /*

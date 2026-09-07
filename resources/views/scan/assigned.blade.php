@@ -8,6 +8,10 @@
 
 	<dl class="mt-5 divide-y divide-gray-200 rounded-lg border border-gray-200 text-sm dark:divide-gray-700 dark:border-gray-700">
 		<div class="flex justify-between gap-4 px-4 py-3">
+			<dt class="text-gray-500 dark:text-gray-400">Item code</dt>
+			<dd class="text-right font-semibold tracking-wide text-gray-800 dark:text-gray-100">{{ $item->code }}</dd>
+		</div>
+		<div class="flex justify-between gap-4 px-4 py-3">
 			<dt class="text-gray-500 dark:text-gray-400">Costume</dt>
 			<dd class="text-right font-medium text-gray-800 dark:text-gray-100">{{ $item->costume->name }}</dd>
 		</div>

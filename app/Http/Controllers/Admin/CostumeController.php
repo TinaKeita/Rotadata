@@ -34,17 +34,21 @@ class CostumeController extends Controller
             'quantity' => 'required|integer|min:1',
         ]);
 
+        $prefix = Costume::makeCodePrefix($request->name, $group->id);
+
         $costume = Costume::create([
             'name' => $request->name,
+            'code_prefix' => $prefix,
             'quantity' => $request->quantity,
             'image' => null,
             'group_id' => $group->id,
         ]);
 
-        // izveido atsevišķas tērpa vienības
-        for ($i = 0; $i < $request->quantity; $i++) {
+        // izveido atsevišķas tērpa vienības ar QR kodu un salasāmu kodu
+        for ($i = 1; $i <= $request->quantity; $i++) {
             $costume->items()->create([
                 'qr_code' => Str::uuid(), // unikāls qr kods priekš katras vienības
+                'code' => sprintf('%s-%02d', $prefix, $i), // piem. BRU-01
                 'assigned_to' => null,
             ]);
         }
