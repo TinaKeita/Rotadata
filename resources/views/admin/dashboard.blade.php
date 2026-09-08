@@ -26,12 +26,6 @@
         </div>
     </x-slot>
 
-    @if(session('success'))
-        <div class="mb-6 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-700 dark:border-emerald-700/40 dark:bg-emerald-900/20 dark:text-emerald-300">
-            {{ session('success') }}
-        </div>
-    @endif
-
     @if(is_null($stats))
         <div class="rounded-xl border border-dashed border-gray-300 px-4 py-12 text-center text-sm text-gray-500 dark:border-gray-600 dark:text-gray-400">
             You don't manage a group yet, so there's nothing to show here.
@@ -76,7 +70,7 @@
                 @if($stats['feed']->isEmpty())
                     <p class="py-8 text-center text-sm text-gray-500 dark:text-gray-400">No costume movements yet.</p>
                 @else
-                    <ol class="space-y-3">
+                    <ol class="max-h-80 space-y-3 overflow-y-auto pr-1">
                         @foreach($stats['feed'] as $e)
                             <li class="flex items-start gap-3 text-sm">
                                 <span @class([

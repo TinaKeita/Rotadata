@@ -29,6 +29,6 @@ class ForcePasswordController extends Controller
             'must_change_password' => false,
         ]);
 
-        return redirect()->route('dashboard')->with('status', 'Parole ir nomainīta.');
+        return redirect()->route('dashboard')->with('success', 'Parole ir nomainīta.');
     }
 }

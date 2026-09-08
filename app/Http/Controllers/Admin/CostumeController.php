@@ -53,7 +53,7 @@ class CostumeController extends Controller
             ]);
         }
 
-        return redirect()->route('admin.costumes.index')->with('success', 'Costume created successfully!');
+        return redirect()->route('admin.costumes.index')->with('success', "Tērps “{$costume->name}” izveidots ar {$request->quantity} vienībām.");
     }
 
     public function show(Costume $costume)
@@ -93,7 +93,7 @@ class CostumeController extends Controller
 
         $costume->delete();
 
-        return redirect()->route('admin.costumes.index')->with('success', 'Costume deleted.');
+        return redirect()->route('admin.costumes.index')->with('success', "Tērps “{$costume->name}” dzēsts.");
     }
 
     public function unassign(CostumeItem $item)
@@ -102,7 +102,7 @@ class CostumeController extends Controller
 
         $item->release(auth()->user(), 'admin');
 
-        return back()->with('success', 'Item unassigned successfully.');
+        return back()->with('success', "Vienība {$item->code} noņemta no dalībnieka.");
     }
 
     // izveido jaunu QR kodu vienībai, ja fiziskā birka ir pazaudēta vai bojāta
@@ -112,6 +112,6 @@ class CostumeController extends Controller
 
         $item->update(['qr_code' => Str::uuid()]);
 
-        return back()->with('success', "A new QR code was generated for {$item->code}. Print and attach the new label — the old QR no longer works.");
+        return back()->with('success', "Vienībai {$item->code} izveidots jauns QR kods. Izdrukājiet un pielīmējiet jauno birku — vecais QR vairs nedarbojas.");
     }
 }

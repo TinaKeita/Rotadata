@@ -16,13 +16,6 @@
         </a>
     </div>
 
-    {{-- veiksmes paziņojums --}}
-    @if (session('success'))
-        <div class="max-w-2xl mb-4 rounded-lg border border-green-300 bg-green-50 px-4 py-3 text-sm text-green-800 dark:border-green-700 dark:bg-green-900/30 dark:text-green-300">
-            {{ session('success') }}
-        </div>
-    @endif
-
     <div class="max-w-2xl rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
         {{-- validācijas kļūdas --}}
         @if ($errors->any())

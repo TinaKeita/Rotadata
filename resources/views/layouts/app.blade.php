@@ -90,6 +90,7 @@
 
                 <main class="lg:row-start-2 lg:col-start-2 p-3 sm:p-5 lg:p-7">
                     <div class="rounded-xl sm:rounded-2xl border border-gray-200/70 bg-white shadow-[0_8px_24px_rgba(0,0,0,0.06)] p-4 sm:p-6 dark:border-gray-700/70 dark:bg-gray-800 dark:shadow-none">
+                        <x-flash />
                         {{ $slot }}
                     </div>
                 </main>

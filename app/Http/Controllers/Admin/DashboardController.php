@@ -117,7 +117,7 @@ class DashboardController extends Controller
                 return $events;
             })
             ->sortByDesc('at')
-            ->take(8)
+            ->take(10)
             ->values();
     }
 

@@ -37,6 +37,8 @@
                     </a>
                 </div>
 
+                <x-flash />
+
                 {{ $slot }}
             </div>
         </div>

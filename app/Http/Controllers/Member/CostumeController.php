@@ -35,9 +35,11 @@ class CostumeController extends Controller
     {
         $this->authorize('unassignAsMember', $item);
 
+        $code = $item->code;
+
         $item->release(auth()->user(), 'self');
 
-        return back()->with('success', 'Costume unassigned.');
+        return back()->with('success', "Vienība {$code} atdota.");
     }
 }
 

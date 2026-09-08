@@ -42,30 +42,20 @@ class MemberController extends Controller
 
         $adminGroup->members()->attach($member->id);
 
-        // sūtīt e pastu ziņu ar paroli
+        // sūta e-pastu ar pagaidu paroli; ja neizdodas, dalībnieks tik un tā ir izveidots
         try {
-            \Log::info('Preparing welcome email', [
-                'username' => env('MAIL_USERNAME'),
-                'recipient' => $member->email,
-                'member_id' => $member->id,
-            ]);
+            Mail::to($member->email)->send(new MemberWelcomeMail($member, $tempPassword, $adminGroup->name));
 
-            Mail::to($member->email)->send(new MemberWelcomeMail($member, $tempPassword));
-
-            \Log::info('Welcome email sent', [
-                'username' => env('MAIL_USERNAME'),
-                'recipient' => $member->email,
-                'member_id' => $member->id,
-            ]);
-
-            return redirect()->route('admin.dashboard')->with('success', 'Member created and email sent!');
-        } catch (\Exception $e) {
-            \Log::error('Mail failed: '.$e->getMessage(), [
+            return redirect()->route('admin.members.index')
+                ->with('success', "Dalībnieks “{$member->name}” izveidots un uzaicinājums nosūtīts uz {$member->email}.");
+        } catch (\Throwable $e) {
+            \Log::error('Uzaicinājuma e-pastu neizdevās nosūtīt: '.$e->getMessage(), [
                 'email' => $member->email,
                 'member_id' => $member->id,
             ]);
 
-            throw $e;
+            return redirect()->route('admin.members.index')
+                ->with('warning', "Dalībnieks “{$member->name}” izveidots, bet e-pastu neizdevās nosūtīt. Pagaidu parole: {$tempPassword} — nododiet to dalībniekam personīgi.");
         }
     }
 
@@ -94,9 +84,11 @@ class MemberController extends Controller
     {
         $this->authorize('delete', $user);
 
+        $name = $user->name;
         $user->delete();
+
         return redirect()->route('admin.members.index')
-            ->with('success', 'Member deleted successfully.');
+            ->with('success', "Dalībnieks “{$name}” dzēsts.");
     }
 
 }
