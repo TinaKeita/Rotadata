@@ -16,7 +16,7 @@
         </a>
     </div>
 
-    {{-- success message --}}
+    {{-- veiksmes paziņojums --}}
     @if (session('success'))
         <div class="max-w-2xl mb-4 rounded-lg border border-green-300 bg-green-50 px-4 py-3 text-sm text-green-800 dark:border-green-700 dark:bg-green-900/30 dark:text-green-300">
             {{ session('success') }}
@@ -24,7 +24,7 @@
     @endif
 
     <div class="max-w-2xl rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
-        {{-- validation errors --}}
+        {{-- validācijas kļūdas --}}
         @if ($errors->any())
             <div class="mb-5 rounded-lg border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-800 dark:border-red-700 dark:bg-red-900/30 dark:text-red-300">
                 <ul class="list-disc list-inside space-y-1">

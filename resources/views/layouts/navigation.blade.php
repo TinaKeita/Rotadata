@@ -1,12 +1,12 @@
 <nav class="flex h-full max-h-[calc(100vh-6rem)] lg:max-h-none flex-col px-3 py-4 sm:px-4 sm:py-6 overflow-y-auto">
 
-    {{-- User info block --}}
+    {{-- lietotāja informācija --}}
     <div class="mb-5 border-b border-white/15 pb-4">
         <p class="text-sm font-semibold text-white truncate">{{ Auth::user()->name }}</p>
         <p class="text-xs text-white/40 truncate">{{ Auth::user()->email }}</p>
     </div>
 
-    {{-- Main links --}}
+    {{-- galvenās saites --}}
     <div class="flex flex-col gap-1.5">
         <x-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
             {{ __('Dashboard') }}
@@ -23,7 +23,7 @@
         @endrole
     </div>
 
-    {{-- Bottom --}}
+    {{-- apakšdaļa --}}
     <div class="mt-auto flex flex-col gap-1.5 border-t border-white/15 pt-4">
         <x-nav-link :href="route('profile.edit')" :active="request()->routeIs('profile.*')">
             {{ __('Profile') }}

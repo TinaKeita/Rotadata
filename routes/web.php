@@ -66,7 +66,7 @@ Route::middleware('auth')->group(function () {
 */
 
 Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->group(function () {
-    Route::view('/dashboard', 'admin.dashboard')->name('dashboard');
+    Route::get('/dashboard', [App\Http\Controllers\Admin\DashboardController::class, 'index'])->name('dashboard');
 
     // Tērpi un to vienības
     Route::post('/costumes/items/{item}/unassign', [AdminCostumeController::class, 'unassign'])

@@ -16,7 +16,7 @@
             <x-input-error :messages="$errors->get('email')" class="mt-2" />
         </div>
 
-        {{-- group name --}}
+        {{-- grupas nosaukums --}}
         <div class="mt-4">
             <x-input-label for="group_name" :value="__('Group Name')" />
             <x-text-input id="group_name" class="block mt-1 w-full" type="text" name="group_name" :value="old('group_name')" required autofocus autocomplete="group_name" />

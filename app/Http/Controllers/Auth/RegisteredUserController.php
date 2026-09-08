@@ -44,7 +44,7 @@ class RegisteredUserController extends Controller
 
         $user->assignRole('admin');
 
-        // izveido grupu directly un sasaista ar adminu
+        // izveido grupu un sasaista to ar administratoru
         $group = Group::create([
             'name' => $request->group_name,
             'admin_id' => $user->id

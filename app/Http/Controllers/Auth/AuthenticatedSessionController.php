@@ -29,9 +29,9 @@ class AuthenticatedSessionController extends Controller
 
         $user = auth()->user();
         if ($user->hasRole('admin')) {
-            return redirect('/admin/dashboard');  // Admin dashboard
+            return redirect('/admin/dashboard');  // administratora sākumlapa
         }
-        return redirect('/dashboard');  // Member dashboard 
+        return redirect('/dashboard');  // dalībnieka sākumlapa
     }
 
 
