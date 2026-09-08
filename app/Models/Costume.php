@@ -25,6 +25,31 @@ class Costume extends Model
         return $this->hasMany(CostumeItem::class);
     }
 
+    // pievieno tērpam jaunas vienības ar QR kodu un turpina salasāmo kodu numerāciju
+    public function addItems(int $count): void
+    {
+        $prefix = $this->code_prefix ?: static::makeCodePrefix($this->name, $this->group_id, $this->id);
+
+        // pēdējais izmantotais numurs (piem. BRU-05 -> 5), lai jaunās vienības turpinātu virkni
+        $lastNumber = $this->items()
+            ->pluck('code')
+            ->map(fn ($code) => (int) Str::afterLast((string) $code, '-'))
+            ->max() ?? 0;
+
+        for ($i = 1; $i <= $count; $i++) {
+            $this->items()->create([
+                'qr_code' => Str::uuid(),
+                'code' => sprintf('%s-%02d', $prefix, $lastNumber + $i),
+                'assigned_to' => null,
+            ]);
+        }
+
+        $this->update([
+            'code_prefix' => $prefix,
+            'quantity' => $this->items()->count(),
+        ]);
+    }
+
     // izveido īsu, cilvēkam salasāmu prefiksu, kas ir unikāls grupas ietvaros
     public static function makeCodePrefix(string $name, int $groupId, ?int $ignoreId = null): string
     {

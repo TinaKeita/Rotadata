@@ -19,6 +19,11 @@
     </div>
 
     <div class="mb-6 flex flex-wrap items-center gap-3">
+        <a href="{{ route('admin.costumes.edit', $costume) }}"
+            class="inline-flex items-center rounded-lg border border-brand-primary/25 bg-brand-light/50 px-4 py-2 text-sm font-semibold text-brand-accent transition hover:bg-brand-light/75 dark:border-brand-secondary/35 dark:bg-darkbrand-light/45 dark:text-brand-light">
+            Edit name
+        </a>
+
         <a href="{{ route('admin.costumes.labels', $costume) }}" target="_blank" rel="noopener"
             class="inline-flex items-center rounded-lg border border-brand-primary/25 bg-brand-light/50 px-4 py-2 text-sm font-semibold text-brand-accent transition hover:bg-brand-light/75 dark:border-brand-secondary/35 dark:bg-darkbrand-light/45 dark:text-brand-light">
             Print label sheet
@@ -30,6 +35,22 @@
             <button type="submit" class="inline-flex items-center rounded-lg border border-brand-primary/20 bg-brand-primary px-4 py-2 text-sm font-semibold text-white transition hover:bg-brand-accent focus:outline-none focus:ring-2 focus:ring-brand-secondary/50 dark:border-darkbrand-accent dark:bg-darkbrand-secondary dark:hover:bg-darkbrand-accent">
                 Delete Costume
             </button>
+        </form>
+    </div>
+
+    {{-- papildu vienību pievienošana --}}
+    <div class="mb-6 rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+        <form method="POST" action="{{ route('admin.costumes.items.add', $costume) }}" class="flex flex-wrap items-end gap-3">
+            @csrf
+            <div>
+                <label for="count" class="block text-xs font-medium text-gray-600 dark:text-gray-300">Add items</label>
+                <input type="number" name="count" id="count" value="1" min="1" max="100" required
+                    class="mt-1 w-24 rounded-lg border-gray-300 px-3 py-2 text-sm text-gray-800 shadow-sm focus:border-brand-primary focus:ring-brand-secondary/50 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200">
+            </div>
+            <button type="submit" class="inline-flex items-center rounded-lg border border-brand-primary/20 bg-brand-primary px-4 py-2 text-sm font-semibold text-white transition hover:bg-brand-accent focus:outline-none focus:ring-2 focus:ring-brand-secondary/50">
+                Add
+            </button>
+            <p class="text-xs text-gray-500 dark:text-gray-400">Currently {{ $items->count() }} {{ Str::plural('item', $items->count()) }}. New ones continue the {{ $costume->code_prefix }} code series.</p>
         </form>
     </div>
 
@@ -79,6 +100,17 @@
                             Regenerate QR
                         </button>
                     </form>
+
+                    @unless($item->assigned_to)
+                        <form method="POST" action="{{ route('admin.costumes.items.destroy', $item) }}"
+                            onsubmit="return confirm('Delete item {{ $item->code }}? This cannot be undone.');">
+                            @csrf
+                            @method('DELETE')
+                            <button type="submit" class="inline-flex items-center rounded-lg border border-red-300 bg-red-50 px-3 py-1.5 text-xs font-semibold text-red-700 transition hover:bg-red-100 dark:border-red-500/40 dark:bg-red-900/20 dark:text-red-300 dark:hover:bg-red-900/40">
+                                Delete item
+                            </button>
+                        </form>
+                    @endunless
                 </div>
 
                 @if($item->assignments->isNotEmpty())

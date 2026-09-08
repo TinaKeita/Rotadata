@@ -16,10 +16,16 @@
     <div class="space-y-3">
         @forelse($costumes as $costume)
             <div class="flex items-center justify-between gap-4 rounded-xl border border-gray-200 bg-white px-4 py-3 shadow-sm dark:border-gray-700 dark:bg-gray-800">
-                <span class="text-sm font-medium text-gray-900 dark:text-gray-100">{{ $costume->name }}</span>
+                <div class="min-w-0">
+                    <span class="text-sm font-medium text-gray-900 dark:text-gray-100">{{ $costume->name }}</span>
+                    <span class="ml-2 text-xs text-gray-500 dark:text-gray-400">
+                        {{ $costume->items_count }} {{ Str::plural('item', $costume->items_count) }}
+                        @if($costume->items_out_count > 0) · {{ $costume->items_out_count }} out @endif
+                    </span>
+                </div>
                 <a href="{{ route('admin.costumes.show', $costume) }}"
-                    class="inline-flex items-center rounded-lg border border-brand-primary/25 bg-brand-light/50 px-3 py-1.5 text-xs font-semibold text-brand-accent transition hover:bg-brand-light/75 dark:border-brand-secondary/35 dark:bg-darkbrand-light/45 dark:text-brand-light">
-                    View
+                    class="inline-flex shrink-0 items-center rounded-lg border border-brand-primary/25 bg-brand-light/50 px-3 py-1.5 text-xs font-semibold text-brand-accent transition hover:bg-brand-light/75 dark:border-brand-secondary/35 dark:bg-darkbrand-light/45 dark:text-brand-light">
+                    Manage
                 </a>
             </div>
         @empty

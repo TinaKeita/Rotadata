@@ -79,10 +79,14 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
         ->name('costumes.items.unassign');
     Route::post('/costumes/items/{item}/regenerate-qr', [AdminCostumeController::class, 'regenerateQr'])
         ->name('costumes.items.regenerate-qr');
+    Route::delete('/costumes/items/{item}', [AdminCostumeController::class, 'destroyItem'])
+        ->name('costumes.items.destroy');
+    Route::post('/costumes/{costume}/items', [AdminCostumeController::class, 'addItems'])
+        ->name('costumes.items.add');
     Route::get('/costumes/{costume}/labels', [AdminCostumeController::class, 'labels'])
         ->name('costumes.labels');
     Route::resource('costumes', AdminCostumeController::class)
-        ->only(['index', 'create', 'store', 'show', 'destroy']);
+        ->only(['index', 'create', 'store', 'show', 'edit', 'update', 'destroy']);
 
     // Dalībnieki (studenti)
     Route::resource('members', AdminMemberController::class)

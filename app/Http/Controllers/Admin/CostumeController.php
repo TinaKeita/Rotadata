@@ -13,7 +13,9 @@ class CostumeController extends Controller
     public function index()
     {
         $group = auth()->user()->adminGroups()->first();
-        $costumes = $group ? $group->costumes : collect();
+        $costumes = $group
+            ? $group->costumes()->withCount(['items', 'items as items_out_count' => fn ($q) => $q->whereNotNull('assigned_to')])->get()
+            : collect();
 
         return view('admin.costumes.index', compact('costumes'));
     }
@@ -29,31 +31,76 @@ class CostumeController extends Controller
         $group = auth()->user()->adminGroups()->first();
         abort_if(is_null($group), 403, 'You do not have a group yet.');
 
-        $request->validate([
+        $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'quantity' => 'required|integer|min:1',
+            'quantity' => 'required|integer|min:1|max:200',
         ]);
 
-        $prefix = Costume::makeCodePrefix($request->name, $group->id);
-
         $costume = Costume::create([
-            'name' => $request->name,
-            'code_prefix' => $prefix,
-            'quantity' => $request->quantity,
+            'name' => $validated['name'],
+            'quantity' => 0,
             'image' => null,
             'group_id' => $group->id,
         ]);
 
-        // izveido atsevišķas tērpa vienības ar QR kodu un salasāmu kodu
-        for ($i = 1; $i <= $request->quantity; $i++) {
-            $costume->items()->create([
-                'qr_code' => Str::uuid(), // unikāls qr kods priekš katras vienības
-                'code' => sprintf('%s-%02d', $prefix, $i), // piem. BRU-01
-                'assigned_to' => null,
-            ]);
+        $costume->addItems((int) $validated['quantity']);
+
+        return redirect()->route('admin.costumes.index')->with('success', "Tērps “{$costume->name}” izveidots ar {$validated['quantity']} vienībām.");
+    }
+
+    // forma tērpa nosaukuma rediģēšanai
+    public function edit(Costume $costume)
+    {
+        $this->authorize('update', $costume);
+
+        return view('admin.costumes.edit', compact('costume'));
+    }
+
+    public function update(Request $request, Costume $costume)
+    {
+        $this->authorize('update', $costume);
+
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+        ]);
+
+        $costume->update(['name' => $validated['name']]);
+
+        return redirect()->route('admin.costumes.show', $costume)
+            ->with('success', "Tērpa nosaukums nomainīts uz “{$costume->name}”.");
+    }
+
+    // pievieno tērpam papildu vienības
+    public function addItems(Request $request, Costume $costume)
+    {
+        $this->authorize('update', $costume);
+
+        $validated = $request->validate([
+            'count' => 'required|integer|min:1|max:100',
+        ]);
+
+        $costume->addItems((int) $validated['count']);
+
+        return redirect()->route('admin.costumes.show', $costume)
+            ->with('success', "Pievienotas {$validated['count']} jaunas vienības. Neaizmirstiet izdrukāt tām QR birkas.");
+    }
+
+    // dzēš vienu tērpa vienību (tikai ja tā nav izsniegta)
+    public function destroyItem(CostumeItem $item)
+    {
+        $this->authorize('update', $item->costume);
+
+        if ($item->assigned_to) {
+            return back()->with('error', "Vienību {$item->code} nevar dzēst — tā ir izsniegta dalībniekam.");
         }
 
-        return redirect()->route('admin.costumes.index')->with('success', "Tērps “{$costume->name}” izveidots ar {$request->quantity} vienībām.");
+        $code = $item->code;
+        $costume = $item->costume;
+
+        $item->delete();
+        $costume->update(['quantity' => $costume->items()->count()]);
+
+        return back()->with('success', "Vienība {$code} dzēsta.");
     }
 
     public function show(Costume $costume)
