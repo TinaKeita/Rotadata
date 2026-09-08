@@ -47,6 +47,12 @@ Route::middleware('auth')->group(function () {
             : view('dashboard');
     })->name('dashboard');
 
+    // Obligātā paroles maiņa pēc pieslēgšanās ar pagaidu paroli
+    Route::get('/password/change', [App\Http\Controllers\Auth\ForcePasswordController::class, 'edit'])
+        ->name('password.change');
+    Route::put('/password/change', [App\Http\Controllers\Auth\ForcePasswordController::class, 'update'])
+        ->name('password.change.update');
+
     // Profils
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');

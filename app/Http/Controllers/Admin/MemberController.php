@@ -34,7 +34,8 @@ class MemberController extends Controller
         $member = User::create([
             'name' => $request->name,
             'email' => $request->email,
-            'password' => Hash::make($tempPassword)
+            'password' => Hash::make($tempPassword),
+            'must_change_password' => true, // pagaidu parole der tikai pirmajai pieslēgšanās reizei
         ]);
 
         $member->assignRole('member');
