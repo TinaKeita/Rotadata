@@ -128,7 +128,13 @@
                                     @if($log->returned_at)
                                         {{ $log->returned_at->format('d.m.Y') }}
                                         <span class="text-gray-400">
-                                            ({{ $log->return_note === 'admin' ? 'taken back by ' . ($log->returnedBy->name ?? 'teacher') : 'returned by student' }})
+                                            @if($log->return_note === 'admin')
+                                                (taken back by {{ $log->returnedBy->name ?? 'teacher' }})
+                                            @elseif($log->return_note === 'transfer')
+                                                (handed over to {{ $log->returnedBy->name ?? 'another member' }})
+                                            @else
+                                                (returned by student)
+                                            @endif
                                         </span>
                                     @else
                                         <span class="font-medium text-amber-600 dark:text-amber-400">still out</span>

@@ -78,6 +78,7 @@
                                     'bg-brand-primary dark:bg-brand-secondary' => $e['type'] === 'assigned',
                                     'bg-emerald-500' => $e['type'] === 'returned',
                                     'bg-amber-500' => $e['type'] === 'taken_back',
+                                    'bg-sky-500' => $e['type'] === 'handed_over',
                                 ])></span>
                                 <div class="min-w-0 flex-1">
                                     <p class="text-gray-700 dark:text-gray-200">
@@ -87,6 +88,10 @@
                                         @elseif($e['type'] === 'returned')
                                             <span class="font-semibold text-gray-900 dark:text-gray-100">{{ $e['who'] }}</span> returned
                                             <span class="font-semibold">{{ $e['code'] }}</span>
+                                        @elseif($e['type'] === 'handed_over')
+                                            <span class="font-semibold text-gray-900 dark:text-gray-100">{{ $e['who'] }}</span> handed
+                                            <span class="font-semibold">{{ $e['code'] }}</span> to
+                                            <span class="font-semibold text-gray-900 dark:text-gray-100">{{ $e['actor'] ?? 'another member' }}</span>
                                         @else
                                             {{ $e['actor'] ?? 'A teacher' }} took
                                             <span class="font-semibold">{{ $e['code'] }}</span> back from

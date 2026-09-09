@@ -56,6 +56,9 @@
                         </span>
                         <span class="text-gray-500 dark:text-gray-400">
                             {{ $log->assigned_at->format('d.m.Y') }} &rarr; {{ $log->returned_at->format('d.m.Y') }}
+                            @if($log->return_note === 'transfer')
+                                <span class="text-gray-400">(handed over)</span>
+                            @endif
                         </span>
                     </li>
                 @endforeach

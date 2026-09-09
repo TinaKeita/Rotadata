@@ -23,6 +23,9 @@ Route::post('/scan/{code}/authenticate', [ScanController::class, 'authenticate']
     ->name('scan.authenticate');
 Route::post('/scan/{code}/assign', [ScanController::class, 'assign'])->name('scan.assign');
 
+// pārņem citam dalībniekam izsniegtu vienību sev (kad tērps fiziski jau nonācis pie skenētāja)
+Route::post('/scan/{code}/takeover', [ScanController::class, 'takeover'])->name('scan.takeover');
+
 // QR koda PNG lejupielāde – faila nosaukumā izmanto salasāmo kodu (piem. qr-BRU-01.png)
 Route::get('/qr/{code}/download', function ($code) {
     $label = \App\Models\CostumeItem::where('qr_code', $code)->value('code') ?? $code;

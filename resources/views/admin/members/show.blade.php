@@ -73,6 +73,8 @@
                             {{ $log->assigned_at->format('d.m.Y') }} &rarr; {{ $log->returned_at->format('d.m.Y') }}
                             @if($log->return_note === 'admin')
                                 <span class="text-gray-400">(taken back)</span>
+                            @elseif($log->return_note === 'transfer')
+                                <span class="text-gray-400">(handed over)</span>
                             @endif
                         </span>
                     </li>

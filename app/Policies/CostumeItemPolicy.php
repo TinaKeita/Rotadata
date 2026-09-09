@@ -31,4 +31,12 @@ class CostumeItemPolicy
         return is_null($item->assigned_to)
             && $user->inGroup($item->costume->group);
     }
+
+    // students pārņem citam izsniegtu vienību sev – tikai ja tā ir izsniegta kādam citam un viņš ir grupā
+    public function takeOver(User $user, CostumeItem $item): bool
+    {
+        return ! is_null($item->assigned_to)
+            && $item->assigned_to !== $user->id
+            && $user->inGroup($item->costume->group);
+    }
 }

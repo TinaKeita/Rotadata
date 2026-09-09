@@ -85,14 +85,26 @@ class DashboardController extends Controller
     {
         $window = now()->subDays(45);
 
-        return CostumeItemAssignment::with(['item.costume', 'returnedBy'])
+        $rows = CostumeItemAssignment::with(['item.costume', 'returnedBy'])
             ->whereIn('costume_item_id', $itemIds)
             ->where(fn ($q) => $q->where('assigned_at', '>=', $window)->orWhere('returned_at', '>=', $window))
-            ->get()
-            ->flatMap(function (CostumeItemAssignment $a) use ($window) {
+            ->get();
+
+        // nodošanas "pieņemšanas puse": vienība + brīdis, kad tā tika nodota tālāk
+        // tos "paņēma" ierakstus izlaižam, lai plūsmā par nodošanu būtu tikai viens (zilais) ieraksts
+        $handoverKeys = $rows
+            ->where('return_note', 'transfer')
+            ->filter(fn ($a) => $a->returned_at)
+            ->map(fn ($a) => $a->costume_item_id.'|'.$a->returned_at->timestamp)
+            ->all();
+
+        return $rows
+            ->flatMap(function (CostumeItemAssignment $a) use ($window, $handoverKeys) {
                 $events = [];
 
-                if ($a->assigned_at >= $window) {
+                $isHandoverPickup = in_array($a->costume_item_id.'|'.$a->assigned_at?->timestamp, $handoverKeys, true);
+
+                if ($a->assigned_at >= $window && ! $isHandoverPickup) {
                     $events[] = [
                         'at'      => $a->assigned_at,
                         'type'    => 'assigned',
@@ -106,7 +118,11 @@ class DashboardController extends Controller
                 if ($a->returned_at && $a->returned_at >= $window) {
                     $events[] = [
                         'at'      => $a->returned_at,
-                        'type'    => $a->return_note === 'admin' ? 'taken_back' : 'returned',
+                        'type'    => match ($a->return_note) {
+                            'admin' => 'taken_back',
+                            'transfer' => 'handed_over',
+                            default => 'returned',
+                        },
                         'code'    => $a->item?->code,
                         'costume' => $a->item?->costume?->name,
                         'who'     => $a->user_name,

@@ -25,7 +25,7 @@ class ScanController extends Controller
         }
 
         if ($item->assigned_to) {
-            return view('scan.assigned', compact('item'));
+            return $this->assignedView($item);
         }
 
         if (! Auth::check()) {
@@ -118,9 +118,7 @@ class ScanController extends Controller
         }
 
         if ($item->assigned_to) {
-            $item->load(['costume.group', 'user']);
-
-            return view('scan.assigned', compact('item'));
+            return $this->assignedView($item);
         }
 
         $this->authorize('claim', $item);
@@ -128,5 +126,40 @@ class ScanController extends Controller
         $item->assignTo(Auth::user(), Auth::user());
 
         return view('scan.success', compact('item'));
+    }
+
+    // pārņem citam dalībniekam izsniegtu vienību sev
+    public function takeover(Request $request, $code)
+    {
+        $item = CostumeItem::with('costume.group')->where('qr_code', $code)->firstOrFail();
+
+        if (! Auth::check()) {
+            return redirect("/scan/{$code}");
+        }
+
+        // ja vienība pa to laiku jau atbrīvota – aizved uz parasto piešķiršanas plūsmu
+        if (! $item->assigned_to) {
+            return redirect("/scan/{$code}");
+        }
+
+        $this->authorize('takeOver', $item);
+
+        $item->transferTo(Auth::user());
+
+        return view('scan.success', compact('item'));
+    }
+
+    // parāda jau izsniegtas vienības lapu kopā ar norādi, vai skenētājs to var pārņemt sev
+    protected function assignedView(CostumeItem $item)
+    {
+        $item->loadMissing(['costume.group', 'user']);
+
+        $isHolder = Auth::id() === $item->assigned_to;
+
+        $canTakeOver = Auth::check()
+            && ! $isHolder
+            && Auth::user()->inGroup($item->costume->group);
+
+        return view('scan.assigned', compact('item', 'isHolder', 'canTakeOver'));
     }
 }

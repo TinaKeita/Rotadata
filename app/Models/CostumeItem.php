@@ -56,6 +56,35 @@ class CostumeItem extends Model
         ]);
     }
 
+    // nodod vienību citam dalībniekam: aizver pašreizējo vēstures ierakstu un uzreiz atver jaunu
+    // vecais ieraksts tiek atzīmēts ar 'transfer', lai vēsturē redzams, ka tā bija nodošana, nevis atdošana
+    public function transferTo(User $to): void
+    {
+        // viens laika zīmogs abiem ierakstiem – pēc tā panelī atpazīst, ka bija nodošana, nevis atsevišķa atdošana un paņemšana
+        $now = now();
+
+        $this->assignments()
+            ->whereNull('returned_at')
+            ->first()
+            ?->update([
+                'returned_at' => $now,
+                'returned_by' => $to->id,
+                'return_note' => 'transfer',
+            ]);
+
+        $this->update([
+            'assigned_to' => $to->id,
+            'assigned_at' => $now,
+        ]);
+
+        $this->assignments()->create([
+            'user_id' => $to->id,
+            'user_name' => $to->name,
+            'assigned_at' => $now,
+            'assigned_by' => $to->id,
+        ]);
+    }
+
     // atgriež vienību un aizver atvērto vēstures ierakstu
     // $note: 'self' = students atdeva pats, 'admin' = skolotājs paņēma atpakaļ
     public function release(User $by, string $note): void
