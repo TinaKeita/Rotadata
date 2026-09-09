@@ -39,7 +39,7 @@ class CostumeController extends Controller
 
         $item->release(auth()->user(), 'self');
 
-        return back()->with('success', "Vienība {$code} atdota.");
+        return back()->with('success', "Item {$code} returned.");
     }
 }
 

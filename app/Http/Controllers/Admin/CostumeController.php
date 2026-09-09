@@ -45,7 +45,7 @@ class CostumeController extends Controller
 
         $costume->addItems((int) $validated['quantity']);
 
-        return redirect()->route('admin.costumes.index')->with('success', "Tērps “{$costume->name}” izveidots ar {$validated['quantity']} vienībām.");
+        return redirect()->route('admin.costumes.index')->with('success', "Costume “{$costume->name}” created with {$validated['quantity']} items.");
     }
 
     // forma tērpa nosaukuma rediģēšanai
@@ -67,7 +67,7 @@ class CostumeController extends Controller
         $costume->update(['name' => $validated['name']]);
 
         return redirect()->route('admin.costumes.show', $costume)
-            ->with('success', "Tērpa nosaukums nomainīts uz “{$costume->name}”.");
+            ->with('success', "Costume renamed to “{$costume->name}”.");
     }
 
     // pievieno tērpam papildu vienības
@@ -82,7 +82,7 @@ class CostumeController extends Controller
         $costume->addItems((int) $validated['count']);
 
         return redirect()->route('admin.costumes.show', $costume)
-            ->with('success', "Pievienotas {$validated['count']} jaunas vienības. Neaizmirstiet izdrukāt tām QR birkas.");
+            ->with('success', "Added {$validated['count']} new items. Don't forget to print QR labels for them.");
     }
 
     // dzēš vienu tērpa vienību (tikai ja tā nav izsniegta)
@@ -91,7 +91,7 @@ class CostumeController extends Controller
         $this->authorize('update', $item->costume);
 
         if ($item->assigned_to) {
-            return back()->with('error', "Vienību {$item->code} nevar dzēst — tā ir izsniegta dalībniekam.");
+            return back()->with('error', "Item {$item->code} can't be deleted — it's assigned to a member.");
         }
 
         $code = $item->code;
@@ -100,7 +100,7 @@ class CostumeController extends Controller
         $item->delete();
         $costume->update(['quantity' => $costume->items()->count()]);
 
-        return back()->with('success', "Vienība {$code} dzēsta.");
+        return back()->with('success', "Item {$code} deleted.");
     }
 
     public function show(Costume $costume)
@@ -140,7 +140,7 @@ class CostumeController extends Controller
 
         $costume->delete();
 
-        return redirect()->route('admin.costumes.index')->with('success', "Tērps “{$costume->name}” dzēsts.");
+        return redirect()->route('admin.costumes.index')->with('success', "Costume “{$costume->name}” deleted.");
     }
 
     public function unassign(CostumeItem $item)
@@ -149,7 +149,7 @@ class CostumeController extends Controller
 
         $item->release(auth()->user(), 'admin');
 
-        return back()->with('success', "Vienība {$item->code} noņemta no dalībnieka.");
+        return back()->with('success', "Item {$item->code} unassigned from the member.");
     }
 
     // izveido jaunu QR kodu vienībai, ja fiziskā birka ir pazaudēta vai bojāta
@@ -159,6 +159,6 @@ class CostumeController extends Controller
 
         $item->update(['qr_code' => Str::uuid()]);
 
-        return back()->with('success', "Vienībai {$item->code} izveidots jauns QR kods. Izdrukājiet un pielīmējiet jauno birku — vecais QR vairs nedarbojas.");
+        return back()->with('success', "A new QR code was generated for {$item->code}. Print and attach the new label — the old QR no longer works.");
     }
 }

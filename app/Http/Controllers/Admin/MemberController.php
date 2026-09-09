@@ -47,15 +47,15 @@ class MemberController extends Controller
             Mail::to($member->email)->send(new MemberWelcomeMail($member, $tempPassword, $adminGroup->name));
 
             return redirect()->route('admin.members.index')
-                ->with('success', "Dalībnieks “{$member->name}” izveidots un uzaicinājums nosūtīts uz {$member->email}.");
+                ->with('success', "Member “{$member->name}” created and an invitation was sent to {$member->email}.");
         } catch (\Throwable $e) {
-            \Log::error('Uzaicinājuma e-pastu neizdevās nosūtīt: '.$e->getMessage(), [
+            \Log::error('Failed to send member invitation email: '.$e->getMessage(), [
                 'email' => $member->email,
                 'member_id' => $member->id,
             ]);
 
             return redirect()->route('admin.members.index')
-                ->with('warning', "Dalībnieks “{$member->name}” izveidots, bet e-pastu neizdevās nosūtīt. Pagaidu parole: {$tempPassword} — nododiet to dalībniekam personīgi.");
+                ->with('warning', "Member “{$member->name}” created, but the email could not be sent. Temporary password: {$tempPassword} — give it to the member in person.");
         }
     }
 
@@ -95,7 +95,7 @@ class MemberController extends Controller
         $user->delete();
 
         return redirect()->route('admin.members.index')
-            ->with('success', "Dalībnieks “{$name}” dzēsts. Viņa tērpi atbrīvoti.");
+            ->with('success', "Member “{$name}” deleted. Their costumes have been released.");
     }
 
 }

@@ -18,6 +18,8 @@ class ProfileController extends Controller
     {
         return view('profile.edit', [
             'user' => $request->user(),
+            // vai lietotājs ir kādas grupas skolotājs – tad kontu dzēst nevar
+            'ownsGroup' => $request->user()->adminGroups()->exists(),
         ]);
     }
 
@@ -34,7 +36,7 @@ class ProfileController extends Controller
 
         $request->user()->save();
 
-        return Redirect::route('profile.edit')->with('success', 'Profils atjaunināts.');
+        return Redirect::route('profile.edit')->with('success', 'Profile updated.');
     }
 
     /**
@@ -47,6 +49,17 @@ class ProfileController extends Controller
         ]);
 
         $user = $request->user();
+
+        // skolotājs, kas pārvalda grupu, nevar dzēst kontu, kamēr grupa nav nodota citam
+        // (groups.admin_id ārējā atslēga citādi izmestu datubāzes kļūdu)
+        $ownedGroups = $user->adminGroups()->pluck('name');
+
+        if ($ownedGroups->isNotEmpty()) {
+            return Redirect::route('profile.edit')->with(
+                'error',
+                "You are the teacher of {$ownedGroups->implode(', ')} — your account can't be deleted until the group is handed over to another teacher."
+            );
+        }
 
         Auth::logout();
 

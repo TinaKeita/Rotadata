@@ -9,6 +9,12 @@
         </p>
     </header>
 
+    @if($ownsGroup ?? false)
+        {{-- skolotājs, kas pārvalda grupu, kontu dzēst nevar, kamēr grupa nav nodota citam --}}
+        <p class="rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-500/40 dark:bg-amber-900/20 dark:text-amber-300">
+            You manage a group, so your account can't be deleted yet. Hand the group over to another teacher first.
+        </p>
+    @else
     <x-danger-button
         x-data=""
         x-on:click.prevent="$dispatch('open-modal', 'confirm-user-deletion')"
@@ -52,4 +58,5 @@
             </div>
         </form>
     </x-modal>
+    @endif
 </section>
