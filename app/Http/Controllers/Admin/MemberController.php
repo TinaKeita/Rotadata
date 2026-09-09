@@ -85,10 +85,17 @@ class MemberController extends Controller
         $this->authorize('delete', $user);
 
         $name = $user->name;
+
+        // atbrīvo visas dalībnieka tērpu vienības un aizver atvērtos vēstures ierakstus pirms dzēšanas
+        // (datubāzes ārējā atslēga arī iztīra assigned_to, bet vēstures ieraksts citādi paliktu "vēl neatdots")
+        foreach ($user->assignedCostumeItems as $item) {
+            $item->release(auth()->user(), 'removed');
+        }
+
         $user->delete();
 
         return redirect()->route('admin.members.index')
-            ->with('success', "Dalībnieks “{$name}” dzēsts.");
+            ->with('success', "Dalībnieks “{$name}” dzēsts. Viņa tērpi atbrīvoti.");
     }
 
 }

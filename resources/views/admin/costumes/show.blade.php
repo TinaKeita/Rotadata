@@ -132,6 +132,8 @@
                                                 (taken back by {{ $log->returnedBy->name ?? 'teacher' }})
                                             @elseif($log->return_note === 'transfer')
                                                 (handed over to {{ $log->returnedBy->name ?? 'another member' }})
+                                            @elseif($log->return_note === 'removed')
+                                                (member removed)
                                             @else
                                                 (returned by student)
                                             @endif

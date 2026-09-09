@@ -121,6 +121,7 @@ class DashboardController extends Controller
                         'type'    => match ($a->return_note) {
                             'admin' => 'taken_back',
                             'transfer' => 'handed_over',
+                            'removed' => 'freed',
                             default => 'returned',
                         },
                         'code'    => $a->item?->code,
