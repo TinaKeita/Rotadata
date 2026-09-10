@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Admin\CostumeController as AdminCostumeController;
+use App\Http\Controllers\Admin\GroupController as AdminGroupController;
 use App\Http\Controllers\Admin\MemberController as AdminMemberController;
 use App\Http\Controllers\Member\CostumeController as MemberCostumeController;
 use App\Http\Controllers\ProfileController;
@@ -95,6 +96,14 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::resource('members', AdminMemberController::class)
         ->only(['index', 'create', 'store', 'show', 'destroy'])
         ->parameters(['members' => 'user']);
+
+    // Grupas iestatījumi un dzēšana (ar 30 dienu atjaunošanas logu)
+    Route::get('/group/settings', [AdminGroupController::class, 'edit'])->name('group.settings');
+    Route::patch('/group', [AdminGroupController::class, 'update'])->name('group.update');
+    Route::get('/group/delete', [AdminGroupController::class, 'confirm'])->name('group.delete');
+    Route::delete('/group', [AdminGroupController::class, 'destroy'])->name('group.destroy');
+    Route::post('/group/restore', [AdminGroupController::class, 'restore'])->name('group.restore');
+    Route::delete('/group/force', [AdminGroupController::class, 'forceDestroy'])->name('group.force-destroy');
 });
 
 require __DIR__.'/auth.php';

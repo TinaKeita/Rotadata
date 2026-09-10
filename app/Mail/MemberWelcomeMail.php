@@ -24,7 +24,7 @@ class MemberWelcomeMail extends Mailable
 
     public function build()
     {
-        return $this->subject('Tavs Rotadata konts ir izveidots')
+        return $this->subject('Your Rotadata account is ready')
             ->view('emails.member-welcome');
     }
 }

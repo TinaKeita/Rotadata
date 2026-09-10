@@ -53,6 +53,11 @@
                 <x-slot:icon><x-nav-icon name="costumes" /></x-slot:icon>
                 Costumes
             </x-nav-link>
+
+            <x-nav-link :href="route('admin.group.settings')" :active="request()->routeIs('admin.group.*')">
+                <x-slot:icon><x-nav-icon name="settings" /></x-slot:icon>
+                Group settings
+            </x-nav-link>
         @else
             @foreach(($navGroups ?? []) as $g)
                 <x-nav-link :href="route('members.costumes.index', $g->id)"

@@ -92,7 +92,8 @@ class MemberController extends Controller
             $item->release(auth()->user(), 'removed');
         }
 
-        $user->delete();
+        // skolotāja veikta dzēšana ir galīga (atšķirībā no grupas dzēšanas, kas ir atgriezeniska)
+        $user->forceDelete();
 
         return redirect()->route('admin.members.index')
             ->with('success', "Member “{$name}” deleted. Their costumes have been released.");
