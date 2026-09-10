@@ -2,13 +2,14 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Mail\MemberAddedMail;
+use App\Mail\MemberWelcomeMail;
+use App\Models\Group;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
-use Illuminate\Support\Facades\Mail;  
-use App\Mail\MemberWelcomeMail;
-use Spatie\Permission\Models\Role;
 
 class MemberController extends Controller
 {
@@ -23,28 +24,66 @@ class MemberController extends Controller
         $adminGroup = auth()->user()->adminGroups()->first();
         abort_if(is_null($adminGroup), 403, 'You do not have a group yet.');
 
-        $request->validate([
-            'name' => 'required',
-            'email' => 'required|email|unique:users,email|max:255'
-        ], [
-            'email.unique' => 'A user with this email address is already in the database.',
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|max:255',
         ]);
 
+        // ja šāds konts jau pastāv, pievieno to grupai, nevis veido jaunu
+        $existing = User::withTrashed()->where('email', $validated['email'])->first();
+
+        return $existing
+            ? $this->attachExisting($existing, $adminGroup)
+            : $this->createAndInvite($validated, $adminGroup);
+    }
+
+    // pievieno esošu kontu skolotāja grupai un paziņo par to e-pastā (bez paroles)
+    private function attachExisting(User $user, Group $group)
+    {
+        if ($user->trashed()) {
+            return back()->withInput()->with('error',
+                'That email belongs to an account that was deactivated when its group was deleted. It can’t be added right now.');
+        }
+
+        if ($user->hasRole('admin')) {
+            return back()->withInput()->with('error', 'That email belongs to a teacher account.');
+        }
+
+        if ($group->members()->whereKey($user->id)->exists()) {
+            return redirect()->route('admin.members.index')
+                ->with('warning', "“{$user->name}” is already in this group.");
+        }
+
+        if (! $user->hasRole('member')) {
+            $user->assignRole('member');
+        }
+
+        $group->members()->attach($user->id);
+
+        rescue(fn () => Mail::to($user->email)->send(new MemberAddedMail($user, $group->name)));
+
+        return redirect()->route('admin.members.index')
+            ->with('success', "“{$user->name}” was added to your group and notified by email.");
+    }
+
+    // izveido jaunu kontu ar pagaidu paroli un nosūta uzaicinājuma e-pastu
+    private function createAndInvite(array $validated, Group $group)
+    {
         $tempPassword = Str::random(12);
+
         $member = User::create([
-            'name' => $request->name,
-            'email' => $request->email,
+            'name' => $validated['name'],
+            'email' => $validated['email'],
             'password' => Hash::make($tempPassword),
             'must_change_password' => true, // pagaidu parole der tikai pirmajai pieslēgšanās reizei
         ]);
 
         $member->assignRole('member');
-
-        $adminGroup->members()->attach($member->id);
+        $group->members()->attach($member->id);
 
         // sūta e-pastu ar pagaidu paroli; ja neizdodas, dalībnieks tik un tā ir izveidots
         try {
-            Mail::to($member->email)->send(new MemberWelcomeMail($member, $tempPassword, $adminGroup->name));
+            Mail::to($member->email)->send(new MemberWelcomeMail($member, $tempPassword, $group->name));
 
             return redirect()->route('admin.members.index')
                 ->with('success', "Member “{$member->name}” created and an invitation was sent to {$member->email}.");

@@ -46,4 +46,14 @@
             </x-primary-button>
         </div>
     </form>
+
+    @if (Route::has('register'))
+        {{-- jauns skolotājs izveido savu kontu un grupu --}}
+        <p class="mt-6 border-t border-gray-200 pt-5 text-center text-sm text-gray-600 dark:border-gray-700 dark:text-gray-300">
+            New here?
+            <a href="{{ route('register') }}" class="font-semibold text-brand-accent hover:text-brand-primary dark:text-brand-light dark:hover:text-brand-secondary">
+                Create a teacher account
+            </a>
+        </p>
+    @endif
 </x-guest-layout>

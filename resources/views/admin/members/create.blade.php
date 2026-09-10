@@ -1,7 +1,7 @@
 <x-app-layout>
     {{-- pievieno jaunu studentu --}}
     <x-slot name="header">
-        <x-page-header title="Create New Member" subtitle="Add a student account for your group." />
+        <x-page-header title="Add Member" subtitle="Add a student to your group — new or existing." />
     </x-slot>
 
     <div class="mb-4">
@@ -36,10 +36,13 @@
             <div>
                 <label for="email" class="block text-sm font-medium text-gray-700 dark:text-gray-200">Email</label>
                 <input id="email" type="email" name="email" value="{{ old('email') }}" class="mt-1.5 w-full rounded-lg border-gray-300 px-3 py-2.5 text-gray-800 shadow-sm focus:border-brand-primary focus:ring-brand-secondary/50 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200 @error('email') border-red-500 @enderror" required>
+                <p class="mt-1.5 text-xs text-gray-500 dark:text-gray-400">
+                    If this person already uses Rotadata, they're just added to your group and emailed — no new password, and the name above is ignored.
+                </p>
             </div>
 
             <button type="submit" class="inline-flex items-center rounded-lg border border-brand-primary/20 bg-brand-primary px-4 py-2 text-sm font-semibold text-white transition hover:bg-brand-accent focus:outline-none focus:ring-2 focus:ring-brand-secondary/50">
-                Create Member
+                Add Member
             </button>
         </form>
     </div>
