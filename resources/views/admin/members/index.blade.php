@@ -1,18 +1,15 @@
 <x-app-layout>
     {{-- studentu saraksts --}}
     <x-slot name="header">
-        <div class="flex flex-col gap-1">
-            <h2 class="text-2xl font-semibold text-brand-accent dark:text-brand-light leading-tight">Members List</h2>
-            <p class="text-sm text-gray-600 dark:text-gray-300">View and manage student accounts.</p>
-        </div>
+        <x-page-header title="Members List" subtitle="View and manage student accounts.">
+            <x-slot:actions>
+                <a href="{{ route('admin.members.create') }}"
+                    class="inline-flex items-center rounded-lg border border-brand-primary/20 bg-brand-primary px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-brand-accent focus:outline-none focus:ring-2 focus:ring-brand-secondary/50">
+                    + Add Member
+                </a>
+            </x-slot:actions>
+        </x-page-header>
     </x-slot>
-
-    <div class="mb-5">
-        <a href="{{ route('admin.members.create') }}"
-            class="inline-flex items-center rounded-lg border border-brand-primary/20 bg-brand-primary px-4 py-2 text-sm font-semibold text-white transition hover:bg-brand-accent focus:outline-none focus:ring-2 focus:ring-brand-secondary/50">
-            Add Member
-        </a>
-    </div>
 
     <div class="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800">
         <table class="w-full text-left text-sm">

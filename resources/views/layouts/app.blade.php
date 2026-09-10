@@ -26,16 +26,7 @@
 
     <body class="font-sans antialiased text-gray-800 dark:text-gray-100">
         <div class="min-h-screen bg-[radial-gradient(1200px_500px_at_10%_-10%,rgba(116,136,115,0.2),transparent),radial-gradient(900px_400px_at_95%_-5%,rgba(209,169,128,0.2),transparent)] dark:bg-gray-900">
-            <div class="min-h-screen lg:grid lg:grid-cols-[14.5rem_1fr] lg:grid-rows-[auto_1fr]">
-
-                <div class="hidden lg:flex lg:row-start-1 lg:col-start-1 items-center gap-3 px-5 bg-brand-primary dark:bg-darkbrand-primary border-b border-black/10 dark:border-white/10">
-                    <a href="{{ route('dashboard') }}" class="inline-flex items-center gap-3">
-                        <x-application-logo class="block h-7 w-auto text-white" />
-                        <h2 class="text-[1.05rem] font-logo italic font-semibold text-white/95 tracking-wide">
-                            Rotadata
-                        </h2>
-                    </a>
-                </div>
+            <div class="min-h-screen lg:grid lg:grid-cols-[15rem_1fr] lg:grid-rows-[auto_1fr]">
 
                 <header class="lg:row-start-1 lg:col-start-2 sticky top-0 z-40 bg-white/95 dark:bg-gray-800/95 backdrop-blur border-b border-gray-200/80 dark:border-gray-700/80 shadow-[0_1px_2px_rgba(0,0,0,0.04)]">
                     <div class="px-4 py-3 sm:px-6 sm:py-4 lg:px-8 flex items-center justify-between gap-3">
@@ -74,7 +65,7 @@
                         </div>
                     </div>
 
-                    <div class="px-4 pb-3 sm:px-6 lg:hidden sm:hidden">
+                    <div class="px-4 pb-3 sm:hidden">
                         @isset($header)
                             {{ $header }}
                         @endisset
@@ -83,7 +74,8 @@
 
                 <button x-show="mobileMenu" x-transition.opacity type="button" class="fixed inset-0 z-30 bg-black/30 lg:hidden" @click="mobileMenu = false" aria-label="Close navigation"></button>
 
-                <aside class="lg:row-start-2 lg:col-start-1 lg:translate-y-0 lg:opacity-100 lg:pointer-events-auto fixed lg:static inset-x-4 top-[4.5rem] z-40 rounded-2xl lg:rounded-none shadow-2xl lg:shadow-none border border-brand-primary/20 lg:border-0 bg-brand-primary dark:bg-darkbrand-primary text-white border-r border-black/10 dark:border-white/10 transition duration-200"
+                <aside class="fixed inset-x-4 top-[4.5rem] z-40 rounded-2xl border border-brand-primary/20 bg-brand-primary text-white shadow-2xl transition duration-200 dark:bg-darkbrand-primary
+                    lg:sticky lg:top-0 lg:inset-x-0 lg:z-30 lg:col-start-1 lg:row-span-2 lg:row-start-1 lg:h-screen lg:self-start lg:translate-y-0 lg:rounded-none lg:border-0 lg:border-r lg:border-black/10 lg:opacity-100 lg:shadow-none lg:pointer-events-auto dark:lg:border-white/10"
                     :class="mobileMenu ? 'translate-y-0 opacity-100 pointer-events-auto' : '-translate-y-2 opacity-0 pointer-events-none'">
                     @include('layouts.navigation')
                 </aside>

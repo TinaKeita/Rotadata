@@ -1,10 +1,7 @@
 <x-app-layout>
     {{-- tērpa nosaukuma rediģēšana --}}
     <x-slot name="header">
-        <div class="flex flex-col gap-1">
-            <h2 class="text-2xl font-semibold text-brand-accent dark:text-brand-light leading-tight">Edit costume</h2>
-            <p class="text-sm text-gray-600 dark:text-gray-300">Change the costume name.</p>
-        </div>
+        <x-page-header title="Edit costume" subtitle="Change the costume name." />
     </x-slot>
 
     <div class="mb-4">

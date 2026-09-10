@@ -1,12 +1,19 @@
 <x-app-layout>
     {{-- tērpu vienību lapa --}}
     <x-slot name="header">
-        <div class="flex flex-col gap-1">
-            <h2 class="text-2xl font-semibold text-brand-accent dark:text-brand-light leading-tight">{{ $costume->name }} Inventory</h2>
-            <p class="text-sm text-gray-600 dark:text-gray-300">
-                Item codes use the prefix <span class="font-semibold">{{ $costume->code_prefix }}</span>. Track assignment and download QR codes.
-            </p>
-        </div>
+        <x-page-header :title="$costume->name.' Inventory'"
+            :subtitle="'Code prefix '.$costume->code_prefix.' · track assignments and download QR codes.'">
+            <x-slot:actions>
+                <a href="{{ route('admin.costumes.edit', $costume) }}"
+                    class="inline-flex items-center rounded-lg border border-brand-primary/25 bg-brand-light/50 px-3 py-1.5 text-xs font-semibold text-brand-accent transition hover:bg-brand-light/75 dark:border-brand-secondary/35 dark:bg-darkbrand-light/45 dark:text-brand-light">
+                    Edit name
+                </a>
+                <a href="{{ route('admin.costumes.labels', $costume) }}" target="_blank" rel="noopener"
+                    class="inline-flex items-center rounded-lg border border-brand-primary/25 bg-brand-light/50 px-3 py-1.5 text-xs font-semibold text-brand-accent transition hover:bg-brand-light/75 dark:border-brand-secondary/35 dark:bg-darkbrand-light/45 dark:text-brand-light">
+                    Print label sheet
+                </a>
+            </x-slot:actions>
+        </x-page-header>
     </x-slot>
 
     <div class="mb-4">
@@ -16,26 +23,6 @@
             </svg>
             Back to Costumes
         </a>
-    </div>
-
-    <div class="mb-6 flex flex-wrap items-center gap-3">
-        <a href="{{ route('admin.costumes.edit', $costume) }}"
-            class="inline-flex items-center rounded-lg border border-brand-primary/25 bg-brand-light/50 px-4 py-2 text-sm font-semibold text-brand-accent transition hover:bg-brand-light/75 dark:border-brand-secondary/35 dark:bg-darkbrand-light/45 dark:text-brand-light">
-            Edit name
-        </a>
-
-        <a href="{{ route('admin.costumes.labels', $costume) }}" target="_blank" rel="noopener"
-            class="inline-flex items-center rounded-lg border border-brand-primary/25 bg-brand-light/50 px-4 py-2 text-sm font-semibold text-brand-accent transition hover:bg-brand-light/75 dark:border-brand-secondary/35 dark:bg-darkbrand-light/45 dark:text-brand-light">
-            Print label sheet
-        </a>
-
-        <form action="{{ route('admin.costumes.destroy', $costume->id) }}" method="POST" onsubmit="return confirm('Are you sure you want to delete this costume?');">
-            @csrf
-            @method('DELETE')
-            <button type="submit" class="inline-flex items-center rounded-lg border border-brand-primary/20 bg-brand-primary px-4 py-2 text-sm font-semibold text-white transition hover:bg-brand-accent focus:outline-none focus:ring-2 focus:ring-brand-secondary/50 dark:border-darkbrand-accent dark:bg-darkbrand-secondary dark:hover:bg-darkbrand-accent">
-                Delete Costume
-            </button>
-        </form>
     </div>
 
     {{-- papildu vienību pievienošana --}}
@@ -148,6 +135,21 @@
                 @endif
             </div>
         @endforeach
+    </div>
+
+    {{-- bīstamā zona: visa tērpa dzēšana --}}
+    <div class="mt-8 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-red-200 bg-red-50/60 p-4 dark:border-red-500/30 dark:bg-red-900/10">
+        <div>
+            <p class="text-sm font-semibold text-red-800 dark:text-red-300">Delete this costume</p>
+            <p class="text-xs text-red-700/80 dark:text-red-300/70">Removes the costume and all its items and QR codes. This cannot be undone.</p>
+        </div>
+        <form action="{{ route('admin.costumes.destroy', $costume->id) }}" method="POST" onsubmit="return confirm('Are you sure you want to delete this costume?');">
+            @csrf
+            @method('DELETE')
+            <button type="submit" class="inline-flex items-center rounded-lg border border-red-300 bg-white px-3 py-1.5 text-xs font-semibold text-red-700 transition hover:bg-red-100 dark:border-red-500/40 dark:bg-transparent dark:text-red-300 dark:hover:bg-red-900/30">
+                Delete Costume
+            </button>
+        </form>
     </div>
 </x-app-layout>
 

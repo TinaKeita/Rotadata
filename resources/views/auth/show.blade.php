@@ -1,9 +1,6 @@
 <x-app-layout>
     <x-slot name="header">
-        <div class="flex flex-col gap-1">
-            <h2 class="text-2xl font-semibold text-brand-accent dark:text-brand-light leading-tight">Member Details</h2>
-            <p class="text-sm text-gray-600 dark:text-gray-300">Overview of account information.</p>
-        </div>
+        <x-page-header title="Member Details" subtitle="Overview of account information." />
     </x-slot>
 
     <div class="max-w-2xl rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">

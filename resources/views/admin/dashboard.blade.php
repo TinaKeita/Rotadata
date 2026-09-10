@@ -1,29 +1,7 @@
 <x-app-layout>
     {{-- admin sākumlapa – tērpu aprites pārskats --}}
     <x-slot name="header">
-        <div class="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-            <div class="flex flex-col gap-1">
-                <h2 class="text-2xl font-semibold text-brand-accent dark:text-brand-light leading-tight">
-                    {{ $group?->name ?? 'Admin' }} Dashboard
-                </h2>
-                <p class="text-sm text-gray-600 dark:text-gray-300">Costume circulation at a glance.</p>
-            </div>
-
-            <div class="flex flex-wrap gap-2">
-                <a href="{{ route('admin.costumes.create') }}"
-                    class="inline-flex items-center rounded-lg border border-brand-primary/20 bg-brand-primary px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-brand-accent">
-                    + Add costume
-                </a>
-                <a href="{{ route('admin.costumes.index') }}"
-                    class="inline-flex items-center rounded-lg border border-brand-primary/25 bg-brand-light/50 px-3 py-1.5 text-xs font-semibold text-brand-accent transition hover:bg-brand-light/75 dark:border-brand-secondary/35 dark:bg-darkbrand-light/45 dark:text-brand-light">
-                    Costumes
-                </a>
-                <a href="{{ route('admin.members.index') }}"
-                    class="inline-flex items-center rounded-lg border border-brand-primary/25 bg-brand-light/50 px-3 py-1.5 text-xs font-semibold text-brand-accent transition hover:bg-brand-light/75 dark:border-brand-secondary/35 dark:bg-darkbrand-light/45 dark:text-brand-light">
-                    Members
-                </a>
-            </div>
-        </div>
+        <x-page-header :title="($group?->name ?? 'Admin').' Dashboard'" subtitle="Costume circulation at a glance." />
     </x-slot>
 
     @if(is_null($stats))

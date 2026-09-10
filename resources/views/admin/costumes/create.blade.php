@@ -1,10 +1,7 @@
 <x-app-layout>
     {{-- pievieno jaunu tērpu --}}
     <x-slot name="header">
-        <div class="flex flex-col gap-1">
-            <h2 class="text-2xl font-semibold text-brand-accent dark:text-brand-light leading-tight">Create Costume</h2>
-            <p class="text-sm text-gray-600 dark:text-gray-300">Add a new costume and generate inventory items.</p>
-        </div>
+        <x-page-header title="Create Costume" subtitle="Add a new costume and generate inventory items." />
     </x-slot>
 
     <div class="max-w-2xl rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">

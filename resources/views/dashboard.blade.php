@@ -1,13 +1,6 @@
 <x-app-layout>
     <x-slot name="header">
-        <div class="flex flex-col gap-1">
-            <h2 class="text-2xl font-semibold text-brand-accent dark:text-brand-light leading-tight">
-                Member Dashboard
-            </h2>
-            <p class="text-sm text-gray-600 dark:text-gray-300">
-                Browse your group inventories and manage assigned costumes.
-            </p>
-        </div>
+        <x-page-header title="Member Dashboard" subtitle="Browse your group inventories and manage assigned costumes." />
     </x-slot>
 
     <section class="space-y-6">

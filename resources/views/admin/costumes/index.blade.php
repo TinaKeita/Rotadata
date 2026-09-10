@@ -1,17 +1,14 @@
 <x-app-layout>
     <x-slot name="header">
-        <div class="flex flex-col gap-1">
-            <h2 class="text-2xl font-semibold text-brand-accent dark:text-brand-light leading-tight">Costumes</h2>
-            <p class="text-sm text-gray-600 dark:text-gray-300">Manage costume sets and open their inventory.</p>
-        </div>
+        <x-page-header title="Costumes" subtitle="Manage costume sets and open their inventory.">
+            <x-slot:actions>
+                <a href="{{ route('admin.costumes.create') }}"
+                    class="inline-flex items-center rounded-lg border border-brand-primary/20 bg-brand-primary px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-brand-accent focus:outline-none focus:ring-2 focus:ring-brand-secondary/50">
+                    + Add Costume
+                </a>
+            </x-slot:actions>
+        </x-page-header>
     </x-slot>
-
-    <div class="mb-5">
-        <a href="{{ route('admin.costumes.create') }}"
-            class="inline-flex items-center rounded-lg border border-brand-primary/20 bg-brand-primary px-4 py-2 text-sm font-semibold text-white transition hover:bg-brand-accent focus:outline-none focus:ring-2 focus:ring-brand-secondary/50">
-            Add Costume
-        </a>
-    </div>
 
     <div class="space-y-3">
         @forelse($costumes as $costume)

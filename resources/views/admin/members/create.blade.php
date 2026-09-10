@@ -1,10 +1,7 @@
 <x-app-layout>
     {{-- pievieno jaunu studentu --}}
     <x-slot name="header">
-        <div class="flex flex-col gap-1">
-            <h2 class="text-2xl font-semibold text-brand-accent dark:text-brand-light leading-tight">Create New Member</h2>
-            <p class="text-sm text-gray-600 dark:text-gray-300">Add a student account for your group.</p>
-        </div>
+        <x-page-header title="Create New Member" subtitle="Add a student account for your group." />
     </x-slot>
 
     <div class="mb-4">
