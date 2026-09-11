@@ -93,6 +93,8 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
         ->only(['index', 'create', 'store', 'show', 'edit', 'update', 'destroy']);
 
     // Dalībnieki (studenti)
+    Route::post('/members/{member}/resend-invite', [AdminMemberController::class, 'resendInvite'])
+        ->name('members.resend-invite');
     Route::resource('members', AdminMemberController::class)
         ->only(['index', 'create', 'store', 'show', 'destroy'])
         ->parameters(['members' => 'user']);

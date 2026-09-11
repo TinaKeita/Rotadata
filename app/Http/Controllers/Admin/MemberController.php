@@ -67,6 +67,7 @@ class MemberController extends Controller
     }
 
     // izveido jaunu kontu ar pagaidu paroli un nosūta uzaicinājuma e-pastu
+    // konts tiek izveidots neatkarīgi no tā, vai e-pasts izdodas nosūtīt – e-pasta kļūme nekad nedrīkst bloķēt dalībnieka pievienošanu
     private function createAndInvite(array $validated, Group $group)
     {
         $tempPassword = Str::random(12);
@@ -81,20 +82,53 @@ class MemberController extends Controller
         $member->assignRole('member');
         $group->members()->attach($member->id);
 
-        // sūta e-pastu ar pagaidu paroli; ja neizdodas, dalībnieks tik un tā ir izveidots
-        try {
-            Mail::to($member->email)->send(new MemberWelcomeMail($member, $tempPassword, $group->name));
-
+        if ($this->sendInvite($member, $group->name, $tempPassword)) {
             return redirect()->route('admin.members.index')
                 ->with('success', "Member “{$member->name}” created and an invitation was sent to {$member->email}.");
+        }
+
+        return redirect()->route('admin.members.index')
+            ->with('warning', "Member “{$member->name}” created, but the email could not be sent. Temporary password: {$tempPassword} — give it to the member in person, or resend the invite from their profile once the problem is fixed.");
+    }
+
+    // vēlreiz nosūta uzaicinājumu ar jaunu pagaidu paroli – tikai kamēr dalībnieks vēl nav pats pieslēdzies
+    public function resendInvite(User $member)
+    {
+        $this->authorize('view', $member);
+
+        abort_unless($member->must_change_password, 403,
+            'This member has already signed in and set their own password — an invite can no longer be resent.');
+
+        $tempPassword = Str::random(12);
+        $member->update(['password' => Hash::make($tempPassword), 'must_change_password' => true]);
+
+        $groupName = auth()->user()->adminGroups()
+            ->whereHas('members', fn ($query) => $query->whereKey($member->id))
+            ->value('name');
+
+        if ($this->sendInvite($member, $groupName, $tempPassword)) {
+            return back()->with('success', "Invite resent to {$member->email}.");
+        }
+
+        return back()->with('warning', "Could not send the email. New temporary password: {$tempPassword} — give it to the member in person.");
+    }
+
+    // mēģina nosūtīt uzaicinājuma e-pastu; atzīmē kontu, ja neizdodas, lai skolotājs to redz un var mēģināt vēlreiz
+    private function sendInvite(User $member, ?string $groupName, string $tempPassword): bool
+    {
+        try {
+            Mail::to($member->email)->send(new MemberWelcomeMail($member, $tempPassword, $groupName));
+            $member->update(['invite_email_failed_at' => null]);
+
+            return true;
         } catch (\Throwable $e) {
             \Log::error('Failed to send member invitation email: '.$e->getMessage(), [
                 'email' => $member->email,
                 'member_id' => $member->id,
             ]);
+            $member->update(['invite_email_failed_at' => now()]);
 
-            return redirect()->route('admin.members.index')
-                ->with('warning', "Member “{$member->name}” created, but the email could not be sent. Temporary password: {$tempPassword} — give it to the member in person.");
+            return false;
         }
     }
 
@@ -111,9 +145,15 @@ class MemberController extends Controller
     {
         $this->authorize('view', $user);
 
+        // students var būt vairākās grupās – rāda tikai izsniegumus no ŠĪ skolotāja grupas(-ām),
+        // nevis visu vēsturi, kurā ietilptu arī cita skolotāja grupas tērpi
+        $groupIds = auth()->user()->adminGroups()->pluck('id');
+
         $user->load([
-            'costumeAssignments.item.costume',
-            'costumeAssignments.returnedBy',
+            'costumeAssignments' => function ($query) use ($groupIds) {
+                $query->whereHas('item.costume', fn ($q) => $q->whereIn('group_id', $groupIds))
+                    ->with(['item.costume', 'returnedBy']);
+            },
         ]);
 
         return view('admin.members.show', compact('user'));

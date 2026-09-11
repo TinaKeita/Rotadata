@@ -25,6 +25,7 @@ class User extends Authenticatable
         'password',
         'must_change_password',
         'deactivated_with_group_id',
+        'invite_email_failed_at',
     ];
 
     /**
@@ -48,6 +49,7 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'must_change_password' => 'boolean',
+            'invite_email_failed_at' => 'datetime',
         ];
     }
     public function adminGroups()

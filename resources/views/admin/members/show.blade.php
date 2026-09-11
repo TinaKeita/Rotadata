@@ -11,6 +11,26 @@
         </a>
     </div>
 
+    {{-- uzaicinājuma e-pasts neizdevās nosūtīt – ļauj mēģināt vēlreiz --}}
+    @if($user->invite_email_failed_at)
+        <div class="mb-5 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-500/40 dark:bg-amber-900/20 dark:text-amber-300">
+            <span>
+                The invitation email could not be delivered ({{ $user->invite_email_failed_at->format('d.m.Y H:i') }}).
+                @if($user->must_change_password)
+                    They still can't have signed in yet.
+                @endif
+            </span>
+            @if($user->must_change_password)
+                <form action="{{ route('admin.members.resend-invite', $user) }}" method="POST">
+                    @csrf
+                    <button type="submit" class="inline-flex items-center rounded-lg border border-amber-400 bg-amber-100 px-3 py-1.5 text-xs font-semibold text-amber-800 transition hover:bg-amber-200 dark:border-amber-500/50 dark:bg-amber-900/30 dark:text-amber-200 dark:hover:bg-amber-900/50">
+                        Resend invite
+                    </button>
+                </form>
+            @endif
+        </div>
+    @endif
+
     <div class="max-w-2xl rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
         <dl class="space-y-3 text-sm">
             <div class="flex items-center justify-between gap-4 border-b border-gray-200 pb-3 dark:border-gray-700">
