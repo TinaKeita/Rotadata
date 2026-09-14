@@ -20,7 +20,9 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        \URL::forceScheme('https');
+        if ($this->app->environment('production')) {
+            \URL::forceScheme('https');
+        }
         // sagatavo sānjoslas skaitītājus katrai lapai, kur ir izvēlne
         View::composer('layouts.navigation', function ($view) {
             $user = auth()->user();
