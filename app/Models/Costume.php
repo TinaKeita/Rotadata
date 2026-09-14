@@ -51,6 +51,7 @@ class Costume extends Model
     }
 
     // izveido īsu, cilvēkam salasāmu prefiksu, kas ir unikāls grupas ietvaros
+    // (vienādi prefiksi DAŽĀDĀS grupās ir pieļaujami un nekaitīgi – skat. piezīmi pie costume_items.code)
     public static function makeCodePrefix(string $name, int $groupId, ?int $ignoreId = null): string
     {
         $base = strtoupper(preg_replace('/[^A-Za-z]/', '', Str::ascii($name)));
