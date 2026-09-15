@@ -95,6 +95,9 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     // Dalībnieki (studenti)
     Route::post('/members/{member}/resend-invite', [AdminMemberController::class, 'resendInvite'])
         ->name('members.resend-invite');
+    // students aizmirsis paroli – skolotājs atiestata, apstiprinot ar savu paroli
+    Route::post('/members/{member}/reset-password', [AdminMemberController::class, 'resetPassword'])
+        ->name('members.reset-password');
     Route::resource('members', AdminMemberController::class)
         ->only(['index', 'create', 'store', 'show', 'destroy'])
         ->parameters(['members' => 'user']);

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Mail\MemberAddedMail;
 use App\Mail\MemberWelcomeMail;
+use App\Mail\PasswordResetByTeacherMail;
 use App\Models\Group;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -111,6 +112,42 @@ class MemberController extends Controller
         }
 
         return back()->with('warning', "Could not send the email. New temporary password: {$tempPassword} — give it to the member in person.");
+    }
+
+    // students aizmirsis paroli – skolotājs var to atiestatīt, bet tikai apstiprinot ar SAVU paroli
+    // (aizsardzība pret nejaušu klikšķi vai svešu piekļuvi neaizslēgtai sesijai)
+    public function resetPassword(Request $request, User $member)
+    {
+        $this->authorize('view', $member);
+
+        $request->validateWithBag('resetPassword', [
+            'password' => ['required', 'current_password'],
+        ]);
+
+        $tempPassword = Str::random(12);
+        $member->update([
+            'password' => Hash::make($tempPassword),
+            'must_change_password' => true, // vecā parole vairs nederēs, jaunā ir tikai vienreizējai pieslēgšanās reizei
+        ]);
+
+        $groupName = auth()->user()->adminGroups()
+            ->whereHas('members', fn ($query) => $query->whereKey($member->id))
+            ->value('name');
+
+        try {
+            Mail::to($member->email)->send(new PasswordResetByTeacherMail($member, $tempPassword, $groupName));
+
+            return redirect()->route('admin.members.show', $member)
+                ->with('success', "{$member->name}’s password was reset. They’ll get a new temporary password by email.");
+        } catch (\Throwable $e) {
+            \Log::error('Failed to send teacher-initiated password reset email: '.$e->getMessage(), [
+                'email' => $member->email,
+                'member_id' => $member->id,
+            ]);
+
+            return redirect()->route('admin.members.show', $member)
+                ->with('warning', "Password reset, but the email could not be sent. New temporary password: {$tempPassword} — give it to {$member->name} in person.");
+        }
     }
 
     // mēģina nosūtīt uzaicinājuma e-pastu; atzīmē kontu, ja neizdodas, lai skolotājs to redz un var mēģināt vēlreiz

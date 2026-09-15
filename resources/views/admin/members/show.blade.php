@@ -50,6 +50,51 @@
         </dl>
     </div>
 
+    {{-- students aizmirsis paroli – skolotājs atiestata, apstiprinot ar SAVU paroli --}}
+    <div class="mt-5 max-w-2xl rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+        <h3 class="text-sm font-semibold text-gray-800 dark:text-gray-100">Forgot password?</h3>
+        <p class="mt-1 text-sm text-gray-600 dark:text-gray-300">
+            Send {{ $user->name }} a new temporary password by email. Their old password stops working immediately,
+            and they'll be asked to set their own on next sign-in.
+        </p>
+
+        <button type="button" x-data x-on:click.prevent="$dispatch('open-modal', 'confirm-password-reset')"
+            class="mt-3 inline-flex items-center rounded-lg border border-amber-300 bg-amber-50 px-3 py-1.5 text-xs font-semibold text-amber-700 transition hover:bg-amber-100 dark:border-amber-500/40 dark:bg-amber-900/20 dark:text-amber-300 dark:hover:bg-amber-900/40">
+            Reset password
+        </button>
+
+        <x-modal name="confirm-password-reset" :show="$errors->resetPassword->isNotEmpty()" focusable>
+            <form method="POST" action="{{ route('admin.members.reset-password', $user) }}" class="p-6">
+                @csrf
+                <h2 class="text-lg font-medium text-gray-900 dark:text-gray-100">
+                    Reset {{ $user->name }}'s password?
+                </h2>
+                <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">
+                    Enter <strong>your own</strong> password to confirm. {{ $user->name }} will get a new temporary
+                    password by email and their old one will stop working right away.
+                </p>
+
+                <div class="mt-6">
+                    <x-input-label for="reset_password" value="Your password" class="sr-only" />
+                    <x-text-input id="reset_password" name="password" type="password" class="mt-1 block w-3/4"
+                        placeholder="Your password" autocomplete="current-password" />
+                    <x-input-error :messages="$errors->resetPassword->get('password')" class="mt-2" />
+                </div>
+
+                <div class="mt-6 flex justify-end gap-3">
+                    <button type="button" x-on:click="$dispatch('close')"
+                        class="inline-flex items-center rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 transition hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600">
+                        Cancel
+                    </button>
+                    <button type="submit"
+                        class="inline-flex items-center rounded-lg border border-amber-400 bg-amber-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-amber-600 focus:outline-none focus:ring-2 focus:ring-amber-300">
+                        Reset password
+                    </button>
+                </div>
+            </form>
+        </x-modal>
+    </div>
+
     @php
         $currentlyHolds = $user->costumeAssignments->whereNull('returned_at');
         $pastItems = $user->costumeAssignments->whereNotNull('returned_at');
