@@ -121,6 +121,8 @@
                                                 (handed over to {{ $log->returnedBy->name ?? 'another member' }})
                                             @elseif($log->return_note === 'removed')
                                                 (member removed)
+                                            @elseif($log->return_note === 'left_group')
+                                                (left the group)
                                             @else
                                                 (returned by student)
                                             @endif

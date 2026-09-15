@@ -14,8 +14,11 @@ class DashboardController extends Controller
     {
         $group = auth()->user()->adminGroups()->first();
 
+        // piem. paziņojums, ka students pametis grupu – jāredz neatkarīgi no tā, vai grupa vēl pastāv
+        $notifications = auth()->user()->unreadNotifications;
+
         if (! $group) {
-            return view('admin.dashboard', ['group' => null, 'stats' => null]);
+            return view('admin.dashboard', ['group' => null, 'stats' => null, 'notifications' => $notifications]);
         }
 
         $itemIds = CostumeItem::whereHas('costume', fn ($q) => $q->where('group_id', $group->id))->pluck('id');
@@ -34,7 +37,7 @@ class DashboardController extends Controller
             'weeks'         => $this->weeklyActivity($itemIds),
         ];
 
-        return view('admin.dashboard', compact('group', 'stats'));
+        return view('admin.dashboard', compact('group', 'stats', 'notifications'));
     }
 
     private function overview($group, $itemIds): array
@@ -122,6 +125,7 @@ class DashboardController extends Controller
                             'admin' => 'taken_back',
                             'transfer' => 'handed_over',
                             'removed' => 'freed',
+                            'left_group' => 'left_group',
                             default => 'returned',
                         },
                         'code'    => $a->item?->code,

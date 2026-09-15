@@ -67,6 +67,9 @@ Route::middleware('auth')->group(function () {
         ->name('members.costumes.index');
     Route::post('/members/costumes/{item}/unassign', [MemberCostumeController::class, 'unassign'])
         ->name('members.costumes.unassign');
+    // students pats pamet grupu – konts vienmēr paliek, mainās tikai piederība šai grupai
+    Route::post('/members/{group}/leave', [MemberCostumeController::class, 'leave'])
+        ->name('members.costumes.leave');
 });
 
 /*
@@ -109,6 +112,10 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::delete('/group', [AdminGroupController::class, 'destroy'])->name('group.destroy');
     Route::post('/group/restore', [AdminGroupController::class, 'restore'])->name('group.restore');
     Route::delete('/group/force', [AdminGroupController::class, 'forceDestroy'])->name('group.force-destroy');
+
+    // Paziņojumi (piem. students pametis grupu)
+    Route::post('/notifications/{notification}/dismiss', [App\Http\Controllers\Admin\NotificationController::class, 'dismiss'])
+        ->name('notifications.dismiss');
 });
 
 require __DIR__.'/auth.php';

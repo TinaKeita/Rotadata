@@ -137,6 +137,8 @@
                                 <span class="text-gray-400">(taken back)</span>
                             @elseif($log->return_note === 'transfer')
                                 <span class="text-gray-400">(handed over)</span>
+                            @elseif($log->return_note === 'left_group')
+                                <span class="text-gray-400">(left the group)</span>
                             @endif
                         </span>
                     </li>

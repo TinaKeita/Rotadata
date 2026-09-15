@@ -200,10 +200,29 @@ class MemberController extends Controller
     {
         $this->authorize('delete', $user);
 
+        $adminGroup = auth()->user()->adminGroups()->first();
+        abort_if(is_null($adminGroup), 403);
+
         $name = $user->name;
 
-        // atbrīvo visas dalībnieka tērpu vienības un aizver atvērtos vēstures ierakstus pirms dzēšanas
-        // (datubāzes ārējā atslēga arī iztīra assigned_to, bet vēstures ieraksts citādi paliktu "vēl neatdots")
+        // students ir arī citās grupās -> izņem tikai NO ŠĪS grupas, konts un pārējās grupas paliek neskartas
+        if ($user->memberGroups()->count() > 1) {
+            $heldFromThisGroup = $user->assignedCostumeItems()
+                ->whereHas('costume', fn ($query) => $query->where('group_id', $adminGroup->id))
+                ->get();
+
+            foreach ($heldFromThisGroup as $item) {
+                $item->release(auth()->user(), 'left_group');
+            }
+
+            $adminGroup->members()->detach($user->id);
+
+            return redirect()->route('admin.members.index')
+                ->with('success', "“{$name}” removed from your group. They're still in other groups, so their account was kept.");
+        }
+
+        // vienīgā grupa -> pilnīga konta dzēšana (atbrīvo VISAS vienības un aizver atvērtos vēstures ierakstus)
+        // datubāzes ārējā atslēga arī iztīra assigned_to, bet vēstures ieraksts citādi paliktu "vēl neatdots"
         foreach ($user->assignedCostumeItems as $item) {
             $item->release(auth()->user(), 'removed');
         }

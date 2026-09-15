@@ -4,6 +4,26 @@
         <x-page-header :title="($group?->name ?? 'Admin').' Dashboard'" subtitle="Costume circulation at a glance." />
     </x-slot>
 
+    {{-- paziņojumi, piem. students pametis grupu – paliek redzami, kamēr skolotājs tos neaizver --}}
+    @if(($notifications ?? collect())->isNotEmpty())
+        <div class="mb-5 space-y-2">
+            @foreach($notifications as $n)
+                <div class="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-brand-primary/25 bg-brand-light/40 px-4 py-3 text-sm text-brand-accent dark:border-brand-secondary/30 dark:bg-darkbrand-light/30 dark:text-brand-light">
+                    <span>
+                        <strong>{{ $n->data['student_name'] }}</strong> left <strong>{{ $n->data['group_name'] }}</strong>
+                        <span class="text-gray-500 dark:text-gray-400">· {{ $n->created_at->diffForHumans() }}</span>
+                    </span>
+                    <form method="POST" action="{{ route('admin.notifications.dismiss', $n->id) }}">
+                        @csrf
+                        <button type="submit" class="text-xs font-semibold text-brand-accent/70 hover:text-brand-accent dark:text-brand-light/70 dark:hover:text-brand-light">
+                            Dismiss
+                        </button>
+                    </form>
+                </div>
+            @endforeach
+        </div>
+    @endif
+
     @if(is_null($stats))
         <div class="rounded-xl border border-dashed border-gray-300 px-4 py-12 text-center text-sm text-gray-500 dark:border-gray-600 dark:text-gray-400">
             You don't manage a group yet, so there's nothing to show here.
@@ -57,7 +77,7 @@
                                     'bg-emerald-500' => $e['type'] === 'returned',
                                     'bg-amber-500' => $e['type'] === 'taken_back',
                                     'bg-sky-500' => $e['type'] === 'handed_over',
-                                    'bg-gray-400' => $e['type'] === 'freed',
+                                    'bg-gray-400' => $e['type'] === 'freed' || $e['type'] === 'left_group',
                                 ])></span>
                                 <div class="min-w-0 flex-1">
                                     <p class="text-gray-700 dark:text-gray-200">
@@ -74,6 +94,9 @@
                                         @elseif($e['type'] === 'freed')
                                             <span class="font-semibold">{{ $e['code'] }}</span> became available
                                             <span class="text-gray-400">({{ $e['who'] }} removed)</span>
+                                        @elseif($e['type'] === 'left_group')
+                                            <span class="font-semibold">{{ $e['code'] }}</span> became available
+                                            <span class="text-gray-400">({{ $e['who'] }} left the group)</span>
                                         @else
                                             {{ $e['actor'] ?? 'A teacher' }} took
                                             <span class="font-semibold">{{ $e['code'] }}</span> back from

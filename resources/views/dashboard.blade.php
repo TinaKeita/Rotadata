@@ -26,7 +26,7 @@
         </div>
 
         <div class="grid gap-5 lg:grid-cols-2">
-            @foreach($groups as $group)
+            @forelse($groups as $group)
                 <article class="group rounded-2xl border border-brand-secondary/15 dark:border-brand-light/20 bg-white dark:bg-gray-900/50 p-6 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-lg">
                     <div class="mb-5 flex items-start justify-between gap-4">
                         <div>
@@ -42,12 +42,28 @@
                         </span>
                     </div>
 
-                    <a href="{{ route('members.costumes.index', $group->id ?? 0) }}"
-                        class="inline-flex items-center justify-center rounded-lg border border-brand-secondary/35 dark:border-brand-light/35 bg-brand-secondary px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-brand-accent focus:outline-none focus:ring-2 focus:ring-brand-primary/50 dark:bg-darkbrand-secondary dark:hover:bg-darkbrand-accent">
-                        My Inventory
-                    </a>
+                    <div class="flex flex-wrap items-center gap-2">
+                        <a href="{{ route('members.costumes.index', $group->id ?? 0) }}"
+                            class="inline-flex items-center justify-center rounded-lg border border-brand-secondary/35 dark:border-brand-light/35 bg-brand-secondary px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-brand-accent focus:outline-none focus:ring-2 focus:ring-brand-primary/50 dark:bg-darkbrand-secondary dark:hover:bg-darkbrand-accent">
+                            My Inventory
+                        </a>
+
+                        {{-- students pats pamet grupu – konts vienmēr paliek --}}
+                        <form method="POST" action="{{ route('members.costumes.leave', $group) }}"
+                            onsubmit="return confirm('Leave {{ $group->name }}? You can only do this once you\'ve returned every item from this group.');">
+                            @csrf
+                            <button type="submit"
+                                class="inline-flex items-center justify-center rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-semibold text-gray-600 transition hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700">
+                                Leave group
+                            </button>
+                        </form>
+                    </div>
                 </article>
-            @endforeach
+            @empty
+                <div class="lg:col-span-2 rounded-xl border border-dashed border-gray-300 px-4 py-10 text-center text-sm text-gray-500 dark:border-gray-600 dark:text-gray-400">
+                    You're not part of any group yet. Ask your teacher to add you.
+                </div>
+            @endforelse
         </div>
     </section>
 </x-app-layout>
