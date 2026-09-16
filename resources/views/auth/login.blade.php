@@ -12,7 +12,7 @@
 
         <div>
             <x-input-label for="email" :value="__('Email')" />
-            <x-text-input id="email" class="mt-1.5" type="email" name="email" :value="old('email')" required autofocus autocomplete="username" />
+            <x-text-input id="email" class="mt-1.5" type="email" name="email" :value="old('email', request('email'))" required autofocus autocomplete="username" />
             <x-input-error :messages="$errors->get('email')" class="mt-2" />
         </div>
 
@@ -74,4 +74,22 @@
             </a>
         </p>
     @endif
+
+    <script>
+        // ielogošanās e-pasta saite nes pagaidu paroli URL fragmentā (#autofill=...), nevis parametrā –
+        // fragments serverim nekad netiek nosūtīts, tāpēc ieliekam formā tikai ar JS un tūlīt notīram no adreses joslas
+        (function () {
+            const match = location.hash.match(/^#autofill=(.+)$/);
+            if (! match) {
+                return;
+            }
+
+            const passwordField = document.getElementById('password');
+            if (passwordField) {
+                passwordField.value = decodeURIComponent(match[1]);
+            }
+
+            history.replaceState(null, '', location.pathname + location.search);
+        })();
+    </script>
 </x-guest-layout>
