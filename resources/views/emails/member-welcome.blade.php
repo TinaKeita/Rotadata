@@ -5,6 +5,13 @@
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<meta name="color-scheme" content="light">
 	<title>Rotadata access</title>
+	<style>
+		/* paroles rādīšanas/slēpšanas pārslēgs – checkbox hack, darbojas klientos ar CSS :checked atbalstu */
+		#pw-toggle:checked ~ .pw-wrap .pw-masked { display: none !important; }
+		#pw-toggle:checked ~ .pw-wrap .pw-value { display: inline !important; }
+		#pw-toggle:checked ~ .pw-wrap .label-show { display: none !important; }
+		#pw-toggle:checked ~ .pw-wrap .label-hide { display: inline !important; }
+	</style>
 </head>
 <body style="margin:0; padding:0; background-color:#f4f2ee; -webkit-font-smoothing:antialiased;">
 
@@ -41,6 +48,7 @@
 							</p>
 
 							{{-- pieslēgšanās dati --}}
+							<!--[if mso]>
 							<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#f4f2ee; border-left:3px solid #748873; border-radius:6px;">
 								<tr>
 									<td style="padding:20px 22px;">
@@ -52,6 +60,32 @@
 									</td>
 								</tr>
 							</table>
+							<![endif]-->
+							<!--[if !mso]><!-->
+							<input type="checkbox" id="pw-toggle" style="display:none;">
+							<table role="presentation" width="100%" cellpadding="0" cellspacing="0" class="pw-wrap" style="background-color:#f4f2ee; border-left:3px solid #748873; border-radius:6px;">
+								<tr>
+									<td style="padding:20px 22px;">
+										<p style="margin:0 0 4px; font-size:12px; text-transform:uppercase; letter-spacing:1px; color:#8a8a8a;">Email</p>
+										<p style="margin:0 0 16px; font-size:15px; color:#2f3a2f;">{{ $user->email }}</p>
+
+										<p style="margin:0 0 6px; font-size:12px; text-transform:uppercase; letter-spacing:1px; color:#8a8a8a;">Temporary password</p>
+										<table role="presentation" cellpadding="0" cellspacing="0">
+											<tr>
+												<td style="padding:10px 14px; background-color:#ffffff; border:1px solid #e0ddd5; border-radius:6px; font-family:'Courier New', Courier, monospace; font-size:18px; font-weight:700; letter-spacing:2px; color:#2f3a2f;">
+													<span class="pw-masked">{{ str_repeat('•', strlen($password)) }}</span><span class="pw-value" style="display:none;">{{ $password }}</span>
+												</td>
+												<td style="padding:10px 0 10px 10px;">
+													<label for="pw-toggle" style="cursor:pointer; display:inline-block; padding:9px 16px; border:1px solid #748873; border-radius:6px; font-family:'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size:13px; font-weight:600; color:#4f6150; white-space:nowrap;">
+														<span class="label-show">Reveal</span><span class="label-hide" style="display:none;">Hide</span>
+													</label>
+												</td>
+											</tr>
+										</table>
+									</td>
+								</tr>
+							</table>
+							<![endif]-->
 
 							<p style="margin:16px 0 28px; font-size:13px; line-height:1.6; color:#777777;">
 								This password only works for your first sign-in. After that you'll be asked to set your own.
