@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Exceptions\CostumeItemUnavailableException;
 use App\Models\CostumeItem;
 use Illuminate\Auth\Events\Lockout;
 use Illuminate\Http\Request;
@@ -123,7 +124,13 @@ class ScanController extends Controller
 
         $this->authorize('claim', $item);
 
-        $item->assignTo(Auth::user(), Auth::user());
+        try {
+            $item->assignTo(Auth::user(), Auth::user());
+        } catch (CostumeItemUnavailableException) {
+            // kāds cits paspēja pirmais (piem. divkāršs klikšķis vai vēl kāds skenēja to pašu kodu tajā pašā mirklī) –
+            // atgriežamies uz show(), kas pēc patiesā stāvokļa pats izlems, ko rādīt
+            return redirect("/scan/{$code}");
+        }
 
         return view('scan.success', compact('item'));
     }
@@ -144,7 +151,12 @@ class ScanController extends Controller
 
         $this->authorize('takeOver', $item);
 
-        $item->transferTo(Auth::user());
+        try {
+            $item->transferTo(Auth::user());
+        } catch (CostumeItemUnavailableException) {
+            // stāvoklis mainījies starplaikā (piem. turētājs pats to atdeva) – show() izlems, ko rādīt tālāk
+            return redirect("/scan/{$code}");
+        }
 
         return view('scan.success', compact('item'));
     }
