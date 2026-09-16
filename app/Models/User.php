@@ -62,6 +62,12 @@ class User extends Authenticatable
         return $this->belongsToMany(Group::class, 'group_user');
     }
 
+    // grupa, kuras dēļ šis konts tika deaktivizēts (grupas dzēšana vai skolotāja veikta izņemšana)
+    public function deactivatedFromGroup()
+    {
+        return $this->belongsTo(Group::class, 'deactivated_with_group_id');
+    }
+
     public function assignedCostumeItems()
     {
         return $this->hasMany(CostumeItem::class, 'assigned_to');

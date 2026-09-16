@@ -47,6 +47,24 @@
         </div>
     </form>
 
+    @if (session('trashed_login_email'))
+        {{-- parole sakrita ar dzēstu kontu – piedāvā to atjaunot --}}
+        <div class="mt-5 rounded-lg border border-amber-300 bg-amber-50 p-4 text-sm text-amber-800 dark:border-amber-500/40 dark:bg-amber-900/20 dark:text-amber-300">
+            <p>Enter your password once more to restore this account and sign in.</p>
+            <form method="POST" action="{{ route('login.restore') }}" class="mt-3 flex flex-wrap items-end gap-3">
+                @csrf
+                <input type="hidden" name="email" value="{{ session('trashed_login_email') }}">
+                <div class="min-w-0 flex-1">
+                    <x-input-label for="restore_password" value="Password" class="sr-only" />
+                    <x-text-input id="restore_password" class="mt-1 w-full" type="password" name="password" required autocomplete="current-password" />
+                </div>
+                <button type="submit" class="inline-flex items-center rounded-lg border border-brand-primary/20 bg-brand-primary px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-brand-accent focus:outline-none focus:ring-2 focus:ring-brand-secondary/50">
+                    Restore account
+                </button>
+            </form>
+        </div>
+    @endif
+
     @if (Route::has('register'))
         {{-- jauns skolotājs izveido savu kontu un grupu --}}
         <p class="mt-6 border-t border-gray-200 pt-5 text-center text-sm text-gray-600 dark:border-gray-700 dark:text-gray-300">

@@ -104,6 +104,11 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::resource('members', AdminMemberController::class)
         ->only(['index', 'create', 'store', 'show', 'destroy'])
         ->parameters(['members' => 'user']);
+    // nesen izņemta dalībnieka atjaunošana vai galīga dzēšana (30 dienu logs, tāpat kā grupām)
+    Route::post('/members/{user}/restore', [AdminMemberController::class, 'restore'])
+        ->name('members.restore')->withTrashed();
+    Route::delete('/members/{user}/force', [AdminMemberController::class, 'forceDestroy'])
+        ->name('members.force-destroy')->withTrashed();
 
     // Grupas iestatījumi un dzēšana (ar 30 dienu atjaunošanas logu)
     Route::get('/group/settings', [AdminGroupController::class, 'edit'])->name('group.settings');

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\ProfileUpdateRequest;
+use App\Models\Group;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -68,6 +69,9 @@ class ProfileController extends Controller
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
-        return Redirect::to('/');
+        $purgeDate = now()->addDays(Group::PURGE_AFTER_DAYS)->format('d.m.Y');
+
+        return Redirect::route('login')->with('success',
+            "Your account has been deleted. You can restore it by logging back in with your usual email and password until {$purgeDate}, after which it's permanently erased.");
     }
 }

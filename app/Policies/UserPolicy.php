@@ -19,4 +19,17 @@ class UserPolicy
             && ! $member->hasRole('admin')
             && $admin->sharesGroupWithMember($member);
     }
+
+    // skolotājs drīkst atjaunot tikai savas grupas dēļ deaktivizētu studentu
+    public function restore(User $admin, User $member): bool
+    {
+        return $member->deactivated_with_group_id !== null
+            && $admin->adminGroups()->whereKey($member->deactivated_with_group_id)->exists();
+    }
+
+    // tas pats nosacījums attiecas uz neatgriezenisku iztīrīšanu
+    public function forceDelete(User $admin, User $member): bool
+    {
+        return $this->restore($admin, $member);
+    }
 }

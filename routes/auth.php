@@ -22,6 +22,10 @@ Route::middleware('guest')->group(function () {
 
     Route::post('login', [AuthenticatedSessionController::class, 'store']);
 
+    // pats dzēsta konta atjaunošana pieslēgšanās brīdī (tikai pašam lietotājam, ne skolotāja izņemtiem)
+    Route::post('login/restore', [AuthenticatedSessionController::class, 'restore'])
+        ->name('login.restore');
+
     Route::get('forgot-password', [PasswordResetLinkController::class, 'create'])
         ->name('password.request');
 

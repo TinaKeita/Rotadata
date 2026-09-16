@@ -10,3 +10,6 @@ Artisan::command('inspire', function () {
 
 // katru dienu iztīra grupas, kas ir soft deleted ilgāk par atjaunošanas logu
 Schedule::command('groups:purge')->dailyAt('03:00');
+
+// katru dienu iztīra atsevišķi izņemtus dalībniekus, kas ir soft deleted ilgāk par atjaunošanas logu
+Schedule::command('members:purge')->dailyAt('03:05');

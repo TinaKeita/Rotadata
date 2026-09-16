@@ -64,7 +64,7 @@
                                 @csrf
                                 @method('DELETE')
                                 <button type="submit"
-                                        onclick="return confirm('Delete this member?')"
+                                        onclick="return confirm('Delete this member? If this is their only group, the account can still be restored for 30 days.')"
                                         class="inline-flex items-center rounded-lg border border-red-300 bg-red-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-red-500 dark:border-red-400/40 dark:bg-red-700 dark:hover:bg-red-600">
                                     Delete
                                 </button>
@@ -82,4 +82,72 @@
             </tbody>
         </table>
     </div>
+
+    @if($trashedMembers->isNotEmpty())
+        {{-- nesen izņemti dalībnieki – vēl var atjaunot 30 dienu laikā --}}
+        <div class="mt-6 rounded-xl border border-amber-300 bg-amber-50 p-6 shadow-sm dark:border-amber-500/40 dark:bg-amber-900/20">
+            <h3 class="text-sm font-semibold uppercase tracking-[0.14em] text-amber-700 dark:text-amber-300">Recently removed</h3>
+            <p class="mt-1 text-sm text-amber-800/90 dark:text-amber-200/90">
+                These accounts were deleted because this was their only group. They can still be restored.
+            </p>
+
+            <ul class="mt-4 space-y-3">
+                @foreach($trashedMembers as $member)
+                    <li class="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-amber-300/70 bg-white px-4 py-3 dark:border-amber-500/30 dark:bg-gray-800">
+                        <div>
+                            <p class="font-semibold text-gray-900 dark:text-gray-100">{{ $member->name }}</p>
+                            <p class="text-xs text-gray-500 dark:text-gray-400">
+                                {{ $member->email }} &middot; deleted {{ $member->deleted_at->format('d.m.Y') }},
+                                purged {{ $member->deleted_at->copy()->addDays(\App\Models\Group::PURGE_AFTER_DAYS)->diffForHumans() }}
+                            </p>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <form method="POST" action="{{ route('admin.members.restore', $member) }}">
+                                @csrf
+                                <button type="submit" class="inline-flex items-center rounded-lg border border-brand-primary/20 bg-brand-primary px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-brand-accent">
+                                    Restore
+                                </button>
+                            </form>
+
+                            <button type="button" x-data x-on:click.prevent="$dispatch('open-modal', 'confirm-force-destroy-{{ $member->id }}')"
+                                class="inline-flex items-center rounded-lg border border-red-300 bg-red-50 px-3 py-1.5 text-xs font-semibold text-red-700 transition hover:bg-red-100 dark:border-red-500/40 dark:bg-red-900/20 dark:text-red-300 dark:hover:bg-red-900/40">
+                                Delete permanently
+                            </button>
+
+                            <x-modal name="confirm-force-destroy-{{ $member->id }}" :show="$errors->{'forceDestroy'.$member->id}->isNotEmpty()" focusable>
+                                <form method="POST" action="{{ route('admin.members.force-destroy', $member) }}" class="p-6">
+                                    @csrf
+                                    @method('DELETE')
+                                    <h2 class="text-lg font-medium text-gray-900 dark:text-gray-100">
+                                        Permanently delete “{{ $member->name }}”?
+                                    </h2>
+                                    <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">
+                                        This skips the recovery window and cannot be undone. Enter your password to confirm.
+                                    </p>
+
+                                    <div class="mt-6">
+                                        <x-input-label for="force_password_{{ $member->id }}" value="Your password" class="sr-only" />
+                                        <x-text-input id="force_password_{{ $member->id }}" name="password" type="password" class="mt-1 block w-3/4"
+                                            placeholder="Your password" autocomplete="current-password" />
+                                        <x-input-error :messages="$errors->{'forceDestroy'.$member->id}->get('password')" class="mt-2" />
+                                    </div>
+
+                                    <div class="mt-6 flex justify-end gap-3">
+                                        <button type="button" x-on:click="$dispatch('close')"
+                                            class="inline-flex items-center rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 transition hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600">
+                                            Cancel
+                                        </button>
+                                        <button type="submit"
+                                            class="inline-flex items-center rounded-lg border border-red-300 bg-red-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-400">
+                                            Delete permanently
+                                        </button>
+                                    </div>
+                                </form>
+                            </x-modal>
+                        </div>
+                    </li>
+                @endforeach
+            </ul>
+        </div>
+    @endif
 </x-app-layout>

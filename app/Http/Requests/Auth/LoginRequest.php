@@ -2,9 +2,12 @@
 
 namespace App\Http\Requests\Auth;
 
+use App\Models\Group;
+use App\Models\User;
 use Illuminate\Auth\Events\Lockout;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
@@ -41,15 +44,35 @@ class LoginRequest extends FormRequest
     {
         $this->ensureIsNotRateLimited();
 
-        if (! Auth::attempt($this->only('email', 'password'), $this->boolean('remember'))) {
-            RateLimiter::hit($this->throttleKey());
+        if (Auth::attempt($this->only('email', 'password'), $this->boolean('remember'))) {
+            RateLimiter::clear($this->throttleKey());
+
+            return;
+        }
+
+        RateLimiter::hit($this->throttleKey());
+
+        // varbūt tas ir pats savu kontu dzēsis lietotājs – parolei sakrītot, piedāvā atjaunošanu pieslēgšanās lapā
+        // (skolotāja izņemtus kontus, kuriem deactivated_with_group_id ir aizpildīts, šeit apzināti neiekļaujam –
+        // tos drīkst atjaunot tikai attiecīgais skolotājs)
+        $trashedUser = User::onlyTrashed()
+            ->whereNull('deactivated_with_group_id')
+            ->where('email', $this->string('email'))
+            ->first();
+
+        if ($trashedUser && Hash::check($this->string('password'), $trashedUser->password)) {
+            $this->session()->flash('trashed_login_email', $trashedUser->email);
+
+            $purgeDate = $trashedUser->deleted_at->copy()->addDays(Group::PURGE_AFTER_DAYS)->format('d.m.Y');
 
             throw ValidationException::withMessages([
-                'email' => trans('auth.failed'),
+                'email' => "This account was deleted on {$trashedUser->deleted_at->format('d.m.Y')} and will be permanently erased on {$purgeDate}. You can restore it below until then.",
             ]);
         }
 
-        RateLimiter::clear($this->throttleKey());
+        throw ValidationException::withMessages([
+            'email' => trans('auth.failed'),
+        ]);
     }
 
     /**

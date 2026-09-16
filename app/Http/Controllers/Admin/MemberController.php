@@ -175,7 +175,12 @@ class MemberController extends Controller
         $adminGroup = auth()->user()->adminGroups()->first();
         $members = $adminGroup ? $adminGroup->members : collect();
 
-        return view('admin.members.index', compact('members'));
+        // nesen izņemti dalībnieki (vienīgā grupa), kurus vēl var atjaunot
+        $trashedMembers = $adminGroup
+            ? User::onlyTrashed()->where('deactivated_with_group_id', $adminGroup->id)->get()
+            : collect();
+
+        return view('admin.members.index', compact('members', 'trashedMembers'));
     }
 
     public function show(User $user)
@@ -221,17 +226,53 @@ class MemberController extends Controller
                 ->with('success', "“{$name}” removed from your group. They're still in other groups, so their account was kept.");
         }
 
-        // vienīgā grupa -> pilnīga konta dzēšana (atbrīvo VISAS vienības un aizver atvērtos vēstures ierakstus)
+        // vienīgā grupa -> konta mīkstā dzēšana (atbrīvo VISAS vienības un aizver atvērtos vēstures ierakstus)
         // datubāzes ārējā atslēga arī iztīra assigned_to, bet vēstures ieraksts citādi paliktu "vēl neatdots"
         foreach ($user->assignedCostumeItems as $item) {
             $item->release(auth()->user(), 'removed');
         }
 
-        // skolotāja veikta dzēšana ir galīga (atšķirībā no grupas dzēšanas, kas ir atgriezeniska)
+        // skolotāja veikta dzēšana tagad ir atgriezeniska, tāpat kā grupas dzēšana –
+        // atzīmē, kuras grupas dēļ konts deaktivizēts, lai to varētu vēlāk atjaunot
+        $user->update(['deactivated_with_group_id' => $adminGroup->id]);
+        $user->delete();
+
+        $purgeDate = now()->addDays(Group::PURGE_AFTER_DAYS)->format('d.m.Y');
+
+        return redirect()->route('admin.members.index')
+            ->with('success', "Member “{$name}” deleted. Their costumes have been released. You can restore the account until {$purgeDate}.");
+    }
+
+    // atjauno skolotāja izņemtu (vienīgās grupas) dalībnieku
+    public function restore(User $user)
+    {
+        abort_unless($user->trashed(), 404);
+        $this->authorize('restore', $user);
+
+        $name = $user->name;
+
+        $user->restore();
+        $user->update(['deactivated_with_group_id' => null]);
+
+        return redirect()->route('admin.members.index')
+            ->with('success', "“{$name}” restored and added back to your group.");
+    }
+
+    // iztīra izņemto dalībnieku uzreiz, negaidot 30 dienas – prasa paroli, jo tas ir neatgriezeniski
+    public function forceDestroy(Request $request, User $user)
+    {
+        abort_unless($user->trashed(), 404);
+        $this->authorize('forceDelete', $user);
+
+        $request->validateWithBag('forceDestroy'.$user->id, [
+            'password' => ['required', 'current_password'],
+        ]);
+
+        $name = $user->name;
         $user->forceDelete();
 
         return redirect()->route('admin.members.index')
-            ->with('success', "Member “{$name}” deleted. Their costumes have been released.");
+            ->with('success', "“{$name}” permanently deleted.");
     }
 
 }
