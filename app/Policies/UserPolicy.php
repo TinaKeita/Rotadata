@@ -12,11 +12,11 @@ class UserPolicy
         return $admin->sharesGroupWithMember($member);
     }
 
-    // skolotājs drīkst dzēst savas grupas studentu, bet ne sevi un ne citu skolotāju
+    // skolotājs drīkst izņemt savas grupas dalībnieku – ja tas ir skolotājs vai ir arī citā grupā,
+    // kontrolieris tikai atsaista no grupas, nevis dzēš kontu, tāpēc šeit sevi izslēdzam, bet ne citus skolotājus
     public function delete(User $admin, User $member): bool
     {
         return $admin->id !== $member->id
-            && ! $member->hasRole('admin')
             && $admin->sharesGroupWithMember($member);
     }
 

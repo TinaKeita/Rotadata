@@ -58,6 +58,19 @@
                 <x-slot:icon><x-nav-icon name="settings" /></x-slot:icon>
                 Group settings
             </x-nav-link>
+
+            @if(($navMemberGroups ?? collect())->isNotEmpty())
+                {{-- skolotājs ir arī dalībnieks citā(-ās) grupā(-ās) – atsevišķa sadaļa viņa paša inventāram --}}
+                <p class="mt-4 px-3 pb-1 text-[11px] font-semibold uppercase tracking-wider text-white/35">My memberships</p>
+
+                @foreach($navMemberGroups as $g)
+                    <x-nav-link :href="route('members.costumes.index', $g->id)"
+                        :active="request()->routeIs('members.costumes.*') && (int) $currentGroupId === (int) $g->id">
+                        <x-slot:icon><x-nav-icon name="inventory" /></x-slot:icon>
+                        {{ $g->name }}
+                    </x-nav-link>
+                @endforeach
+            @endif
         @else
             @foreach(($navGroups ?? []) as $g)
                 <x-nav-link :href="route('members.costumes.index', $g->id)"

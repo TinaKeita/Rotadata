@@ -59,15 +59,27 @@
                                 </form>
                             @endif
 
+                            @php
+                                // skolotāju un vairāku grupu dalībniekus tikai atsaistām no šīs grupas, nevis dzēšam kontu
+                                $justRemoves = $member->hasRole('admin') || $member->member_groups_count > 1;
+                            @endphp
                             <form action="{{ route('admin.members.destroy', $member) }}"
                                 method="POST">
                                 @csrf
                                 @method('DELETE')
-                                <button type="submit"
-                                        onclick="return confirm('Delete this member? If this is their only group, the account can still be restored for 30 days.')"
-                                        class="inline-flex items-center rounded-lg border border-red-300 bg-red-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-red-500 dark:border-red-400/40 dark:bg-red-700 dark:hover:bg-red-600">
-                                    Delete
-                                </button>
+                                @if($justRemoves)
+                                    <button type="submit"
+                                            onclick="return confirm('Remove “{{ $member->name }}” from your group? Their account is kept{{ $member->hasRole('admin') ? ' — they’re a teacher elsewhere' : ' — they’re still in other groups' }}.')"
+                                            class="inline-flex items-center rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-xs font-semibold text-gray-700 transition hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700">
+                                        Remove
+                                    </button>
+                                @else
+                                    <button type="submit"
+                                            onclick="return confirm('Delete this member? The account can still be restored for 30 days.')"
+                                            class="inline-flex items-center rounded-lg border border-red-300 bg-red-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-red-500 dark:border-red-400/40 dark:bg-red-700 dark:hover:bg-red-600">
+                                        Delete
+                                    </button>
+                                @endif
                             </form>
                             </div>
                         </td>

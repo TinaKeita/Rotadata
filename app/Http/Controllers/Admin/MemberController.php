@@ -46,8 +46,9 @@ class MemberController extends Controller
                 'That email belongs to an account that was deactivated when its group was deleted. It can’t be added right now.');
         }
 
-        if ($user->hasRole('admin')) {
-            return back()->withInput()->with('error', 'That email belongs to a teacher account.');
+        // skolotājs drīkst būt arī cita skolotāja grupas dalībnieks – bet ne savas pašas grupas
+        if ($user->ownsGroup($group)) {
+            return back()->withInput()->with('error', 'That’s your own group — you can’t add yourself as a member of it.');
         }
 
         if ($group->members()->whereKey($user->id)->exists()) {
@@ -173,7 +174,10 @@ class MemberController extends Controller
     public function index()
     {
         $adminGroup = auth()->user()->adminGroups()->first();
-        $members = $adminGroup ? $adminGroup->members : collect();
+        // roles un citu grupu skaits jau šeit, lai skats var izvēlēties "Remove" (atsaista) vai "Delete" (dzēš kontu) pogu
+        $members = $adminGroup
+            ? $adminGroup->members()->with('roles')->withCount('memberGroups')->get()
+            : collect();
 
         // nesen izņemti dalībnieki (vienīgā grupa), kurus vēl var atjaunot
         $trashedMembers = $adminGroup
@@ -210,8 +214,9 @@ class MemberController extends Controller
 
         $name = $user->name;
 
-        // students ir arī citās grupās -> izņem tikai NO ŠĪS grupas, konts un pārējās grupas paliek neskartas
-        if ($user->memberGroups()->count() > 1) {
+        // skolotāju kontus nekad nedzēšam, un students var būt arī citās grupās -> abos gadījumos tikai
+        // atsaistam NO ŠĪS grupas, konts un pārējās grupas/tiesības paliek neskartas
+        if ($user->hasRole('admin') || $user->memberGroups()->count() > 1) {
             $heldFromThisGroup = $user->assignedCostumeItems()
                 ->whereHas('costume', fn ($query) => $query->where('group_id', $adminGroup->id))
                 ->get();
@@ -222,11 +227,13 @@ class MemberController extends Controller
 
             $adminGroup->members()->detach($user->id);
 
+            $reason = $user->hasRole('admin') ? "they're a teacher" : "they're still in other groups";
+
             return redirect()->route('admin.members.index')
-                ->with('success', "“{$name}” removed from your group. They're still in other groups, so their account was kept.");
+                ->with('success', "“{$name}” removed from your group. Since {$reason}, their account was kept.");
         }
 
-        // vienīgā grupa -> konta mīkstā dzēšana (atbrīvo VISAS vienības un aizver atvērtos vēstures ierakstus)
+        // vienīgā grupa un nav skolotājs -> konta mīkstā dzēšana (atbrīvo VISAS vienības un aizver atvērtos vēstures ierakstus)
         // datubāzes ārējā atslēga arī iztīra assigned_to, bet vēstures ieraksts citādi paliktu "vēl neatdots"
         foreach ($user->assignedCostumeItems as $item) {
             $item->release(auth()->user(), 'removed');
