@@ -5,7 +5,7 @@
             <x-slot:actions>
                 <a href="{{ route('admin.members.create') }}"
                     class="inline-flex items-center rounded-lg border border-brand-primary/20 bg-brand-primary px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-brand-accent focus:outline-none focus:ring-2 focus:ring-brand-secondary/50">
-                    + Add Member
+                    + Add Members
                 </a>
             </x-slot:actions>
         </x-page-header>

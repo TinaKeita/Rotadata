@@ -20,40 +20,95 @@ class MemberController extends Controller
         return view('admin.members.create');
     }
 
+    // pieņem vienu vai vairākus studentus vienā reizē – katru rindu apstrādā neatkarīgi,
+    // lai viena rindas kļūda nebloķē pārējo veiksmīgo pievienošanu
     public function store(Request $request)
     {
         $adminGroup = auth()->user()->adminGroups()->first();
         abort_if(is_null($adminGroup), 403, 'You do not have a group yet.');
 
+        // pielāgo kļūdu ziņojumus, lai tajos būtu rindas numurs ("Row 2 email"), nevis "members.1.email"
+        $attributes = [];
+        foreach ((array) $request->input('members', []) as $i => $row) {
+            $attributes["members.$i.name"] = 'row '.($i + 1).' name';
+            $attributes["members.$i.email"] = 'row '.($i + 1).' email';
+        }
+
         $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|email|max:255',
-        ]);
+            'members' => 'required|array|min:1|max:50',
+            'members.*.name' => 'required|string|max:255',
+            'members.*.email' => 'required|email|max:255|distinct',
+        ], [], $attributes);
 
-        // ja šāds konts jau pastāv, pievieno to grupai, nevis veido jaunu
-        $existing = User::withTrashed()->where('email', $validated['email'])->first();
+        $created = 0;
+        $attached = 0;
+        $skipped = [];
+        $needsManualPassword = [];
 
-        return $existing
-            ? $this->attachExisting($existing, $adminGroup)
-            : $this->createAndInvite($validated, $adminGroup);
+        foreach ($validated['members'] as $row) {
+            // ja šāds konts jau pastāv, pievieno to grupai, nevis veido jaunu
+            $existing = User::withTrashed()->where('email', $row['email'])->first();
+
+            $result = $existing
+                ? $this->attachExisting($existing, $adminGroup)
+                : $this->createAndInvite($row, $adminGroup);
+
+            if ($result['status'] === 'created') {
+                $created++;
+            } elseif ($result['status'] === 'created_email_failed') {
+                $created++;
+                $needsManualPassword[] = "{$result['name']} ({$result['email']}): {$result['password']}";
+            } elseif ($result['status'] === 'attached') {
+                $attached++;
+            } else {
+                $skipped[] = $result['message'];
+            }
+        }
+
+        return redirect()->route('admin.members.index')
+            ->with($this->summaryFlash($created, $attached, $skipped, $needsManualPassword));
+    }
+
+    // apkopo visu rindu iznākumus vienā, salasāmā paziņojumā
+    private function summaryFlash(int $created, int $attached, array $skipped, array $needsManualPassword): array
+    {
+        $parts = [];
+        if ($created > 0) {
+            $parts[] = "{$created} new ".Str::plural('account', $created).' created and invited';
+        }
+        if ($attached > 0) {
+            $parts[] = "{$attached} existing ".Str::plural('account', $attached).' added';
+        }
+
+        $message = $parts ? ('Added '.implode(', ', $parts).'.') : 'No members were added.';
+
+        if ($skipped) {
+            $message .= "\nSkipped: ".implode('; ', $skipped);
+        }
+
+        if ($needsManualPassword) {
+            $message .= "\nCouldn't email these — give the temporary password in person:\n".implode("\n", $needsManualPassword);
+        }
+
+        $level = ($created + $attached === 0) ? 'error' : (($skipped || $needsManualPassword) ? 'warning' : 'success');
+
+        return [$level => $message];
     }
 
     // pievieno esošu kontu skolotāja grupai un paziņo par to e-pastā (bez paroles)
-    private function attachExisting(User $user, Group $group)
+    private function attachExisting(User $user, Group $group): array
     {
         if ($user->trashed()) {
-            return back()->withInput()->with('error',
-                'That email belongs to an account that was deactivated when its group was deleted. It can’t be added right now.');
+            return ['status' => 'skipped', 'message' => "“{$user->email}” belongs to a deactivated account and can’t be added right now."];
         }
 
         // skolotājs drīkst būt arī cita skolotāja grupas dalībnieks – bet ne savas pašas grupas
         if ($user->ownsGroup($group)) {
-            return back()->withInput()->with('error', 'That’s your own group — you can’t add yourself as a member of it.');
+            return ['status' => 'skipped', 'message' => "“{$user->email}” is your own account."];
         }
 
         if ($group->members()->whereKey($user->id)->exists()) {
-            return redirect()->route('admin.members.index')
-                ->with('warning', "“{$user->name}” is already in this group.");
+            return ['status' => 'skipped', 'message' => "“{$user->name}” is already in this group."];
         }
 
         if (! $user->hasRole('member')) {
@@ -64,13 +119,12 @@ class MemberController extends Controller
 
         rescue(fn () => Mail::to($user->email)->send(new MemberAddedMail($user, $group->name)));
 
-        return redirect()->route('admin.members.index')
-            ->with('success', "“{$user->name}” was added to your group and notified by email.");
+        return ['status' => 'attached', 'name' => $user->name, 'email' => $user->email];
     }
 
     // izveido jaunu kontu ar pagaidu paroli un nosūta uzaicinājuma e-pastu
     // konts tiek izveidots neatkarīgi no tā, vai e-pasts izdodas nosūtīt – e-pasta kļūme nekad nedrīkst bloķēt dalībnieka pievienošanu
-    private function createAndInvite(array $validated, Group $group)
+    private function createAndInvite(array $validated, Group $group): array
     {
         $tempPassword = Str::random(12);
 
@@ -85,12 +139,10 @@ class MemberController extends Controller
         $group->members()->attach($member->id);
 
         if ($this->sendInvite($member, $group->name, $tempPassword)) {
-            return redirect()->route('admin.members.index')
-                ->with('success', "Member “{$member->name}” created and an invitation was sent to {$member->email}.");
+            return ['status' => 'created', 'name' => $member->name, 'email' => $member->email];
         }
 
-        return redirect()->route('admin.members.index')
-            ->with('warning', "Member “{$member->name}” created, but the email could not be sent. Temporary password: {$tempPassword} — give it to the member in person, or resend the invite from their profile once the problem is fixed.");
+        return ['status' => 'created_email_failed', 'name' => $member->name, 'email' => $member->email, 'password' => $tempPassword];
     }
 
     // vēlreiz nosūta uzaicinājumu ar jaunu pagaidu paroli – tikai kamēr dalībnieks vēl nav pats pieslēdzies
