@@ -25,6 +25,14 @@
         </a>
     </div>
 
+    @if($costume->image)
+        {{-- tērpa foto – palīdz dalībniekiem atpazīt pareizo tērpu skenējot --}}
+        <div class="mb-6">
+            <img src="{{ $costume->imageUrl() }}" alt="{{ $costume->name }}"
+                class="h-48 w-full rounded-xl border border-gray-200 object-cover shadow-sm dark:border-gray-700 sm:h-64 sm:w-64">
+        </div>
+    @endif
+
     {{-- papildu vienību pievienošana --}}
     <div class="mb-6 rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800">
         <form method="POST" action="{{ route('admin.costumes.items.add', $costume) }}" class="flex flex-wrap items-end gap-3">

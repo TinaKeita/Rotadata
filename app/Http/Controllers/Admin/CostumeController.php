@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Costume;
 use App\Models\CostumeItem;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 class CostumeController extends Controller
@@ -34,12 +35,13 @@ class CostumeController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'quantity' => 'required|integer|min:1|max:200',
+            'image' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:4096',
         ]);
 
         $costume = Costume::create([
             'name' => $validated['name'],
             'quantity' => 0,
-            'image' => null,
+            'image' => $request->hasFile('image') ? $request->file('image')->store('costumes', 'public') : null,
             'group_id' => $group->id,
         ]);
 
@@ -62,9 +64,23 @@ class CostumeController extends Controller
 
         $validated = $request->validate([
             'name' => 'required|string|max:255',
+            'image' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:4096',
+            'remove_image' => 'nullable|boolean',
         ]);
 
-        $costume->update(['name' => $validated['name']]);
+        // vecais foto jāizdzēš gan aizstājot, gan noņemot, lai nekrāj nelietotus failus krātuvē
+        if ($request->hasFile('image')) {
+            if ($costume->image) {
+                Storage::disk('public')->delete($costume->image);
+            }
+            $costume->image = $request->file('image')->store('costumes', 'public');
+        } elseif ($request->boolean('remove_image') && $costume->image) {
+            Storage::disk('public')->delete($costume->image);
+            $costume->image = null;
+        }
+
+        $costume->name = $validated['name'];
+        $costume->save();
 
         return redirect()->route('admin.costumes.show', $costume)
             ->with('success', "Costume renamed to “{$costume->name}”.");
@@ -137,6 +153,10 @@ class CostumeController extends Controller
     public function destroy(Costume $costume)
     {
         $this->authorize('delete', $costume);
+
+        if ($costume->image) {
+            Storage::disk('public')->delete($costume->image);
+        }
 
         $costume->delete();
 

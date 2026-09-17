@@ -18,6 +18,9 @@
         @forelse($items as $item)
             <div class="flex items-center justify-between gap-4 rounded-xl border border-brand-secondary/15 dark:border-brand-light/20 bg-white dark:bg-gray-900/50 px-5 py-3.5 shadow-sm">
                 <div class="flex items-center gap-4 min-w-0">
+                    @if($item->costume->image)
+                        <img src="{{ $item->costume->imageUrl() }}" alt="" class="h-10 w-10 shrink-0 rounded-lg border border-gray-200 object-cover dark:border-gray-700">
+                    @endif
                     <span class="shrink-0 rounded-md border border-brand-primary/25 dark:border-brand-light/25 bg-brand-light/50 dark:bg-darkbrand-light/40 px-2.5 py-0.5 text-xs font-semibold tracking-wide text-brand-accent dark:text-brand-light">
                         {{ $item->code ?? '#NR.'.$item->id }}
                     </span>

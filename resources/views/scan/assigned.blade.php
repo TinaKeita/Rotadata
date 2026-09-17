@@ -6,6 +6,12 @@
 		<p class="mt-2 text-sm text-amber-700/90 dark:text-amber-300/90">This costume item is linked to a member.</p>
 	</div>
 
+	@if($item->costume->image)
+		<div class="mt-5 flex justify-center">
+			<img src="{{ $item->costume->imageUrl() }}" alt="" class="h-24 w-24 rounded-lg border border-gray-200 object-cover dark:border-gray-700">
+		</div>
+	@endif
+
 	<dl class="mt-5 divide-y divide-gray-200 rounded-lg border border-gray-200 text-sm dark:divide-gray-700 dark:border-gray-700">
 		<div class="flex justify-between gap-4 px-4 py-3">
 			<dt class="text-gray-500 dark:text-gray-400">Item code</dt>

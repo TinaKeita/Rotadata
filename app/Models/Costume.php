@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 class Costume extends Model
@@ -18,6 +19,12 @@ class Costume extends Model
     public function group()
     {
         return $this->belongsTo(Group::class);
+    }
+
+    // pilna, tīklā pieejama saite uz augšupielādēto foto (vai null, ja tāda nav)
+    public function imageUrl(): ?string
+    {
+        return $this->image ? Storage::disk('public')->url($this->image) : null;
     }
 
     public function items()
