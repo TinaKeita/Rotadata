@@ -62,6 +62,12 @@ class ProfileController extends Controller
             );
         }
 
+        // atbrīvo visas turētās tērpu vienības un aizver atvērtos vēstures ierakstus –
+        // tāpat kā skolotāja veiktai dalībnieka izņemšanai (MemberController::destroy)
+        foreach ($user->assignedCostumeItems as $item) {
+            $item->release($user, 'removed');
+        }
+
         Auth::logout();
 
         $user->delete();
