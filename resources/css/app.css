@@ -66,10 +66,7 @@
 @tailwind components;
 @layer components {
   .app-bg {
-    @apply min-h-screen dark:bg-gray-900;
-    background-image:
-      radial-gradient(1200px 500px at 10% -10%, rgba(116, 136, 115, 0.2), transparent),
-      radial-gradient(900px 400px at 95% -5%, rgba(209, 169, 128, 0.2), transparent);
+    @apply min-h-screen bg-paper dark:bg-gray-900;
   }
 
   .app-shell {
@@ -81,7 +78,7 @@
   }
 
   .app-header {
-    @apply lg:row-start-1 lg:col-start-2 sticky top-0 z-40 bg-white/95 dark:bg-gray-800/95 backdrop-blur border-b border-gray-200/80 dark:border-gray-700/80 shadow-[0_1px_2px_rgba(0,0,0,0.04)];
+    @apply lg:row-start-1 lg:col-start-2 sticky top-0 z-40 bg-white/95 dark:bg-gray-800/95 backdrop-blur border-b border-gray-200/80 dark:border-gray-700/80;
   }
 
   .app-header-inner {
@@ -105,7 +102,7 @@
   }
 
   .app-card {
-    @apply rounded-xl sm:rounded-2xl border border-gray-200/70 bg-white shadow-[0_8px_24px_rgba(0,0,0,0.06)] p-4 sm:p-6 dark:border-gray-700/70 dark:bg-gray-800 dark:shadow-none;
+    @apply rounded-xl sm:rounded-2xl border border-line bg-white p-4 sm:p-6 dark:border-gray-700/70 dark:bg-gray-800;
   }
 
   .guest-bg {
@@ -117,21 +114,6 @@
 
   .guest-card {
     @apply w-full max-w-md px-5 py-6 sm:px-6 sm:py-7 bg-white/95 dark:bg-gray-800/95 border border-white/60 dark:border-gray-700 shadow-[0_10px_35px_rgba(0,0,0,0.08)] overflow-hidden rounded-xl sm:rounded-2xl;
-  }
-
-  .landing-bg {
-    @apply min-h-screen text-gray-800 dark:bg-gray-900 dark:text-gray-100;
-    background-image:
-      radial-gradient(1200px 520px at 0% 0%, rgba(116, 136, 115, 0.22), transparent),
-      radial-gradient(900px 420px at 100% 0%, rgba(209, 169, 128, 0.22), transparent);
-  }
-
-  .landing-main {
-    @apply mx-auto flex min-h-screen w-full max-w-5xl items-center px-4 py-8 sm:px-6 sm:py-14;
-  }
-
-  .landing-card {
-    @apply w-full rounded-2xl sm:rounded-3xl border border-gray-200/80 bg-white/95 p-6 shadow-[0_10px_28px_rgba(0,0,0,0.08)] dark:border-gray-700 dark:bg-gray-800/95 sm:p-10;
   }
 }
 
