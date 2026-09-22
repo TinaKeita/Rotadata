@@ -36,6 +36,15 @@ class NewPasswordController extends Controller
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
         ]);
 
+        // otrā aizsardzības līnija: pat ja studentam kaut kā ir derīgs atiestatīšanas žetons
+        // (piem. izsniegts pirms šī ierobežojuma), pašapkalpošanās atiestatīšanu tik un tā noraidām
+        $target = User::where('email', $request->input('email'))->first();
+
+        if ($target && $target->hasRole('member')) {
+            return back()->withInput($request->only('email'))
+                ->with('notice', "Students can't reset their password here — ask your teacher to reset it from their dashboard.");
+        }
+
         // Here we will attempt to reset the user's password. If it is successful we
         // will update the password on an actual user model and persist it to the
         // database. Otherwise we will parse the error and return the response.

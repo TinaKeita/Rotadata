@@ -1,4 +1,13 @@
 <x-guest-layout>
+    <div class="mb-4">
+        <a href="{{ url('/') }}" class="inline-flex items-center gap-1.5 text-sm font-medium text-brand-secondary dark:text-brand-light hover:text-brand-accent dark:hover:text-white transition">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
+            </svg>
+            Back to homepage
+        </a>
+    </div>
+
     <div class="mb-6 text-center">
         <p class="text-xs font-semibold uppercase tracking-[0.16em] text-brand-primary dark:text-brand-secondary">Rotadata</p>
         <h1 class="mt-2 text-2xl font-semibold text-brand-accent dark:text-brand-light">Welcome Back</h1>
@@ -39,6 +48,9 @@
                 </a>
             @endif
         </div>
+
+        {{-- studentiem šeit paroli neatiestatīt – tas jālūdz skolotājam --}}
+        <p class="text-xs text-gray-500 dark:text-gray-400">Students: ask your teacher to reset your password instead.</p>
 
         <div class="pt-1">
             <x-primary-button class="w-full justify-center">
