@@ -96,6 +96,19 @@
             </dl>
         </div>
 
+        {{-- sezonas atskaite – vienmēr pieejama, ne tikai sezonas beigās --}}
+        <div class="mt-6 max-w-2xl rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+            <h3 class="text-sm font-semibold text-gray-800 dark:text-gray-100">Season report</h3>
+            <p class="mt-2 text-sm text-gray-600 dark:text-gray-300">
+                A printable summary of the {{ \App\Support\Season::label() }} season: what's still checked out and
+                how each costume was used. Best exported before summer break, but available any time.
+            </p>
+            <a href="{{ route('admin.season-report.show') }}" target="_blank"
+                class="mt-4 inline-flex items-center rounded-lg border border-brand-primary/20 bg-brand-primary px-4 py-2 text-sm font-semibold text-white transition hover:bg-brand-accent focus:outline-none focus:ring-2 focus:ring-brand-secondary/50">
+                Export season report
+            </a>
+        </div>
+
         {{-- bīstamā zona --}}
         <div class="mt-6 max-w-2xl rounded-xl border border-red-200 bg-white p-6 shadow-sm dark:border-red-500/30 dark:bg-gray-800">
             <h3 class="text-sm font-semibold text-red-700 dark:text-red-400">Delete this group</h3>

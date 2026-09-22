@@ -24,6 +24,20 @@
         </div>
     @endif
 
+    {{-- sezonas noslēguma atgādinājums – redzams tikai no maija līdz augusta beigām --}}
+    @if(!is_null($stats) && \App\Support\Season::isClosingSoon())
+        <div class="mb-5 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-amber-300 bg-amber-50 px-4 py-3.5 text-sm text-amber-900 shadow-sm dark:border-amber-500/40 dark:bg-amber-900/20 dark:text-amber-200">
+            <span>
+                🎓 The <strong>{{ \App\Support\Season::label() }}</strong> season is wrapping up —
+                export your season report before summer break so everything's accounted for.
+            </span>
+            <a href="{{ route('admin.season-report.show') }}" target="_blank"
+                class="inline-flex shrink-0 items-center rounded-lg border border-amber-400 bg-white px-3 py-1.5 text-xs font-semibold text-amber-800 transition hover:bg-amber-100 dark:border-amber-500/50 dark:bg-gray-800 dark:text-amber-200 dark:hover:bg-gray-700">
+                Export report
+            </a>
+        </div>
+    @endif
+
     @if(is_null($stats))
         <div class="rounded-xl border border-dashed border-gray-300 px-4 py-12 text-center text-sm text-gray-500 dark:border-gray-600 dark:text-gray-400">
             You don't manage a group yet, so there's nothing to show here.

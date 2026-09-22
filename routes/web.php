@@ -130,6 +130,10 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::resource('events', AdminEventController::class)
         ->only(['index', 'create', 'store', 'edit', 'update', 'destroy']);
 
+    // Sezonas atskaite (drukājama) – kas vēl nav atdots un kā šosezon izmantoti tērpi
+    Route::get('/season-report', [App\Http\Controllers\Admin\SeasonReportController::class, 'show'])
+        ->name('season-report.show');
+
     // Grupas iestatījumi un dzēšana (ar 30 dienu atjaunošanas logu)
     Route::get('/group/settings', [AdminGroupController::class, 'edit'])->name('group.settings');
     Route::patch('/group', [AdminGroupController::class, 'update'])->name('group.update');
