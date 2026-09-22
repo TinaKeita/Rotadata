@@ -8,6 +8,8 @@
             $groups = auth()->user()->memberGroups;
         @endphp
 
+        <x-events.timeline :upcoming="$upcoming" :past="$past" />
+
         <div class="rounded-2xl border border-brand-primary/20 dark:border-brand-light/15 bg-gradient-to-r from-brand-light/40 via-white to-brand-light/20 dark:from-darkbrand-light/40 dark:via-gray-800 dark:to-darkbrand-light/20 p-6 sm:p-8 shadow-sm">
             <div class="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
                 <div>

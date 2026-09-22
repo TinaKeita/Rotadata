@@ -38,6 +38,7 @@ class AppServiceProvider extends ServiceProvider
                     'navGroup' => $group,
                     'navMembersCount' => $group?->members_count ?? 0,
                     'navCostumesCount' => $group ? $group->costumes()->count() : 0,
+                    'navEventsCount' => $group ? $group->events()->upcoming()->count() : 0,
                     // skolotājs var būt arī cita skolotāja grupas dalībnieks – rāda šīs grupas atsevišķi
                     'navMemberGroups' => $user->memberGroups,
                 ]);

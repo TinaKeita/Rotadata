@@ -33,6 +33,11 @@ class Group extends Model
         return $this->hasMany(Costume::class);
     }
 
+    public function events()
+    {
+        return $this->hasMany(Event::class);
+    }
+
     // visas šīs grupas tērpu vienības (caur tērpiem)
     public function costumeItems()
     {

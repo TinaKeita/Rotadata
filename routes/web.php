@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Admin\CostumeController as AdminCostumeController;
+use App\Http\Controllers\Admin\EventController as AdminEventController;
 use App\Http\Controllers\Admin\GroupController as AdminGroupController;
 use App\Http\Controllers\Admin\MemberController as AdminMemberController;
 use App\Http\Controllers\Member\CostumeController as MemberCostumeController;
@@ -46,9 +47,24 @@ Route::get('/qr/{code}/download', function ($code) {
 
 Route::middleware('auth')->group(function () {
     Route::get('/dashboard', function () {
-        return auth()->user()->hasRole('admin')
-            ? redirect()->route('admin.dashboard')
-            : view('dashboard');
+        if (auth()->user()->hasRole('admin')) {
+            return redirect()->route('admin.dashboard');
+        }
+
+        // koncerti no visām grupām, kurās students ir dalībnieks, sakārtoti pēc datuma
+        $groupIds = auth()->user()->memberGroups()->pluck('groups.id');
+
+        $upcoming = \App\Models\Event::with(['costumes', 'group'])
+            ->whereIn('group_id', $groupIds)
+            ->upcoming()
+            ->get();
+
+        $past = \App\Models\Event::with(['costumes', 'group'])
+            ->whereIn('group_id', $groupIds)
+            ->past()
+            ->get();
+
+        return view('dashboard', compact('upcoming', 'past'));
     })->name('dashboard');
 
     // Obligātā paroles maiņa pēc pieslēgšanās ar pagaidu paroli
@@ -109,6 +125,10 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
         ->name('members.restore')->withTrashed();
     Route::delete('/members/{user}/force', [AdminMemberController::class, 'forceDestroy'])
         ->name('members.force-destroy')->withTrashed();
+
+    // Koncerti
+    Route::resource('events', AdminEventController::class)
+        ->only(['index', 'create', 'store', 'edit', 'update', 'destroy']);
 
     // Grupas iestatījumi un dzēšana (ar 30 dienu atjaunošanas logu)
     Route::get('/group/settings', [AdminGroupController::class, 'edit'])->name('group.settings');

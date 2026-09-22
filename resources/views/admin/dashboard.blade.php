@@ -29,6 +29,10 @@
             You don't manage a group yet, so there's nothing to show here.
         </div>
     @else
+        <div class="mb-6">
+            <x-events.timeline :upcoming="$upcoming" :past="$past" :can-manage="true" :manage-url="route('admin.events.index')" />
+        </div>
+
         @php
             $o = $stats['overview'];
             $r = $stats['readiness'];

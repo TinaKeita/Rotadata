@@ -54,6 +54,11 @@
                 Costumes
             </x-nav-link>
 
+            <x-nav-link :href="route('admin.events.index')" :active="request()->routeIs('admin.events.*')" :badge="$navEventsCount ?? null">
+                <x-slot:icon><x-nav-icon name="calendar" /></x-slot:icon>
+                Concerts
+            </x-nav-link>
+
             <x-nav-link :href="route('admin.group.settings')" :active="request()->routeIs('admin.group.*')">
                 <x-slot:icon><x-nav-icon name="settings" /></x-slot:icon>
                 Group settings

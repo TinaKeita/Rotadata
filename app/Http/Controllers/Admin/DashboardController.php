@@ -18,8 +18,11 @@ class DashboardController extends Controller
         $notifications = auth()->user()->unreadNotifications;
 
         if (! $group) {
-            return view('admin.dashboard', ['group' => null, 'stats' => null, 'notifications' => $notifications]);
+            return view('admin.dashboard', ['group' => null, 'stats' => null, 'notifications' => $notifications, 'upcoming' => collect(), 'past' => collect()]);
         }
+
+        $upcoming = $group->events()->with(['costumes', 'group'])->upcoming()->get();
+        $past = $group->events()->with(['costumes', 'group'])->past()->get();
 
         $itemIds = CostumeItem::whereHas('costume', fn ($q) => $q->where('group_id', $group->id))->pluck('id');
 
@@ -37,7 +40,7 @@ class DashboardController extends Controller
             'weeks'         => $this->weeklyActivity($itemIds),
         ];
 
-        return view('admin.dashboard', compact('group', 'stats', 'notifications'));
+        return view('admin.dashboard', compact('group', 'stats', 'notifications', 'upcoming', 'past'));
     }
 
     private function overview($group, $itemIds): array
