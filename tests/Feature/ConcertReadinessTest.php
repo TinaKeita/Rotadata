@@ -290,21 +290,84 @@ class ConcertReadinessTest extends TestCase
         $this->assertNull($item->fresh()->assigned_to);
     }
 
-    // skolotājs izsniedz no studenta lapas – tiek dota nākamā brīvā vienība, kad brīvo nav, rāda kļūdu
-    public function test_teacher_hands_out_next_free_item_from_member_page(): void
+    // skolotājs izsniedz no studenta lapas konkrēto vienību pēc koda; aizņemtu vienību izsniegt nevar
+    public function test_teacher_hands_out_the_exact_item_from_member_page(): void
     {
-        $this->give('Marta', 'Vainags'); // VAI-01 jau aizņemts
+        $vai03 = $this->costumes['Vainags']->items()->where('code', 'VAI-03')->first();
 
         $this->actingAs($this->teacher)
-            ->post(route('admin.members.hand-out', $this->students['Anna']), ['costume_id' => $this->costumes['Vainags']->id])
+            ->post(route('admin.members.hand-out', $this->students['Anna']), ['item_id' => $vai03->id])
             ->assertSessionHas('success');
 
-        $this->assertSame('VAI-02', $this->students['Anna']->assignedCostumeItems()->first()->code);
-
-        $this->give('Roberts', 'Vainags'); // pēdējā brīvā
+        $this->assertSame($this->students['Anna']->id, $vai03->fresh()->assigned_to);
 
         $this->actingAs($this->teacher)
-            ->post(route('admin.members.hand-out', $this->students['Roberts']), ['costume_id' => $this->costumes['Vainags']->id])
+            ->post(route('admin.members.hand-out', $this->students['Marta']), ['item_id' => $vai03->id])
             ->assertSessionHas('error');
+
+        $this->assertSame($this->students['Anna']->id, $vai03->fresh()->assigned_to);
+    }
+
+    // solistam papildu tērps: gatavs tikai tad, kad ir arī tas; vajadzīgo skaitu nosaka automātiski
+    public function test_extra_costume_for_a_soloist_counts_in_readiness(): void
+    {
+        $this->event->studentCostumes()->create([
+            'user_id' => $this->students['Marta']->id,
+            'costume_id' => $this->costumes['Veste']->id,
+            'quantity' => 1,
+        ]);
+        $this->give('Marta', 'Krekls');
+        $this->give('Marta', 'Vainags');
+
+        $event = $this->freshEvent();
+        $marta = $event->readinessFor($this->students['Marta']);
+
+        $this->assertFalse($marta['ready']);
+        $this->assertSame('Veste', $marta['missingText']);
+
+        // Veste: Roberts (puiši) + Marta (papildu) = 2
+        $rows = $event->costumeReadiness()->keyBy(fn ($r) => $r['costume']->name);
+        $this->assertSame(2, $rows['Veste']['target']);
+
+        $this->give('Marta', 'Veste');
+        $this->assertTrue($this->freshEvent()->readinessFor($this->students['Marta'])['ready']);
+    }
+
+    // papildu skaits jau vajadzīgam tērpam: 2 vainagi solistei
+    public function test_extra_quantity_raises_how_many_are_needed(): void
+    {
+        $this->event->studentCostumes()->create([
+            'user_id' => $this->students['Marta']->id,
+            'costume_id' => $this->costumes['Vainags']->id,
+            'quantity' => 1,
+        ]);
+        $this->give('Marta', 'Krekls');
+        $this->give('Marta', 'Vainags');
+
+        $marta = $this->freshEvent()->readinessFor($this->students['Marta']);
+        $this->assertFalse($marta['ready']);
+        $this->assertSame('Vainags', $marta['missingText']);
+
+        $this->give('Marta', 'Vainags');
+        $this->assertTrue($this->freshEvent()->readinessFor($this->students['Marta'])['ready']);
+    }
+
+    public function test_concert_form_saves_extra_costumes(): void
+    {
+        $this->actingAs($this->teacher)->put(route('admin.events.update', $this->event), [
+            'title' => 'Rudens koncerts',
+            'starts_at' => $this->event->starts_at->format('Y-m-d H:i'),
+            'location' => null,
+            'notes' => null,
+            'costume_ids' => collect($this->costumes)->pluck('id')->all(),
+            'attendance_sent' => 1,
+            'attending_ids' => collect($this->students)->pluck('id')->all(),
+            'extras' => [
+                ['user_id' => $this->students['Marta']->id, 'costume_id' => $this->costumes['Veste']->id, 'quantity' => 1],
+            ],
+        ])->assertRedirect(route('admin.events.index'));
+
+        $this->assertSame(1, $this->event->studentCostumes()->count());
+        $this->assertNull($this->event->costumes()->first()->pivot->target_count);
     }
 }

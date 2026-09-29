@@ -132,18 +132,20 @@
         @else
             <form method="POST" action="{{ route('admin.members.hand-out', $user) }}" class="mt-3 flex flex-wrap items-center gap-2">
                 @csrf
-                <select name="costume_id" required aria-label="Costume to hand out"
+                <select name="item_id" required aria-label="Item to hand out"
                     class="min-w-0 flex-1 rounded-lg border-line-strong bg-paper py-2 text-sm text-ink focus:border-brand focus:ring-brand/20">
-                    <option value="" disabled selected>Choose a costume…</option>
+                    <option value="" disabled selected>Choose the item by its code…</option>
                     @foreach($costumes as $costume)
-                        <option value="{{ $costume->id }}" @disabled($costume->free_count === 0)>
-                            {{ $costume->name }} · {{ $costume->free_count === 0 ? 'none free' : $costume->free_count.' free' }}
-                        </option>
+                        <optgroup label="{{ $costume->name }}{{ $costume->items->isEmpty() ? ' — none free' : '' }}">
+                            @foreach($costume->items as $item)
+                                <option value="{{ $item->id }}">{{ $item->code }} · {{ $costume->name }}</option>
+                            @endforeach
+                        </optgroup>
                     @endforeach
                 </select>
                 <button type="submit" class="ui-btn">Hand out</button>
             </form>
-            <p class="ui-help mt-2">The next free item of that costume goes to {{ $user->name }}, just like when they scan it themselves.</p>
+            <p class="ui-help mt-2">Pick the code printed on the label of the item you're giving {{ $user->name }}, so the app matches what they actually have.</p>
         @endif
     </div>
 

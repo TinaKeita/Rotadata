@@ -49,6 +49,7 @@ class EventController extends Controller
 
         $this->syncCostumes($event, $request);
         $this->syncAbsences($event, $request);
+        $this->syncExtras($event, $request);
 
         return redirect()->route('admin.events.index')->with('success', "Concert “{$event->title}” added.");
     }
@@ -61,7 +62,7 @@ class EventController extends Controller
         $costumes = $event->group->costumes()->with('costumeSet')->get();
         $members = $event->group->members()->orderBy('name')->get();
         $sets = $event->group->costumeSets;
-        $event->load('absentees');
+        $event->load(['absentees', 'studentCostumes']);
 
         return view('admin.events.edit', compact('event', 'costumes', 'members', 'sets'));
     }
@@ -81,6 +82,7 @@ class EventController extends Controller
 
         $this->syncCostumes($event, $request);
         $this->syncAbsences($event, $request);
+        $this->syncExtras($event, $request);
 
         return redirect()->route('admin.events.index')->with('success', "Concert “{$event->title}” updated.");
     }
@@ -118,8 +120,11 @@ class EventController extends Controller
             'costume_ids.*' => 'integer|exists:costumes,id,group_id,'.$groupId,
             'costume_notes' => 'nullable|array',
             'costume_notes.*' => 'nullable|string|max:255',
-            'costume_targets' => 'nullable|array',
-            'costume_targets.*' => 'nullable|integer|min:1|max:1000',
+            // papildu tērpi konkrētiem studentiem (piem. solistam)
+            'extras' => 'nullable|array|max:200',
+            'extras.*.user_id' => 'required|integer',
+            'extras.*.costume_id' => 'required|integer|exists:costumes,id,group_id,'.$groupId,
+            'extras.*.quantity' => 'required|integer|min:1|max:20',
             'attendance_sent' => 'nullable|boolean',
             'attending_ids' => 'nullable|array',
             'attending_ids.*' => 'integer',
@@ -131,12 +136,12 @@ class EventController extends Controller
     {
         $ids = $request->input('costume_ids', []);
         $notes = $request->input('costume_notes', []);
-        $targets = $request->input('costume_targets', []);
 
         $sync = collect($ids)
             ->mapWithKeys(fn ($id) => [(int) $id => [
                 'note' => $notes[$id] ?? null,
-                'target_count' => $targets[$id] ?? null,
+                // vajadzīgo skaitu vairs neievada ar roku – to nosaka dalībnieki un komplekti
+                'target_count' => null,
             ]])
             ->all();
 
@@ -160,5 +165,28 @@ class EventController extends Controller
             ->all();
 
         $event->absentees()->sync($absentIds);
+    }
+
+    // saglabā papildu tērpus konkrētiem studentiem; vienāds students + tērps tiek saskaitīts vienā rindā,
+    // un ņemti vērā tikai šīs grupas dalībnieki
+    private function syncExtras(Event $event, Request $request): void
+    {
+        if (! $request->boolean('attendance_sent')) {
+            return;
+        }
+
+        $memberIds = $event->group->members()->pluck('users.id')->map(fn ($id) => (int) $id);
+
+        $rows = collect($request->input('extras', []))
+            ->filter(fn ($r) => $memberIds->contains((int) ($r['user_id'] ?? 0)))
+            ->groupBy(fn ($r) => (int) $r['user_id'].'|'.(int) $r['costume_id'])
+            ->map(fn ($group) => [
+                'user_id' => (int) $group->first()['user_id'],
+                'costume_id' => (int) $group->first()['costume_id'],
+                'quantity' => min(20, $group->sum(fn ($r) => (int) $r['quantity'])),
+            ]);
+
+        $event->studentCostumes()->delete();
+        $event->studentCostumes()->createMany($rows->values()->all());
     }
 }

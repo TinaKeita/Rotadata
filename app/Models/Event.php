@@ -44,12 +44,19 @@ class Event extends Model
         return $this->belongsToMany(User::class, 'event_absences')->withTimestamps();
     }
 
+    // papildu tērpi konkrētiem studentiem (piem. solistam), kas nāk klāt komplekta prasībām
+    public function studentCostumes()
+    {
+        return $this->hasMany(EventStudentCostume::class);
+    }
+
     // vienreiz nolasīti gatavības dati, lai costumeReadiness() un studentReadiness() neatkārto vaicājumus
     private ?array $readinessCache = null;
 
     /**
-     * Koncertā piedalošies studenti (ar komplektu no group_user), nepieciešamie tērpi un tas,
-     * kuru tērpu vienības katram studentam šobrīd ir rokās.
+     * Koncertā piedalošies studenti (ar komplektu no group_user), visi iesaistītie tērpi
+     * (visiem vajadzīgie + studentu papildu tērpi), cik katram studentam vajag katra tērpa
+     * un cik vienību no tā viņam šobrīd ir rokās.
      */
     private function readinessData(): array
     {
@@ -64,18 +71,28 @@ class Event extends Model
             ->orderBy('name')
             ->get();
 
-        $costumes = $this->costumes;
+        // papildu tērpi tikai piedalošajiem studentiem: studenta id => [tērpa id => skaits]
+        $extraRows = $this->studentCostumes()->whereIn('user_id', $students->pluck('id'))->get();
+        $extras = $extraRows->groupBy('user_id')
+            ->map(fn ($rows) => $rows->mapWithKeys(fn ($r) => [(int) $r->costume_id => (int) $r->quantity])->all());
 
-        // studenta id => to tērpu id, kuru vismaz viena vienība viņam ir izsniegta
+        // visiem vajadzīgie tērpi + tie, kas vajadzīgi tikai kā papildu tērpi
+        $general = $this->costumes;
+        $extraOnlyIds = $extraRows->pluck('costume_id')->map(fn ($id) => (int) $id)->unique()->diff($general->pluck('id'));
+        $costumes = $general->concat(Costume::whereIn('id', $extraOnlyIds)->orderBy('name')->get())->values();
+
+        // studenta id => [tērpa id => cik vienību rokās]
         $holdings = CostumeItem::whereIn('costume_id', $costumes->pluck('id'))
             ->whereIn('assigned_to', $students->pluck('id'))
             ->get(['costume_id', 'assigned_to'])
             ->groupBy('assigned_to')
-            ->map(fn ($rows) => $rows->pluck('costume_id')->map(fn ($id) => (int) $id)->unique()->all());
+            ->map(fn ($rows) => $rows->countBy(fn ($r) => (int) $r->costume_id)->all());
 
         return $this->readinessCache = [
             'students' => $students,
+            'general' => $general,
             'costumes' => $costumes,
+            'extras' => $extras,
             'holdings' => $holdings,
             'absentCount' => $absentIds->count(),
         ];
@@ -94,27 +111,54 @@ class Event extends Model
     }
 
     /**
-     * Cik piedalošos studentu, kam šis tērps vajadzīgs, jau to tur rokās, salīdzinot ar vajadzīgo skaitu,
-     * un vai vispār inventārā ir pietiekami daudz vienību, lai to sasniegtu.
-     * Balstās uz esošo izsniegšanas stāvokli — skolotājam nekas manuāli nav jāskaita.
-     * Ja koncertam nav norādīts konkrēts skaits (target_count), vajadzīgs visiem piedalošajiem, kam tērps paredzēts.
+     * Cik vienību no katra tērpa vajag šim studentam: pa vienai no visiem viņam paredzētajiem tērpiem
+     * plus viņa papildu tērpi (tie var arī palielināt jau vajadzīga tērpa skaitu, piem. solistam 2 vainagi).
+     * Atgriež [tērpa id => skaits].
+     */
+    private function requiredFor(User $student, array $data): array
+    {
+        $required = [];
+
+        foreach ($data['general'] as $costume) {
+            if (self::needs($costume, self::setIdOf($student))) {
+                $required[$costume->id] = 1;
+            }
+        }
+
+        foreach ($data['extras'][$student->id] ?? [] as $costumeId => $quantity) {
+            $required[$costumeId] = ($required[$costumeId] ?? 0) + $quantity;
+        }
+
+        return $required;
+    }
+
+    /**
+     * Pa tērpiem: cik vienību piedalošajiem studentiem kopā vajag (komplekti + papildu tērpi), cik no tām
+     * jau ir rokās un vai inventārā vispār pietiek vienību. Skaits veidojas automātiski no dalībniekiem –
+     * skolotājam nekas manuāli nav jāskaita.
      */
     public function costumeReadiness(): \Illuminate\Support\Collection
     {
-        ['students' => $students, 'costumes' => $costumes, 'holdings' => $holdings] = $this->readinessData();
+        $data = $this->readinessData();
+        $required = $data['students']->mapWithKeys(fn (User $s) => [$s->id => $this->requiredFor($s, $data)]);
+        $generalIds = $data['general']->pluck('id')->all();
 
-        return $costumes->map(function (Costume $costume) use ($students, $holdings) {
-            $needing = $students->filter(fn (User $s) => self::needs($costume, self::setIdOf($s)));
+        return $data['costumes']->map(function (Costume $costume) use ($data, $required, $generalIds) {
+            $target = 0;
+            $assigned = 0;
 
-            $target = $costume->pivot->target_count ?: $needing->count();
+            foreach ($data['students'] as $student) {
+                $need = $required[$student->id][$costume->id] ?? 0;
+                $target += $need;
+                $assigned += min($need, $data['holdings'][$student->id][$costume->id] ?? 0);
+            }
+
             $total = $costume->quantity; // cik vienību šim tērpam vispār ir inventārā
-
-            $assigned = $needing
-                ->filter(fn (User $s) => in_array($costume->id, $holdings[$s->id] ?? [], true))
-                ->count();
 
             return [
                 'costume' => $costume,
+                // tērps vajadzīgs tikai kā papildu tērps atsevišķiem studentiem
+                'extra_only' => ! in_array($costume->id, $generalIds, true),
                 'assigned' => $assigned,
                 'target' => $target,
                 'total' => $total,
@@ -126,30 +170,44 @@ class Event extends Model
     }
 
     /**
-     * Gatavība pa studentiem: students ir gatavs tikai tad, ja viņam ir rokās pa vienai vienībai
-     * no KATRA vajadzīgā tērpa (kopīgie + viņa komplekta tērpi).
+     * Gatavība pa studentiem: students ir gatavs tikai tad, ja viņam ir rokās tik vienību no KATRA vajadzīgā tērpa,
+     * cik vajag (kopīgie + viņa komplekta tērpi + viņa papildu tērpi).
      * Ja koncertam ir komplektu tērpi, bet studentam komplekts nav izvēlēts, viņš netiek skaitīts kā gatavs.
      */
     public function studentReadiness(): array
     {
-        ['students' => $students, 'costumes' => $costumes, 'holdings' => $holdings, 'absentCount' => $absentCount] = $this->readinessData();
+        $data = $this->readinessData();
+        $costumesById = $data['costumes']->keyBy('id');
 
-        $hasSetCostumes = $costumes->contains(fn (Costume $c) => ! is_null($c->costume_set_id));
+        $hasSetCostumes = $data['general']->contains(fn (Costume $c) => ! is_null($c->costume_set_id));
 
-        $rows = $students->map(function (User $student) use ($costumes, $holdings, $hasSetCostumes) {
-            $setId = self::setIdOf($student);
-            $held = $holdings[$student->id] ?? [];
+        $rows = $data['students']->map(function (User $student) use ($data, $costumesById, $hasSetCostumes) {
+            $required = $this->requiredFor($student, $data);
+            $held = $data['holdings'][$student->id] ?? [];
+            $extras = $data['extras'][$student->id] ?? [];
 
-            $needed = $costumes->filter(fn (Costume $c) => self::needs($c, $setId))->values();
-            $missing = $needed->reject(fn (Costume $c) => in_array($c->id, $held, true))->values();
-            $noSet = $hasSetCostumes && is_null($setId);
+            // katram vajadzīgajam tērpam: cik vajag, cik ir un vai tas ir papildu tērps
+            $checklist = collect($required)->map(fn ($qty, $id) => [
+                'costume' => $costumesById[$id],
+                'required' => $qty,
+                'held' => min($qty, $held[$id] ?? 0),
+                'extra' => isset($extras[$id]),
+            ])->values();
+
+            $missingList = $checklist->filter(fn ($c) => $c['held'] < $c['required'])->values();
+            $noSet = $hasSetCostumes && is_null(self::setIdOf($student));
 
             return [
                 'student' => $student,
-                'needed' => $needed,
-                'missing' => $missing,
+                'checklist' => $checklist,
+                'needed' => $checklist->pluck('costume'),
+                'missing' => $missingList->pluck('costume'),
+                // piem. "Vainags, Veste ×2" – cilvēkam salasāms trūkstošo saraksts
+                'missingText' => $missingList
+                    ->map(fn ($c) => $c['costume']->name.($c['required'] - $c['held'] > 1 ? ' ×'.($c['required'] - $c['held']) : ''))
+                    ->implode(', '),
                 'no_set' => $noSet,
-                'ready' => ! $noSet && $missing->isEmpty(),
+                'ready' => ! $noSet && $missingList->isEmpty(),
             ];
         });
 
@@ -161,8 +219,8 @@ class Event extends Model
             'ready' => $ready,
             'total' => $total,
             'percent' => $total > 0 ? (int) round($ready / $total * 100) : 0,
-            'absentCount' => $absentCount,
-            'hasCostumes' => $costumes->isNotEmpty(),
+            'absentCount' => $data['absentCount'],
+            'hasCostumes' => $data['costumes']->isNotEmpty(),
         ];
     }
 

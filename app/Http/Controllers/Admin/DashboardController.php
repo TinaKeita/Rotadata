@@ -102,6 +102,7 @@ class DashboardController extends Controller
                     'type' => 'missing',
                     'student' => $r['student'],
                     'missing' => $r['missing'],
+                    'missingText' => $r['missingText'],
                     'event' => $event,
                 ];
             }

@@ -115,7 +115,7 @@
                                                 <p class="mt-0.5 truncate font-mono text-[12px] text-ink-soft">{{ $row['students']->take(4)->pluck('name')->implode(', ') }}{{ $row['students']->count() > 4 ? ' …' : '' }}</p>
                                                 @break
                                             @case('missing')
-                                                <p class="text-[15.5px]"><span class="font-semibold">{{ $row['student']->name }}</span> <span class="text-ink-muted">is missing {{ $row['missing']->pluck('name')->implode(', ') }}</span></p>
+                                                <p class="text-[15.5px]"><span class="font-semibold">{{ $row['student']->name }}</span> <span class="text-ink-muted">is missing {{ $row['missingText'] }}</span></p>
                                                 <p class="mt-0.5 font-mono text-[12px] text-ink-soft">for {{ $row['event']->title }} · {{ $row['event']->starts_at->format('d.m') }}</p>
                                                 @break
                                             @case('invite')
@@ -250,7 +250,7 @@
                                         <a href="{{ route('admin.members.show', $r['student']) }}" class="flex items-baseline justify-between gap-3 rounded-lg px-2 py-2 text-[14.5px] hover:bg-surface-sunk">
                                             <span class="min-w-0 truncate font-medium">{{ $r['student']->name }}</span>
                                             <span class="min-w-0 truncate text-right font-mono text-[12px] text-ink-soft">
-                                                {{ $r['no_set'] ? 'no set chosen' : 'needs '.$r['missing']->pluck('name')->implode(', ') }}
+                                                {{ $r['no_set'] ? 'no set chosen' : 'needs '.$r['missingText'] }}
                                             </span>
                                         </a>
                                     @endforeach

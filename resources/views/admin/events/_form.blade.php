@@ -3,7 +3,6 @@
     $event = $event ?? null;
     $selectedCostumeIds = old('costume_ids', $event?->costumes->pluck('id')->all() ?? []);
     $costumeNotes = old('costume_notes', $event ? $event->costumes->pluck('pivot.note', 'id')->all() : []);
-    $costumeTargets = old('costume_targets', $event ? $event->costumes->pluck('pivot.target_count', 'id')->all() : []);
 
     // "min" datumam laukā rādām tikai tad, ja koncerts jau nav pagātnē — citādi nevarētu saglabāt
     // veca koncerta piezīmes, nemainot tā datumu
@@ -13,6 +12,11 @@
     $absentIds = $event ? $event->absentees->pluck('id')->all() : [];
     $attendingIds = array_map('intval', old('attending_ids', $members->pluck('id')->reject(fn ($id) => in_array($id, $absentIds))->all()));
     $setNames = $sets->pluck('name', 'id');
+
+    // papildu tērpi konkrētiem studentiem (piem. solistam) – formas rindas Alpine sarakstam
+    $extraRows = old('extras', $event
+        ? $event->studentCostumes->map(fn ($x) => ['user_id' => $x->user_id, 'costume_id' => $x->costume_id, 'quantity' => $x->quantity])->values()->all()
+        : []);
 @endphp
 
 <div>
@@ -49,8 +53,8 @@
 <div>
     <p class="ui-label">Costumes needed <span class="font-normal text-ink-soft">(optional, can be added later)</span></p>
     <p class="ui-help mt-0.5">
-        Leave "Needed" blank to count everyone performing who needs it: shared costumes are needed by all, set costumes only by that set.
-        Readiness is tracked automatically from who has already checked one out.
+        How many are needed is counted for you: shared costumes by everyone performing, set costumes by the students in that set.
+        Readiness then follows automatically from who has checked one out.
     </p>
     @if($costumes->isEmpty())
         <p class="mt-1.5 text-sm text-ink-soft">You don't have any costumes yet — you can attach them once you've added some.</p>
@@ -70,13 +74,7 @@
                             <input type="text" name="costume_notes[{{ $costume->id }}]" value="{{ $costumeNotes[$costume->id] ?? '' }}"
                                 placeholder="Note (optional), e.g. bring by 17:00"
                                 class="min-w-0 flex-1 rounded-md border-line-strong px-2.5 py-1.5 text-xs text-ink-muted focus:border-brand focus:ring-brand/30 bg-paper placeholder:text-ink-soft">
-                            <input type="number" name="costume_targets[{{ $costume->id }}]" value="{{ $costumeTargets[$costume->id] ?? '' }}"
-                                placeholder="Needed (auto)" min="1" max="1000"
-                                class="w-40 shrink-0 rounded-md border-line-strong px-2.5 py-1.5 text-xs text-ink-muted focus:border-brand focus:ring-brand/30 bg-paper placeholder:text-ink-soft">
                         </div>
-                        @if($costume->quantity > 0 && ($costumeTargets[$costume->id] ?? null) > $costume->quantity)
-                            <p class="mt-1 text-xs font-medium text-rust">⚠ Only {{ $costume->quantity }} in stock — that's fewer than requested.</p>
-                        @endif
                     </span>
                 </label>
             @endforeach
@@ -115,5 +113,46 @@
                 </label>
             @endforeach
         </div>
+    @endif
+</div>
+
+{{-- papildu tērpi konkrētiem studentiem (piem. solistam vēl viens tērps) – nāk klāt tam, ko prasa komplekts --}}
+<div x-data="{ rows: @js($extraRows) }">
+    <p class="ui-label">Extra costumes for specific students <span class="font-normal text-ink-soft">(optional)</span></p>
+    <p class="ui-help mt-0.5">
+        For example a soloist who needs one more costume than the rest. It's added on top of what their set needs,
+        and they only count as ready once they have it too. Choosing a costume they already need raises how many of it they need.
+    </p>
+
+    @if($members->isEmpty() || $costumes->isEmpty())
+        <p class="mt-1.5 text-sm text-ink-soft">You need students and costumes in your group first.</p>
+    @else
+        <div class="mt-2 space-y-2">
+            <template x-for="(row, index) in rows" :key="index">
+                <div class="flex flex-wrap items-center gap-2 rounded-lg border border-line px-3 py-2">
+                    <select :name="`extras[${index}][user_id]`" x-model="row.user_id" required aria-label="Student"
+                        class="min-w-0 flex-1 rounded-lg border-line-strong bg-paper py-1.5 text-sm text-ink focus:border-brand focus:ring-brand/20">
+                        <option value="">Student…</option>
+                        @foreach($members as $member)
+                            <option value="{{ $member->id }}">{{ $member->name }}</option>
+                        @endforeach
+                    </select>
+                    <select :name="`extras[${index}][costume_id]`" x-model="row.costume_id" required aria-label="Costume"
+                        class="min-w-0 flex-1 rounded-lg border-line-strong bg-paper py-1.5 text-sm text-ink focus:border-brand focus:ring-brand/20">
+                        <option value="">Costume…</option>
+                        @foreach($costumes as $costume)
+                            <option value="{{ $costume->id }}">{{ $costume->name }}</option>
+                        @endforeach
+                    </select>
+                    <input type="number" :name="`extras[${index}][quantity]`" x-model="row.quantity" min="1" max="20" required aria-label="How many"
+                        class="w-20 rounded-lg border-line-strong bg-paper py-1.5 text-sm text-ink focus:border-brand focus:ring-brand/20">
+                    <button type="button" x-on:click="rows.splice(index, 1)" class="ui-btn-danger ui-btn-sm">Remove</button>
+                </div>
+            </template>
+        </div>
+
+        <button type="button" x-on:click="rows.push({ user_id: '', costume_id: '', quantity: 1 })" class="ui-btn-ghost ui-btn-sm mt-2">
+            + Add extra costume
+        </button>
     @endif
 </div>

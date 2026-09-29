@@ -262,7 +262,8 @@ class MemberController extends Controller
         return back()->with('success', $message);
     }
 
-    // skolotājs izsniedz studentam izvēlētā tērpa nākamo brīvo vienību (bez QR skenēšanas)
+    // skolotājs izsniedz studentam konkrētu vienību, kas viņam ir rokās – izvēlas to pēc koda uz birkas (piem. VAI-03),
+    // lai sistēmā piešķirtā vienība vienmēr sakrīt ar fiziski iedoto
     public function handOut(Request $request, User $user)
     {
         $this->authorize('view', $user);
@@ -271,23 +272,20 @@ class MemberController extends Controller
         abort_if(is_null($adminGroup), 403, 'You do not have a group yet.');
 
         $validated = $request->validate([
-            'costume_id' => 'required|integer|exists:costumes,id,group_id,'.$adminGroup->id,
+            'item_id' => ['required', 'integer'],
         ]);
 
-        $costume = $adminGroup->costumes()->findOrFail($validated['costume_id']);
+        // tikai šīs grupas tērpu vienības
+        $item = $adminGroup->costumeItems()->whereKey($validated['item_id'])->first();
+        abort_if(is_null($item), 422, 'That item is not in your group.');
 
-        // mēģina brīvās vienības pēc kārtas – ja kādu starplaikā paņem cits, ņem nākamo
-        foreach ($costume->items()->whereNull('assigned_to')->orderBy('code')->get() as $item) {
-            try {
-                $item->assignTo($user, auth()->user());
-
-                return back()->with('success', "{$costume->name} ({$item->code}) handed out to {$user->name}.");
-            } catch (CostumeItemUnavailableException) {
-                continue;
-            }
+        try {
+            $item->assignTo($user, auth()->user());
+        } catch (CostumeItemUnavailableException) {
+            return back()->with('error', "Item {$item->code} is already with someone else. Check the code on the label.");
         }
 
-        return back()->with('error', "There are no free {$costume->name} items left to hand out.");
+        return back()->with('success', "{$item->code} ({$item->costume->name}) handed out to {$user->name}.");
     }
 
     // skolotājs jau iedeva paroli citādi – noņem brīdinājumu par nepiegādāto uzaicinājumu
@@ -342,9 +340,9 @@ class MemberController extends Controller
         $sets = $adminGroup?->costumeSets ?? collect();
         $currentSetId = $adminGroup?->members()->whereKey($user->id)->first()?->pivot->costume_set_id;
 
-        // tērpi ar brīvo vienību skaitu izsniegšanas formai
+        // tērpi ar brīvajām vienībām izsniegšanas formai – skolotājs izvēlas konkrēto kodu
         $costumes = $adminGroup
-            ? $adminGroup->costumes()->withCount(['items as free_count' => fn ($q) => $q->whereNull('assigned_to')])->orderBy('name')->get()
+            ? $adminGroup->costumes()->with(['items' => fn ($q) => $q->whereNull('assigned_to')->orderBy('code')])->orderBy('name')->get()
             : collect();
 
         return view('admin.members.show', compact('user', 'sets', 'currentSetId', 'costumes'));

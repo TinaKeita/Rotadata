@@ -26,7 +26,6 @@
             @php
                 $event = $nextConcert['event'];
                 $row = $nextConcert['row'];
-                $missingIds = $row['missing']->pluck('id')->all();
             @endphp
             <section data-reveal="" data-reveal-delay="60" class="ui-card">
                 <div class="mb-3 flex flex-wrap items-center justify-between gap-3">
@@ -47,15 +46,16 @@
                     @elseif($row['ready'])
                         You have everything you need. ✓
                     @else
-                        You still need: <strong class="font-semibold">{{ $row['missing']->pluck('name')->implode(', ') }}</strong>
+                        You still need: <strong class="font-semibold">{{ $row['missingText'] }}</strong>
                     @endif
                 </div>
 
-                @if($row['needed']->isNotEmpty())
+                @if($row['checklist']->isNotEmpty())
                     <div class="mt-4 flex flex-wrap gap-1.5">
-                        @foreach($row['needed'] as $costume)
-                            <span class="ui-chip {{ in_array($costume->id, $missingIds, true) ? 'ui-chip-late' : 'ui-chip-good' }}">
-                                {{ in_array($costume->id, $missingIds, true) ? '○' : '✓' }} {{ $costume->name }}
+                        @foreach($row['checklist'] as $c)
+                            @php $done = $c['held'] >= $c['required']; @endphp
+                            <span class="ui-chip {{ $done ? 'ui-chip-good' : 'ui-chip-late' }}">
+                                {{ $done ? '✓' : '○' }} {{ $c['costume']->name }}@if($c['required'] > 1) {{ $c['held'] }}/{{ $c['required'] }}@endif @if($c['extra'])· extra @endif
                             </span>
                         @endforeach
                     </div>

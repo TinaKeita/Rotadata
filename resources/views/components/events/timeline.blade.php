@@ -185,7 +185,8 @@
                                             <div class="mb-1 flex items-center justify-between text-xs">
                                                 <span class="font-medium text-ink-muted">
                                                     {{ $row['costume']->name }}
-                                                    @if($row['costume']->pivot->note) <span class="text-ink-soft">· {{ $row['costume']->pivot->note }}</span> @endif
+                                                    @if($row['costume']->pivot?->note) <span class="text-ink-soft">· {{ $row['costume']->pivot->note }}</span> @endif
+                                                    @if($row['extra_only']) <span class="text-ink-soft">· extra only</span> @endif
                                                 </span>
                                                 <span class="font-mono text-ink-soft">{{ $row['assigned'] }}/{{ $row['target'] }} ready</span>
                                             </div>
@@ -209,11 +210,11 @@
                                 @elseif($mine['no_set'])
                                     <p class="ui-alert ui-alert-warn">Your teacher hasn't put you in a set yet, so it isn't clear which costumes you need.</p>
                                 @else
-                                    @php $missingIds = $mine['missing']->pluck('id')->all(); @endphp
                                     <div class="flex flex-wrap gap-1.5">
-                                        @foreach($mine['needed'] as $costume)
-                                            <span class="ui-chip {{ in_array($costume->id, $missingIds, true) ? 'ui-chip-late' : 'ui-chip-good' }}">
-                                                {{ in_array($costume->id, $missingIds, true) ? '○' : '✓' }} {{ $costume->name }}@if($costume->pivot->note) · {{ $costume->pivot->note }} @endif
+                                        @foreach($mine['checklist'] as $c)
+                                            @php $done = $c['held'] >= $c['required']; @endphp
+                                            <span class="ui-chip {{ $done ? 'ui-chip-good' : 'ui-chip-late' }}">
+                                                {{ $done ? '✓' : '○' }} {{ $c['costume']->name }}@if($c['required'] > 1) {{ $c['held'] }}/{{ $c['required'] }}@endif @if($c['extra'])· extra @endif @if($c['costume']->pivot?->note)· {{ $c['costume']->pivot->note }} @endif
                                             </span>
                                         @endforeach
                                     </div>
