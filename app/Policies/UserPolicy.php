@@ -20,11 +20,14 @@ class UserPolicy
             && $admin->sharesGroupWithMember($member);
     }
 
-    // skolotājs drīkst atjaunot tikai savas grupas dēļ deaktivizētu studentu
+    // skolotājs drīkst atjaunot studentu, kurš jebkad ir bijis kādā no viņa grupām –
+    // nevis tikai to, kuras dēļ konts tika deaktivizēts (students var būt bijis vairākās grupās)
     public function restore(User $admin, User $member): bool
     {
-        return $member->deactivated_with_group_id !== null
-            && $admin->adminGroups()->whereKey($member->deactivated_with_group_id)->exists();
+        return $member->trashed()
+            && $admin->adminGroups()
+                ->whereHas('members', fn ($query) => $query->withTrashed()->whereKey($member->id))
+                ->exists();
     }
 
     // tas pats nosacījums attiecas uz neatgriezenisku iztīrīšanu

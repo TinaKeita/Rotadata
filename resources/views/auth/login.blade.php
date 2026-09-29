@@ -1,76 +1,58 @@
-<x-guest-layout>
-    <div class="mb-4">
-        <a href="{{ url('/') }}" class="inline-flex items-center gap-1.5 text-sm font-medium text-brand-secondary dark:text-brand-light hover:text-brand-accent dark:hover:text-white transition">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
-            </svg>
-            Back to homepage
-        </a>
+<x-auth-layout>
+    <div class="mb-8 text-center">
+        <p class="mb-3 font-mono text-xs uppercase tracking-[0.1em] text-brand">Welcome back</p>
+        <h1 class="mb-2 font-display text-[36px] font-normal leading-[1.05] tracking-[-0.02em]">Log in</h1>
+        <p class="text-pretty text-[15.5px] text-ink-muted">Sign in to manage groups and costume inventory.</p>
     </div>
 
-    <div class="mb-6 text-center">
-        <p class="text-xs font-semibold uppercase tracking-[0.16em] text-brand-primary dark:text-brand-secondary">Rotadata</p>
-        <h1 class="mt-2 text-2xl font-semibold text-brand-accent dark:text-brand-light">Welcome Back</h1>
-        <p class="mt-2 text-sm text-gray-600 dark:text-gray-300">Sign in to manage groups and costume inventory.</p>
-    </div>
-
-    <x-auth-session-status class="mb-4 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-emerald-700 dark:border-emerald-500/40 dark:bg-emerald-900/20 dark:text-emerald-300" :status="session('status')" />
+    <x-auth-session-status class="mb-5 rounded-lg border border-line bg-brand-tint px-3.5 py-2.5 text-brand" :status="session('status')" />
 
     <form method="POST" action="{{ route('login') }}" class="space-y-5">
         @csrf
 
         <div>
-            <x-input-label for="email" :value="__('Email')" />
-            <x-text-input id="email" class="mt-1.5" type="email" name="email" :value="old('email', request('email'))" required autofocus autocomplete="username" />
+            <label for="email" class="auth-label">Email</label>
+            <input id="email" class="auth-input" type="email" name="email" value="{{ old('email', request('email')) }}" required autofocus autocomplete="username">
             <x-input-error :messages="$errors->get('email')" class="mt-2" />
         </div>
 
         <div>
-            <x-input-label for="password" :value="__('Password')" />
-
-            <x-text-input id="password" class="mt-1.5"
-                            type="password"
-                            name="password"
-                            required autocomplete="current-password" />
-
+            <label for="password" class="auth-label">Password</label>
+            <input id="password" class="auth-input" type="password" name="password" required autocomplete="current-password">
             <x-input-error :messages="$errors->get('password')" class="mt-2" />
         </div>
 
-        <div class="flex items-center justify-between gap-3">
+        <div class="flex flex-wrap items-center justify-between gap-3">
             <label for="remember_me" class="inline-flex items-center">
-                <input id="remember_me" type="checkbox" class="rounded border-gray-300 text-brand-primary shadow-sm focus:ring-brand-secondary/60 dark:border-gray-700 dark:bg-gray-900 dark:text-brand-secondary dark:focus:ring-brand-secondary/40" name="remember">
-                <span class="ms-2 text-sm text-gray-600 dark:text-gray-300">{{ __('Remember me') }}</span>
+                <input id="remember_me" type="checkbox" name="remember" class="rounded border-line-strong bg-paper text-brand focus:ring-brand/30">
+                <span class="ms-2 text-sm text-ink-muted">Remember me</span>
             </label>
 
             @if (Route::has('password.request'))
-                <a class="text-sm font-medium text-brand-accent hover:text-brand-primary focus:outline-none focus:ring-2 focus:ring-brand-secondary/50 dark:text-brand-light dark:hover:text-brand-secondary" href="{{ route('password.request') }}">
-                    {{ __('Forgot your password?') }}
-                </a>
+                <a class="auth-link text-sm" href="{{ route('password.request') }}">Forgot your password?</a>
             @endif
         </div>
 
-        {{-- studentiem šeit paroli neatiestatīt – tas jālūdz skolotājam --}}
-        <p class="text-xs text-gray-500 dark:text-gray-400">Students: ask your teacher to reset your password instead.</p>
-
         <div class="pt-1">
-            <x-primary-button class="w-full justify-center">
-                {{ __('Log in') }}
-            </x-primary-button>
+            <button type="submit" class="auth-button">Log in</button>
         </div>
+
+        {{-- studentiem šeit paroli neatiestatīt – tas jālūdz skolotājam --}}
+        <p class="text-center font-mono text-[11.5px] text-ink-soft">Students: ask your teacher to reset your password.</p>
     </form>
 
     @if (session('trashed_login_email'))
         {{-- parole sakrita ar dzēstu kontu – piedāvā to atjaunot --}}
-        <div class="mt-5 rounded-lg border border-amber-300 bg-amber-50 p-4 text-sm text-amber-800 dark:border-amber-500/40 dark:bg-amber-900/20 dark:text-amber-300">
+        <div class="mt-6 rounded-lg border border-amber-300 bg-amber-50 p-4 text-sm text-amber-800 dark:border-amber-500/40 dark:bg-amber-900/20 dark:text-amber-300">
             <p>Enter your password once more to restore this account and sign in.</p>
             <form method="POST" action="{{ route('login.restore') }}" class="mt-3 flex flex-wrap items-end gap-3">
                 @csrf
                 <input type="hidden" name="email" value="{{ session('trashed_login_email') }}">
                 <div class="min-w-0 flex-1">
-                    <x-input-label for="restore_password" value="Password" class="sr-only" />
-                    <x-text-input id="restore_password" class="mt-1 w-full" type="password" name="password" required autocomplete="current-password" />
+                    <label for="restore_password" class="sr-only">Password</label>
+                    <input id="restore_password" class="auth-input" type="password" name="password" required autocomplete="current-password">
                 </div>
-                <button type="submit" class="inline-flex items-center rounded-lg border border-brand-primary/20 bg-brand-primary px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-brand-accent focus:outline-none focus:ring-2 focus:ring-brand-secondary/50">
+                <button type="submit" class="rounded-full bg-ink px-5 py-2.5 text-sm font-medium text-paper hover:bg-brand">
                     Restore account
                 </button>
             </form>
@@ -79,11 +61,9 @@
 
     @if (Route::has('register'))
         {{-- jauns skolotājs izveido savu kontu un grupu --}}
-        <p class="mt-6 border-t border-gray-200 pt-5 text-center text-sm text-gray-600 dark:border-gray-700 dark:text-gray-300">
+        <p class="mt-8 border-t border-line pt-6 text-center text-sm text-ink-muted">
             New here?
-            <a href="{{ route('register') }}" class="font-semibold text-brand-accent hover:text-brand-primary dark:text-brand-light dark:hover:text-brand-secondary">
-                Create a teacher account
-            </a>
+            <a href="{{ route('register') }}" class="auth-link">Create a teacher account</a>
         </p>
     @endif
 
@@ -104,4 +84,4 @@
             history.replaceState(null, '', location.pathname + location.search);
         })();
     </script>
-</x-guest-layout>
+</x-auth-layout>

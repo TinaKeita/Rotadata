@@ -231,9 +231,12 @@ class MemberController extends Controller
             ? $adminGroup->members()->with('roles')->withCount('memberGroups')->get()
             : collect();
 
-        // nesen izņemti dalībnieki (vienīgā grupa), kurus vēl var atjaunot
+        // nesen izņemti dalībnieki, kuri jebkad bijuši šajā grupā – ne tikai tie, kam
+        // deactivated_with_group_id sakrīt (students var būt deaktivizēts citas grupas dēļ)
         $trashedMembers = $adminGroup
-            ? User::onlyTrashed()->where('deactivated_with_group_id', $adminGroup->id)->get()
+            ? User::onlyTrashed()
+                ->whereHas('memberGroups', fn ($query) => $query->whereKey($adminGroup->id))
+                ->get()
             : collect();
 
         return view('admin.members.index', compact('members', 'trashedMembers'));

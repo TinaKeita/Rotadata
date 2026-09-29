@@ -85,17 +85,22 @@ class Group extends Model
 
     /**
      * Atjauno grupu un ar to deaktivizētos dalībniekus. Atgriež atjaunotos dalībniekus.
+     *
+     * Dalībnieku meklē pēc group_user saraksta (nevis pēc deactivated_with_group_id),
+     * jo tas var atjaunot arī tad, ja students tika deaktivizēts citas grupas dēļ,
+     * kamēr šī grupa bija tikai izņemta, nevis vienīgā, ko students zaudēja.
      */
     public function restoreWithMembers(): Collection
     {
         $this->restore();
 
         $reactivated = User::onlyTrashed()
-            ->where('deactivated_with_group_id', $this->id)
+            ->whereHas('memberGroups', fn ($query) => $query->whereKey($this->id))
             ->get();
 
-        User::onlyTrashed()->where('deactivated_with_group_id', $this->id)->restore();
-        User::where('deactivated_with_group_id', $this->id)->update(['deactivated_with_group_id' => null]);
+        $ids = $reactivated->pluck('id');
+        User::whereIn('id', $ids)->restore();
+        User::whereIn('id', $ids)->update(['deactivated_with_group_id' => null]);
 
         return $reactivated;
     }

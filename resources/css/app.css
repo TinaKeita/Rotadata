@@ -2,6 +2,37 @@
   html {
     color-scheme: light;
   }
+
+  /* landing lapas "page chrome" toņi kā RGB trijnieki (bez rgb(), lai Tailwind var pievienot
+     caurspīdīgumu ar rgb(var(--x) / alpha)). Gaišās vērtības ir noklusējuma dizains;
+     .dark pārraksta tās, kad main pārslēdz to pašu .dark klasi, ko lieto pārējā lietotne. */
+  :root {
+    --color-paper: 251 250 248;
+    --color-surface: 255 255 255;
+    --color-surface-sunk: 245 243 239;
+    --color-ink: 27 27 25;
+    --color-ink-muted: 74 74 69;
+    --color-ink-soft: 110 106 97;
+    --color-line: 231 228 222;
+    --color-line-strong: 217 213 205;
+    --color-line-soft: 244 242 238;
+    --color-brand: 47 93 70;
+    --color-brand-tint: 237 241 236;
+  }
+
+  .dark {
+    --color-paper: 26 29 23;
+    --color-surface: 33 36 29;
+    --color-surface-sunk: 15 17 12;
+    --color-ink: 243 241 236;
+    --color-ink-muted: 199 194 180;
+    --color-ink-soft: 143 138 124;
+    --color-line: 52 55 43;
+    --color-line-strong: 69 73 55;
+    --color-line-soft: 38 41 32;
+    --color-brand: 111 190 147;
+    --color-brand-tint: 30 42 33;
+  }
 }
 .toggle-switch {
   position: relative;
@@ -110,6 +141,23 @@
     background-image:
       radial-gradient(1000px 450px at 12% 0%, rgba(116, 136, 115, 0.18), transparent),
       radial-gradient(700px 300px at 92% 0%, rgba(209, 169, 128, 0.22), transparent);
+  }
+
+  /* login/register formu elementi landing lapas žetonos (skat. x-auth-layout) */
+  .auth-label {
+    @apply mb-1.5 block text-sm font-medium text-ink;
+  }
+
+  .auth-input {
+    @apply w-full rounded-lg border-line-strong bg-paper px-3.5 py-2.5 text-[15px] text-ink placeholder:text-ink-soft focus:border-brand focus:ring-2 focus:ring-brand/20;
+  }
+
+  .auth-button {
+    @apply inline-flex w-full items-center justify-center rounded-full bg-ink px-[26px] py-[13px] text-[15.5px] font-medium text-paper transition-colors hover:bg-brand focus:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-surface;
+  }
+
+  .auth-link {
+    @apply font-medium text-brand underline-offset-4 hover:underline;
   }
 
   .guest-card {

@@ -1,64 +1,51 @@
-<x-guest-layout>
-    <div class="mb-4">
-        <a href="{{ route('login') }}" class="inline-flex items-center gap-1.5 text-sm font-medium text-brand-secondary dark:text-brand-light hover:text-brand-accent dark:hover:text-white transition">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
-            </svg>
-            Back to login
-        </a>
-    </div>
-
-    <div class="mb-6 text-center">
-        <p class="text-xs font-semibold uppercase tracking-[0.16em] text-brand-primary dark:text-brand-secondary">Rotadata</p>
-        <h1 class="mt-2 text-2xl font-semibold text-brand-accent dark:text-brand-light">Create your account</h1>
-        <p class="mt-2 text-sm text-gray-600 dark:text-gray-300">Set up your teacher account and your first group.</p>
+<x-auth-layout :back-href="route('login')" back-label="Log in">
+    <div class="mb-8 text-center">
+        <p class="mb-3 font-mono text-xs uppercase tracking-[0.1em] text-brand">Teacher account</p>
+        <h1 class="mb-2 font-display text-[36px] font-normal leading-[1.05] tracking-[-0.02em]">Start with one group.</h1>
+        <p class="text-pretty text-[15.5px] text-ink-muted">Set up your teacher account and your first group.</p>
     </div>
 
     <form method="POST" action="{{ route('register') }}" class="space-y-5">
         @csrf
 
         <div>
-            <x-input-label for="name" :value="__('Your name')" />
-            <x-text-input id="name" class="mt-1.5" type="text" name="name" :value="old('name')" required autofocus autocomplete="name" />
+            <label for="name" class="auth-label">Your name</label>
+            <input id="name" class="auth-input" type="text" name="name" value="{{ old('name') }}" required autofocus autocomplete="name">
             <x-input-error :messages="$errors->get('name')" class="mt-2" />
         </div>
 
         <div>
-            <x-input-label for="email" :value="__('Email')" />
-            <x-text-input id="email" class="mt-1.5" type="email" name="email" :value="old('email')" required autocomplete="username" />
+            <label for="email" class="auth-label">Email</label>
+            <input id="email" class="auth-input" type="email" name="email" value="{{ old('email') }}" required autocomplete="username">
             <x-input-error :messages="$errors->get('email')" class="mt-2" />
         </div>
 
         <div>
-            <x-input-label for="group_name" :value="__('Group name')" />
-            <x-text-input id="group_name" class="mt-1.5" type="text" name="group_name" :value="old('group_name')" required autocomplete="off" />
-            <p class="mt-1.5 text-xs text-gray-500 dark:text-gray-400">Your ensemble or class, e.g. “Drama Club”. You can rename it later.</p>
+            <label for="group_name" class="auth-label">Group name</label>
+            <input id="group_name" class="auth-input" type="text" name="group_name" value="{{ old('group_name') }}" required autocomplete="off">
+            <p class="mt-1.5 text-[13px] text-ink-soft">Your ensemble or class, e.g. “Drama Club”. You can rename it later.</p>
             <x-input-error :messages="$errors->get('group_name')" class="mt-2" />
         </div>
 
         <div>
-            <x-input-label for="password" :value="__('Password')" />
-            <x-text-input id="password" class="mt-1.5" type="password" name="password" required autocomplete="new-password" />
+            <label for="password" class="auth-label">Password</label>
+            <input id="password" class="auth-input" type="password" name="password" required autocomplete="new-password">
             <x-input-error :messages="$errors->get('password')" class="mt-2" />
         </div>
 
         <div>
-            <x-input-label for="password_confirmation" :value="__('Confirm password')" />
-            <x-text-input id="password_confirmation" class="mt-1.5" type="password" name="password_confirmation" required autocomplete="new-password" />
+            <label for="password_confirmation" class="auth-label">Confirm password</label>
+            <input id="password_confirmation" class="auth-input" type="password" name="password_confirmation" required autocomplete="new-password">
             <x-input-error :messages="$errors->get('password_confirmation')" class="mt-2" />
         </div>
 
         <div class="pt-1">
-            <x-primary-button class="w-full justify-center">
-                {{ __('Create account') }}
-            </x-primary-button>
+            <button type="submit" class="auth-button">Create account</button>
         </div>
     </form>
 
-    <p class="mt-6 border-t border-gray-200 pt-5 text-center text-sm text-gray-600 dark:border-gray-700 dark:text-gray-300">
+    <p class="mt-8 border-t border-line pt-6 text-center text-sm text-ink-muted">
         Already have an account?
-        <a href="{{ route('login') }}" class="font-semibold text-brand-accent hover:text-brand-primary dark:text-brand-light dark:hover:text-brand-secondary">
-            Sign in
-        </a>
+        <a href="{{ route('login') }}" class="auth-link">Log in</a>
     </p>
-</x-guest-layout>
+</x-auth-layout>

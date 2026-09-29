@@ -20,9 +20,11 @@
     ];
 
     // lietotnē vienībai ir tikai divi stāvokļi: izsniegta ("Out") vai brīva ("Available")
+    // šie divi paliek ar saviem fiksētajiem toņiem abiem režīmiem (nevis kopīgajiem lapas žetoniem),
+    // jo tā ir maketa "ekrānuzņēmuma" statusa uzlīme, nevis pati lapa
     $badges = [
-        'Out' => 'bg-[#E8EFE9] text-brand',
-        'Available' => 'bg-[#F0EEE8] text-ink-soft',
+        'Out' => 'bg-[#E8EFE9] text-brand dark:bg-[#1d2b22] dark:text-[#8fd6ac]',
+        'Available' => 'bg-[#F0EEE8] text-ink-soft dark:bg-[#2a2823] dark:text-[#a39d8f]',
     ];
 
     $rows = [
@@ -74,7 +76,13 @@
     ];
 @endphp
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="scroll-smooth motion-reduce:scroll-auto">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="scroll-smooth motion-reduce:scroll-auto"
+    x-data="{ darkMode: localStorage.getItem('darkMode') === 'true' }"
+    x-init="$watch('darkMode', val => {
+        localStorage.setItem('darkMode', val);
+        document.documentElement.classList.toggle('dark', val);
+    })"
+    :class="{ 'dark': darkMode }"
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -91,25 +99,34 @@
 </head>
 <body class="overflow-x-clip bg-paper font-body text-base leading-[1.55] text-ink antialiased">
 
+    {{-- tumšā režīma pārslēgs, tāpat kā login/register lapās; tas pats localStorage atslēgas vārds,
+         tāpēc izvēle saglabājas arī pāriejot uz tām --}}
+    <div class="toggle-switch fixed right-4 top-4 z-40 sm:right-6 sm:top-6">
+        <label class="switch-label">
+            <input type="checkbox" class="checkbox" x-model="darkMode" aria-label="Toggle dark mode">
+            <span class="slider"></span>
+        </label>
+    </div>
+
     {{-- peldošā navigācijas kapsula; zem 768px saites paslēptas aiz "Menu" pogas --}}
     <header class="pointer-events-none sticky top-0 z-30 flex justify-center px-4 py-3.5"
         x-data="{ open: false }" @keydown.escape.window="open = false">
         <nav aria-label="Main"
-            class="pointer-events-auto relative flex max-w-full items-center gap-2 rounded-full border border-[#E2DED6] bg-paper/80 py-[7px] pl-4 pr-[7px] shadow-nav backdrop-blur-[14px]">
+            class="pointer-events-auto relative flex max-w-full items-center gap-2 rounded-full border border-line bg-paper/80 py-[7px] pl-4 pr-[7px] shadow-nav backdrop-blur-[14px]">
             <a href="#top" class="flex shrink-0 items-center gap-2 text-[15px] font-semibold tracking-[-0.01em] hover:text-brand">
                 <img src="{{ asset('favicon.svg') }}" alt="" width="22" height="22" class="block h-[22px] w-[22px]">
                 Rotadata
             </a>
-            <span class="mx-1 hidden h-[18px] w-px shrink-0 bg-[#E2DED6] md:block"></span>
+            <span class="mx-1 hidden h-[18px] w-px shrink-0 bg-line md:block"></span>
 
             <div class="hidden min-w-0 gap-0.5 md:flex">
                 @foreach ($navLinks as [$label, $href])
-                    <a href="{{ $href }}" class="whitespace-nowrap rounded-full px-3 py-1.5 text-sm font-medium text-ink-muted hover:bg-[#EFECE6] hover:text-ink">{{ $label }}</a>
+                    <a href="{{ $href }}" class="whitespace-nowrap rounded-full px-3 py-1.5 text-sm font-medium text-ink-muted hover:bg-surface-sunk hover:text-ink">{{ $label }}</a>
                 @endforeach
             </div>
 
             <button type="button" @click="open = !open" :aria-expanded="open.toString()" aria-controls="landing-menu"
-                class="shrink-0 rounded-full px-3 py-1.5 text-sm font-medium text-ink-muted hover:bg-[#EFECE6] hover:text-ink md:hidden">
+                class="shrink-0 rounded-full px-3 py-1.5 text-sm font-medium text-ink-muted hover:bg-surface-sunk hover:text-ink md:hidden">
                 Menu
             </button>
 
@@ -118,9 +135,9 @@
             </a>
 
             <div id="landing-menu" x-show="open" @click.outside="open = false" style="display: none"
-                class="absolute inset-x-0 top-full mt-2 flex flex-col rounded-2xl border border-[#E2DED6] bg-paper p-2 shadow-nav md:hidden">
+                class="absolute inset-x-0 top-full mt-2 flex flex-col rounded-2xl border border-line bg-paper p-2 shadow-nav md:hidden">
                 @foreach ($navLinks as [$label, $href])
-                    <a href="{{ $href }}" @click="open = false" class="rounded-xl px-3 py-2.5 text-sm font-medium text-ink-muted hover:bg-[#EFECE6] hover:text-ink">{{ $label }}</a>
+                    <a href="{{ $href }}" @click="open = false" class="rounded-xl px-3 py-2.5 text-sm font-medium text-ink-muted hover:bg-surface-sunk hover:text-ink">{{ $label }}</a>
                 @endforeach
             </div>
         </nav>
@@ -145,9 +162,9 @@
             <div data-reveal="" data-reveal-delay="220" class="overflow-hidden rounded-block border border-line bg-surface shadow-hero">
                 <div class="flex items-center gap-2.5 border-b border-line bg-paper px-[18px] py-3">
                     <span class="flex gap-[5px]" aria-hidden="true">
-                        <span class="block h-[9px] w-[9px] rounded-full bg-[#E2DED6]"></span>
-                        <span class="block h-[9px] w-[9px] rounded-full bg-[#E2DED6]"></span>
-                        <span class="block h-[9px] w-[9px] rounded-full bg-[#E2DED6]"></span>
+                        <span class="block h-[9px] w-[9px] rounded-full bg-line"></span>
+                        <span class="block h-[9px] w-[9px] rounded-full bg-line"></span>
+                        <span class="block h-[9px] w-[9px] rounded-full bg-line"></span>
                     </span>
                     <span class="ml-2 font-mono text-[11.5px] text-ink-soft">Folkloras kopa 4B</span>
                     <span class="ml-auto font-mono text-[11.5px] text-brand">24 / 86 out</span>
@@ -248,7 +265,7 @@
             <figure data-reveal="" class="grid grid-cols-[repeat(auto-fit,minmax(min(260px,100%),1fr))] items-center gap-8 border-y border-line py-11">
                 <blockquote class="min-w-0 text-pretty font-display text-[length:clamp(21px,2.4vw,28px)] leading-[1.35] tracking-[-0.01em] sm:col-span-2">“Before, the costume list lived in my head and three notebooks. Now a student can tell me what they have without me having to ask.”</blockquote>
                 <figcaption class="flex min-w-0 items-center gap-3">
-                    <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#EDEAE3] text-[13px] font-semibold text-ink-muted">IB</span>
+                    <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-surface-sunk text-[13px] font-semibold text-ink-muted">IB</span>
                     <span class="min-w-0">
                         <span class="block text-[15px] font-medium">Ilze Bērziņa</span>
                         <span class="block text-[13.5px] text-ink-soft">Folklore group leader</span>

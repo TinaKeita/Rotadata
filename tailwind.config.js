@@ -1,6 +1,17 @@
 import defaultTheme from 'tailwindcss/defaultTheme';
 import forms from '@tailwindcss/forms';
 
+// ļauj krāsu definēt kā CSS mainīgo (piem. "251 250 248"), lai tā pati Tailwind klase
+// (piem. bg-paper) automātiski pielāgotos tumšajam režīmam, kad main pārslēdz .dark uz <html>
+function withOpacityValue(variable) {
+    return ({ opacityValue }) => {
+        if (opacityValue === undefined) {
+            return `rgb(var(${variable}))`;
+        }
+        return `rgb(var(${variable}) / ${opacityValue})`;
+    };
+}
+
 /** @type {import('tailwindcss').Config} */
 export default {
     darkMode: 'class',
@@ -14,18 +25,32 @@ export default {
     theme: {
         extend: {
             colors: {
-                // jaunie dizaina žetoni landing lapas pārbūvei 
-                paper: '#FBFAF8',
-                surface: { DEFAULT: '#FFFFFF', sunk: '#F5F3EF' },
-                ink: { DEFAULT: '#1B1B19', muted: '#4A4A45', soft: '#6E6A61' }, // soft – gaišākā krāsa, kas drīkst nest tekstu
-                line: { DEFAULT: '#E7E4DE', strong: '#D9D5CD', soft: '#F4F2EE' },
+                // jaunie dizaina žetoni landing lapas pārbūvei – "page chrome" toņi (fons, virsma, teksts,
+                // līnijas, akcents) ir CSS mainīgie, lai landing lapa dabūtu tumšo režīmu bez katras
+                // klases pārrakstīšanas; tumšās vērtības skat. resources/css/app.css (:root un .dark)
+                paper: withOpacityValue('--color-paper'),
+                surface: { DEFAULT: withOpacityValue('--color-surface'), sunk: withOpacityValue('--color-surface-sunk') },
+                ink: {
+                    DEFAULT: withOpacityValue('--color-ink'),
+                    muted: withOpacityValue('--color-ink-muted'),
+                    soft: withOpacityValue('--color-ink-soft'), // soft – gaišākā krāsa, kas drīkst nest tekstu
+                },
+                line: {
+                    DEFAULT: withOpacityValue('--color-line'),
+                    strong: withOpacityValue('--color-line-strong'),
+                    soft: withOpacityValue('--color-line-soft'),
+                },
                 sand: '#D1A980', // tikai akcents, nekad teksts uz balta fona
                 rust: { DEFAULT: '#8A4B33', tint: '#F6E9E4' },
 
                 brand: {
-                    DEFAULT: '#2F5D46',
+                    // DEFAULT arī ir CSS mainīgais – gaišajā režīmā tumši zaļš teksta akcents, tumšajā
+                    // režīmā spilgtāks, lai paliktu salasāms uz tumšā fona
+                    DEFAULT: withOpacityValue('--color-brand'),
+                    tint: withOpacityValue('--color-brand-tint'),
+                    // dark paliek fiksēts: to lieto tikai CTA blokā, kas ar savu tumšo fonu
+                    // ir apzināti "pretējs" pārējai lapai neatkarīgi no gaišā/tumšā režīma
                     dark: '#24301F',
-                    tint: '#EDF1EC',
                     // vecie nosaukumi paliek, lai pārējā lietotne nesalūst
                     primary: '#748873',
                     secondary: '#D1A980',
