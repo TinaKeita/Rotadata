@@ -264,4 +264,47 @@ class ConcertReadinessTest extends TestCase
 
         Mail::assertSent(MemberRemovedMail::class, fn ($mail) => $mail->hasTo($this->students['Anna']->email) && $mail->restoreUntil !== null);
     }
+
+    // skolotājs izsniedz konkrētu vienību no tērpa lapas
+    public function test_teacher_can_assign_an_item_to_a_student(): void
+    {
+        $item = $this->costumes['Veste']->items()->orderBy('code')->first();
+
+        $this->actingAs($this->teacher)
+            ->post(route('admin.costumes.items.assign', $item), ['user_id' => $this->students['Roberts']->id])
+            ->assertSessionHas('success');
+
+        $this->assertSame($this->students['Roberts']->id, $item->fresh()->assigned_to);
+        $this->assertSame($this->teacher->id, $item->assignments()->first()->assigned_by);
+    }
+
+    public function test_teacher_cannot_assign_to_someone_outside_the_group(): void
+    {
+        $outsider = User::factory()->create();
+        $item = $this->costumes['Veste']->items()->first();
+
+        $this->actingAs($this->teacher)
+            ->post(route('admin.costumes.items.assign', $item), ['user_id' => $outsider->id])
+            ->assertStatus(422);
+
+        $this->assertNull($item->fresh()->assigned_to);
+    }
+
+    // skolotājs izsniedz no studenta lapas – tiek dota nākamā brīvā vienība, kad brīvo nav, rāda kļūdu
+    public function test_teacher_hands_out_next_free_item_from_member_page(): void
+    {
+        $this->give('Marta', 'Vainags'); // VAI-01 jau aizņemts
+
+        $this->actingAs($this->teacher)
+            ->post(route('admin.members.hand-out', $this->students['Anna']), ['costume_id' => $this->costumes['Vainags']->id])
+            ->assertSessionHas('success');
+
+        $this->assertSame('VAI-02', $this->students['Anna']->assignedCostumeItems()->first()->code);
+
+        $this->give('Roberts', 'Vainags'); // pēdējā brīvā
+
+        $this->actingAs($this->teacher)
+            ->post(route('admin.members.hand-out', $this->students['Roberts']), ['costume_id' => $this->costumes['Vainags']->id])
+            ->assertSessionHas('error');
+    }
 }

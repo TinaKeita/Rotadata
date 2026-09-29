@@ -147,7 +147,7 @@
                                                 @break
                                             @case('missing')
                                                 <span class="rounded-full px-2.5 py-0.5 font-mono text-[12px] {{ $softChip }}">{{ $whenLabel($row['event']) }}</span>
-                                                <a href="{{ route('admin.members.show', $row['student']) }}" class="{{ $pill }}">Open</a>
+                                                <a href="{{ route('admin.members.show', $row['student']) }}#hand-out" class="{{ $pill }}">Hand out</a>
                                                 @break
                                             @case('invite')
                                                 <span class="rounded-full px-2.5 py-0.5 font-mono text-[12px] {{ $lateChip }}">Invite</span>

@@ -124,6 +124,29 @@
         $pastItems = $user->costumeAssignments->whereNotNull('returned_at');
     @endphp
 
+    {{-- skolotājs izsniedz tērpu pats (bez QR skenēšanas): tiek dota nākamā brīvā vienība --}}
+    <div id="hand-out" class="ui-card mt-5 max-w-2xl scroll-mt-24">
+        <h3 class="ui-eyebrow">Hand out a costume</h3>
+        @if($costumes->isEmpty())
+            <p class="mt-2 text-sm text-ink-soft">Your group has no costumes yet.</p>
+        @else
+            <form method="POST" action="{{ route('admin.members.hand-out', $user) }}" class="mt-3 flex flex-wrap items-center gap-2">
+                @csrf
+                <select name="costume_id" required aria-label="Costume to hand out"
+                    class="min-w-0 flex-1 rounded-lg border-line-strong bg-paper py-2 text-sm text-ink focus:border-brand focus:ring-brand/20">
+                    <option value="" disabled selected>Choose a costume…</option>
+                    @foreach($costumes as $costume)
+                        <option value="{{ $costume->id }}" @disabled($costume->free_count === 0)>
+                            {{ $costume->name }} · {{ $costume->free_count === 0 ? 'none free' : $costume->free_count.' free' }}
+                        </option>
+                    @endforeach
+                </select>
+                <button type="submit" class="ui-btn">Hand out</button>
+            </form>
+            <p class="ui-help mt-2">The next free item of that costume goes to {{ $user->name }}, just like when they scan it themselves.</p>
+        @endif
+    </div>
+
     <div class="ui-card mt-5 max-w-2xl">
         <h3 class="ui-eyebrow">Currently holds ({{ $currentlyHolds->count() }})</h3>
         @if($currentlyHolds->isEmpty())
@@ -136,7 +159,16 @@
                             {{ $log->item?->code ?? '—' }}
                             <span class="text-ink-soft">· {{ $log->item?->costume?->name ?? 'deleted costume' }}</span>
                         </span>
-                        <span class="text-ink-soft">since {{ $log->assigned_at->format('d.m.Y') }}</span>
+                        <span class="flex items-center gap-3">
+                            <span class="font-mono text-[12px] text-ink-soft">since {{ $log->assigned_at->format('d.m.Y') }}</span>
+                            {{-- skolotājs paņem vienību atpakaļ (tas pats, kas tērpa lapā) --}}
+                            @if($log->item)
+                                <form method="POST" action="{{ route('admin.costumes.items.unassign', $log->item) }}">
+                                    @csrf
+                                    <button type="submit" class="ui-btn-ghost ui-btn-sm">Take back</button>
+                                </form>
+                            @endif
+                        </span>
                     </li>
                 @endforeach
             </ul>

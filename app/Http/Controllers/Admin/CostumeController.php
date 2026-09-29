@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Exceptions\CostumeItemUnavailableException;
 use App\Models\Costume;
 use App\Models\CostumeItem;
 use Illuminate\Http\Request;
@@ -135,7 +136,10 @@ class CostumeController extends Controller
             ->with(['user', 'assignments.assignedBy', 'assignments.returnedBy'])
             ->get();
 
-        return view('admin.costumes.show', compact('costume', 'items'));
+        // studenti, kuriem skolotājs var izsniegt brīvu vienību
+        $members = $costume->group->members()->orderBy('name')->get();
+
+        return view('admin.costumes.show', compact('costume', 'items', 'members'));
     }
 
     // drukājama QR kodu lapa – visas tērpa vienības vienā A4 režģī
@@ -178,6 +182,30 @@ class CostumeController extends Controller
         $item->release(auth()->user(), 'admin');
 
         return back()->with('success', "Item {$item->code} unassigned from the member.");
+    }
+
+    // skolotājs izsniedz brīvu vienību izvēlētam studentam (piem. mēģinājumā, bez QR skenēšanas)
+    public function assign(Request $request, CostumeItem $item)
+    {
+        $this->authorize('assignAsAdmin', $item);
+
+        $group = $item->costume->group;
+
+        $validated = $request->validate([
+            'user_id' => ['required', 'integer'],
+        ]);
+
+        // izsniegt drīkst tikai šīs grupas dalībniekam
+        $student = $group->members()->whereKey($validated['user_id'])->first();
+        abort_if(is_null($student), 422, 'That student is not in this group.');
+
+        try {
+            $item->assignTo($student, auth()->user());
+        } catch (CostumeItemUnavailableException) {
+            return back()->with('error', "Item {$item->code} was just taken by someone else.");
+        }
+
+        return back()->with('success', "Item {$item->code} handed out to {$student->name}.");
     }
 
     // izveido jaunu QR kodu vienībai, ja fiziskā birka ir pazaudēta vai bojāta

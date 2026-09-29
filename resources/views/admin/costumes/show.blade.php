@@ -60,8 +60,8 @@
 
                     @if($item->assigned_to)
                         <div class="flex items-center gap-2">
-                            <span class="ui-chip ui-chip-late">
-                                Assigned to {{ $item->user->name }}
+                            <span class="ui-chip">
+                                With {{ $item->user->name }}
                             </span>
                             <form method="POST" action="{{ route('admin.costumes.items.unassign', $item) }}">
                                 @csrf
@@ -71,9 +71,23 @@
                             </form>
                         </div>
                     @else
-                        <span class="ui-chip ui-chip-good">
-                            Available
-                        </span>
+                        <div class="flex flex-wrap items-center justify-end gap-2">
+                            <span class="ui-chip ui-chip-good">Available</span>
+                            {{-- skolotājs izsniedz vienību pats, bez QR skenēšanas --}}
+                            @if($members->isNotEmpty())
+                                <form method="POST" action="{{ route('admin.costumes.items.assign', $item) }}" class="flex items-center gap-2">
+                                    @csrf
+                                    <select name="user_id" required aria-label="Student to assign {{ $item->code }} to"
+                                        class="rounded-lg border-line-strong bg-paper py-1.5 text-sm text-ink focus:border-brand focus:ring-brand/20">
+                                        <option value="" disabled selected>Assign to…</option>
+                                        @foreach($members as $member)
+                                            <option value="{{ $member->id }}">{{ $member->name }}</option>
+                                        @endforeach
+                                    </select>
+                                    <button type="submit" class="ui-btn ui-btn-sm">Assign</button>
+                                </form>
+                            @endif
+                        </div>
                     @endif
                 </div>
 
@@ -117,6 +131,10 @@
                             @foreach($item->assignments as $log)
                                 <li class="text-xs text-ink-muted">
                                     <span class="font-semibold text-ink">{{ $log->user_name }}</span>
+                                    {{-- izsniedza skolotājs, nevis students noskenēja pats --}}
+                                    @if($log->assigned_by && $log->assigned_by !== $log->user_id)
+                                        <span class="text-ink-soft">(given by {{ $log->assignedBy->name ?? 'teacher' }})</span>
+                                    @endif
                                     <span class="text-ink-soft"> · </span>
                                     {{ $log->assigned_at->format('d.m.Y') }}
                                     &rarr;

@@ -85,6 +85,9 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     // Tērpi un to vienības
     Route::post('/costumes/items/{item}/unassign', [AdminCostumeController::class, 'unassign'])
         ->name('costumes.items.unassign');
+    // skolotājs pats izsniedz brīvu vienību studentam (bez skenēšanas)
+    Route::post('/costumes/items/{item}/assign', [AdminCostumeController::class, 'assign'])
+        ->name('costumes.items.assign');
     Route::post('/costumes/items/{item}/regenerate-qr', [AdminCostumeController::class, 'regenerateQr'])
         ->name('costumes.items.regenerate-qr');
     Route::delete('/costumes/items/{item}', [AdminCostumeController::class, 'destroyItem'])
@@ -102,6 +105,8 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     // skolotājs paroli jau iedevis citādi – noņem "uzaicinājums nav piegādāts" brīdinājumu
     Route::post('/members/{member}/dismiss-invite', [AdminMemberController::class, 'dismissInvite'])
         ->name('members.dismiss-invite');
+    // skolotājs izsniedz studentam izvēlētā tērpa nākamo brīvo vienību
+    Route::post('/members/{user}/hand-out', [AdminMemberController::class, 'handOut'])->name('members.hand-out');
     // viena vai vairāku studentu tērpu komplekta maiņa
     Route::patch('/members/set', [AdminMemberController::class, 'updateSet'])->name('members.set');
     // students aizmirsis paroli – skolotājs atiestata, apstiprinot ar savu paroli

@@ -13,6 +13,12 @@ class CostumeItemPolicy
         return $user->ownsGroup($item->costume->group);
     }
 
+    // skolotājs pats izsniedz brīvu vienību studentam (bez skenēšanas) – tikai savas grupas tērpiem
+    public function assignAsAdmin(User $user, CostumeItem $item): bool
+    {
+        return $user->ownsGroup($item->costume->group);
+    }
+
     // skolotājs izveido jaunu QR kodu vienībai (kad fiziskā birka pazaudēta) – tikai savas grupas tērpiem
     public function regenerateQr(User $user, CostumeItem $item): bool
     {
