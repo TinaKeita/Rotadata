@@ -41,7 +41,8 @@ export default {
                     soft: withOpacityValue('--color-line-soft'),
                 },
                 sand: '#D1A980', // tikai akcents, nekad teksts uz balta fona
-                rust: { DEFAULT: '#8A4B33', tint: '#F6E9E4' },
+                // rust – "nokavēts"/brīdinājuma tonis; CSS mainīgais, lai tumšajā režīmā paliktu salasāms
+                rust: { DEFAULT: withOpacityValue('--color-rust'), tint: withOpacityValue('--color-rust-tint') },
 
                 brand: {
                     // DEFAULT arī ir CSS mainīgais – gaišajā režīmā tumši zaļš teksta akcents, tumšajā
@@ -67,8 +68,8 @@ export default {
             },
 
             fontFamily: {
-                // sans apzināti nemainām, kamēr Public Sans nav ielādēts (2. solis)
-                sans: ['Figtree', ...defaultTheme.fontFamily.sans],
+                // visa lietotne lieto landing lapas pamatfontu (Public Sans ielādē app, guest un auth izkārtojumi)
+                sans: ['"Public Sans"', ...defaultTheme.fontFamily.sans],
                 logo: ['Playfair Display', 'serif'],
                 // Public Sans landing lapas pamatteksts; vēlāk (pārējās lapas) to var piesaistīt pie sans
                 body: ['"Public Sans"', 'Helvetica', 'Arial', 'sans-serif'],

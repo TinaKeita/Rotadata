@@ -23,9 +23,15 @@ class Group extends Model
         return $this->belongsTo(User::class, 'admin_id');
     }
 
+    // pivot costume_set_id – studenta tērpu komplekts šajā grupā
     public function members()
     {
-        return $this->belongsToMany(User::class, 'group_user');
+        return $this->belongsToMany(User::class, 'group_user')->withPivot('costume_set_id');
+    }
+
+    public function costumeSets()
+    {
+        return $this->hasMany(CostumeSet::class)->orderBy('name');
     }
 
     public function costumes()

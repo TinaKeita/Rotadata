@@ -18,7 +18,7 @@
 
         <div>
             <label for="password" class="auth-label">Password</label>
-            <input id="password" class="auth-input" type="password" name="password" required autocomplete="current-password">
+            <x-password-input id="password" class="auth-input" name="password" required autocomplete="current-password" />
             <x-input-error :messages="$errors->get('password')" class="mt-2" />
         </div>
 
@@ -50,7 +50,7 @@
                 <input type="hidden" name="email" value="{{ session('trashed_login_email') }}">
                 <div class="min-w-0 flex-1">
                     <label for="restore_password" class="sr-only">Password</label>
-                    <input id="restore_password" class="auth-input" type="password" name="password" required autocomplete="current-password">
+                    <x-password-input id="restore_password" class="auth-input" name="password" required autocomplete="current-password" />
                 </div>
                 <button type="submit" class="rounded-full bg-ink px-5 py-2.5 text-sm font-medium text-paper hover:bg-brand">
                     Restore account

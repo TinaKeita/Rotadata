@@ -3,6 +3,8 @@
     'past' => collect(),
     'canManage' => false,
     'manageUrl' => null,
+    // true: rāda tikai uznirstošo logu (panelis zīmē savu koncerta kartīti un atver logu ar notikumu open-events)
+    'modalOnly' => false,
 ])
 
 @php
@@ -23,35 +25,42 @@
     }
 @endphp
 
-<div x-data="{ tab: 'upcoming', selected: null }" class="rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+<div x-data="{ tab: 'upcoming', selected: null }"
+    {{-- ārējs atvēršanas notikums: detail.id atver konkrētu koncertu, detail.tab – sarakstu --}}
+    x-on:open-events.window="selected = $event.detail?.id ?? null; tab = $event.detail?.tab ?? 'upcoming'; $dispatch('open-modal', 'events-all')"
+    @class(['ui-card' => ! $modalOnly])>
+    @unless($modalOnly)
     <div class="mb-4 flex items-center justify-between gap-3">
-        <h3 class="text-sm font-semibold text-gray-800 dark:text-gray-100">Concerts</h3>
+        <h3 class="ui-eyebrow">Next on the calendar</h3>
         @if($canManage && $manageUrl)
-            <a href="{{ $manageUrl }}" class="text-xs font-semibold text-brand-accent hover:underline dark:text-brand-light">
+            <a href="{{ $manageUrl }}" class="ui-link text-[13.5px]">
                 Manage concerts
             </a>
         @endif
     </div>
 
     @if($upcoming->isEmpty())
-        <p class="rounded-lg border border-dashed border-gray-300 px-4 py-8 text-center text-sm text-gray-500 dark:border-gray-600 dark:text-gray-400">
+        <p class="ui-empty">
             No upcoming concerts scheduled.
         </p>
     @else
         {{-- tuvākais koncerts – izcelts --}}
         <button type="button"
             x-on:click="selected = {{ $hero->id }}; $dispatch('open-modal', 'events-all')"
-            class="block w-full rounded-2xl border border-brand-primary/25 bg-gradient-to-r from-brand-light/50 via-white to-brand-light/25 p-5 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md dark:border-brand-light/20 dark:from-darkbrand-light/40 dark:via-gray-800 dark:to-darkbrand-light/20">
+            class="block w-full rounded-[14px] border border-line bg-paper p-5 text-left transition-colors hover:border-brand">
             <div class="min-w-0">
-                <p class="text-xs font-semibold uppercase tracking-wide text-brand-secondary dark:text-brand-light">
+                <p class="font-mono text-[11.5px] uppercase tracking-[0.1em] text-brand">
                     {{ $heroWhen }} · {{ $hero->starts_at->format('D, d.m.Y') }}
                     @if(!$canManage && $hero->group)
-                        <span class="font-normal normal-case text-gray-400">· {{ $hero->group->name }}</span>
+                        <span class="font-normal normal-case text-ink-soft">· {{ $hero->group->name }}</span>
                     @endif
                 </p>
-                <p class="mt-1 truncate text-lg font-semibold text-gray-900 dark:text-gray-100">{{ $hero->title }}</p>
+                <p class="mt-1.5 truncate font-display text-[28px] leading-tight tracking-[-0.01em] text-ink">{{ $hero->title }}</p>
+                @if(!$canManage && $hero->isAbsent(auth()->user()))
+                    <span class="ui-chip mt-2">Not performing</span>
+                @endif
                 @if($hero->location)
-                    <p class="mt-0.5 text-sm text-gray-600 dark:text-gray-300">📍 {{ $hero->location }}</p>
+                    <p class="mt-1 font-mono text-[12.5px] text-ink-soft">{{ $hero->starts_at->format('H:i') }} · {{ $hero->location }}</p>
                 @endif
             </div>
         </button>
@@ -62,14 +71,16 @@
                 @foreach($next as $ev)
                     <button type="button"
                         x-on:click="selected = {{ $ev->id }}; $dispatch('open-modal', 'events-all')"
-                        class="flex items-center justify-between gap-3 rounded-lg border border-gray-200 bg-white px-3.5 py-2.5 text-left text-sm transition hover:border-brand-primary/30 hover:bg-brand-light/20 dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-darkbrand-light/20">
-                        <span class="min-w-0 truncate font-medium text-gray-800 dark:text-gray-100">
+                        class="flex items-center justify-between gap-3 rounded-lg border border-line bg-surface px-3.5 py-2.5 text-left text-[15px] transition-colors hover:border-brand hover:text-brand">
+                        <span class="min-w-0 truncate font-medium text-ink">
                             {{ $ev->title }}
                             @if(!$canManage && $ev->group)
-                                <span class="text-xs font-normal text-gray-400">· {{ $ev->group->name }}</span>
+                                <span class="text-xs font-normal text-ink-soft">· {{ $ev->group->name }}</span>
                             @endif
                         </span>
-                        <span class="shrink-0 text-xs text-gray-500 dark:text-gray-400">{{ $ev->starts_at->format('d.m') }}</span>
+                        <span class="shrink-0 font-mono text-[12px] text-ink-soft">
+                            @if(!$canManage && $ev->isAbsent(auth()->user())) not performing · @endif{{ $ev->starts_at->format('d.m') }}
+                        </span>
                     </button>
                 @endforeach
             </div>
@@ -78,11 +89,12 @@
         @if($upcoming->count() > 3 || $past->isNotEmpty())
             <button type="button"
                 x-on:click="selected = null; tab = 'upcoming'; $dispatch('open-modal', 'events-all')"
-                class="mt-3 text-xs font-semibold text-brand-accent hover:underline dark:text-brand-light">
-                Show more
+                class="ui-link mt-3 text-[13.5px]">
+                Show all and past
             </button>
         @endif
     @endif
+    @endunless
 
     {{-- uznirstošais logs: pilns saraksts vai viena koncerta detaļas --}}
     <x-modal name="events-all" maxWidth="lg">
@@ -90,50 +102,50 @@
             {{-- saraksta skats --}}
             <div x-show="!selected">
                 <div class="mb-4 flex items-center justify-between">
-                    <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Concerts</h3>
-                    <button type="button" x-on:click="$dispatch('close-modal', 'events-all')" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">✕</button>
+                    <h3 class="ui-heading">Concerts</h3>
+                    <button type="button" x-on:click="$dispatch('close-modal', 'events-all')" class="text-ink-soft hover:text-ink-muted">✕</button>
                 </div>
 
-                <div class="mb-4 flex gap-2 border-b border-gray-200 dark:border-gray-700">
+                <div class="mb-4 flex gap-2 border-b border-line">
                     <button type="button" x-on:click="tab = 'upcoming'"
-                        :class="tab === 'upcoming' ? 'border-brand-primary text-brand-accent dark:text-brand-light' : 'border-transparent text-gray-500 dark:text-gray-400'"
-                        class="border-b-2 px-3 pb-2 text-sm font-semibold">Upcoming ({{ $upcoming->count() }})</button>
+                        :class="tab === 'upcoming' ? 'border-brand text-brand' : 'border-transparent text-ink-soft'"
+                        class="-mb-px border-b-2 px-3 pb-2 text-sm font-medium">Upcoming ({{ $upcoming->count() }})</button>
                     <button type="button" x-on:click="tab = 'past'"
-                        :class="tab === 'past' ? 'border-brand-primary text-brand-accent dark:text-brand-light' : 'border-transparent text-gray-500 dark:text-gray-400'"
-                        class="border-b-2 px-3 pb-2 text-sm font-semibold">Past ({{ $past->count() }})</button>
+                        :class="tab === 'past' ? 'border-brand text-brand' : 'border-transparent text-ink-soft'"
+                        class="-mb-px border-b-2 px-3 pb-2 text-sm font-medium">Past ({{ $past->count() }})</button>
                 </div>
 
                 <div class="max-h-96 space-y-2 overflow-y-auto pr-1">
                     <div x-show="tab === 'upcoming'" class="space-y-2">
                         @forelse($upcoming as $ev)
                             <button type="button" x-on:click="selected = {{ $ev->id }}"
-                                class="flex w-full items-center justify-between gap-3 rounded-lg border border-gray-200 px-3.5 py-2.5 text-left text-sm hover:bg-brand-light/20 dark:border-gray-700 dark:hover:bg-darkbrand-light/20">
-                                <span class="min-w-0 truncate font-medium text-gray-800 dark:text-gray-100">
+                                class="flex w-full items-center justify-between gap-3 rounded-lg border border-line px-3.5 py-2.5 text-left text-[15px] transition-colors hover:border-brand hover:text-brand">
+                                <span class="min-w-0 truncate font-medium text-ink">
                                     {{ $ev->title }}
                                     @if(!$canManage && $ev->group)
-                                        <span class="text-xs font-normal text-gray-400">· {{ $ev->group->name }}</span>
+                                        <span class="text-xs font-normal text-ink-soft">· {{ $ev->group->name }}</span>
                                     @endif
                                 </span>
-                                <span class="shrink-0 text-xs text-gray-500 dark:text-gray-400">{{ $ev->starts_at->format('d.m.Y') }}</span>
+                                <span class="shrink-0 font-mono text-[12px] text-ink-soft">{{ $ev->starts_at->format('d.m.Y') }}</span>
                             </button>
                         @empty
-                            <p class="py-6 text-center text-sm text-gray-500 dark:text-gray-400">No upcoming concerts.</p>
+                            <p class="py-6 text-center text-sm text-ink-soft">No upcoming concerts.</p>
                         @endforelse
                     </div>
                     <div x-show="tab === 'past'" class="space-y-2">
                         @forelse($past as $ev)
                             <button type="button" x-on:click="selected = {{ $ev->id }}"
-                                class="flex w-full items-center justify-between gap-3 rounded-lg border border-gray-200 px-3.5 py-2.5 text-left text-sm hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-700/40">
-                                <span class="min-w-0 truncate font-medium text-gray-600 dark:text-gray-300">
+                                class="flex w-full items-center justify-between gap-3 rounded-lg border border-line px-3.5 py-2.5 text-left text-[15px] transition-colors hover:border-brand hover:text-brand">
+                                <span class="min-w-0 truncate font-medium text-ink-muted">
                                     {{ $ev->title }}
                                     @if(!$canManage && $ev->group)
-                                        <span class="text-xs font-normal text-gray-400">· {{ $ev->group->name }}</span>
+                                        <span class="text-xs font-normal text-ink-soft">· {{ $ev->group->name }}</span>
                                     @endif
                                 </span>
-                                <span class="shrink-0 text-xs text-gray-400">{{ $ev->starts_at->format('d.m.Y') }}</span>
+                                <span class="shrink-0 font-mono text-[12px] text-ink-soft">{{ $ev->starts_at->format('d.m.Y') }}</span>
                             </button>
                         @empty
-                            <p class="py-6 text-center text-sm text-gray-500 dark:text-gray-400">No past concerts yet.</p>
+                            <p class="py-6 text-center text-sm text-ink-soft">No past concerts yet.</p>
                         @endforelse
                     </div>
                 </div>
@@ -142,28 +154,28 @@
             {{-- detalizētais skats vienam koncertam --}}
             @foreach($all as $ev)
                 <div x-show="selected === {{ $ev->id }}" style="display: none;">
-                    <button type="button" x-on:click="selected = null" class="mb-4 text-xs font-semibold text-brand-accent hover:underline dark:text-brand-light">
+                    <button type="button" x-on:click="selected = null" class="ui-back mb-4">
                         ← Back to list
                     </button>
 
-                    <p class="text-xs font-semibold uppercase tracking-wide text-brand-secondary dark:text-brand-light">{{ $ev->starts_at->format('l, d.m.Y · H:i') }}</p>
-                    <h3 class="mt-1 text-xl font-semibold text-gray-900 dark:text-gray-100">{{ $ev->title }}</h3>
+                    <p class="font-mono text-[11.5px] uppercase tracking-[0.1em] text-brand">{{ $ev->starts_at->format('l, d.m.Y · H:i') }}</p>
+                    <h3 class="ui-heading text-[26px] mt-1">{{ $ev->title }}</h3>
 
                     @if(!$canManage && $ev->group)
-                        <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">{{ $ev->group->name }}</p>
+                        <p class="mt-1 text-sm text-ink-soft">{{ $ev->group->name }}</p>
                     @endif
 
                     @if($ev->location)
-                        <p class="mt-3 text-sm text-gray-700 dark:text-gray-200">📍 {{ $ev->location }}</p>
+                        <p class="mt-2 font-mono text-[12.5px] text-ink-soft">{{ $ev->location }}</p>
                     @endif
 
                     @if($ev->notes)
-                        <p class="mt-3 whitespace-pre-line text-sm text-gray-600 dark:text-gray-300">{{ $ev->notes }}</p>
+                        <p class="mt-3 whitespace-pre-line text-sm text-ink-muted">{{ $ev->notes }}</p>
                     @endif
 
                     @if($ev->costumes->isNotEmpty())
                         <div class="mt-4">
-                            <p class="mb-1.5 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Costumes needed</p>
+                            <p class="ui-eyebrow mb-2">Costumes needed</p>
 
                             @if($canManage)
                                 {{-- skolotājam: dzīvā gatavības statistika, balstīta uz jau izsniegtajiem tērpiem --}}
@@ -171,18 +183,18 @@
                                     @foreach($ev->costumeReadiness() as $row)
                                         <div>
                                             <div class="mb-1 flex items-center justify-between text-xs">
-                                                <span class="font-medium text-gray-700 dark:text-gray-200">
+                                                <span class="font-medium text-ink-muted">
                                                     {{ $row['costume']->name }}
-                                                    @if($row['costume']->pivot->note) <span class="text-gray-400">· {{ $row['costume']->pivot->note }}</span> @endif
+                                                    @if($row['costume']->pivot->note) <span class="text-ink-soft">· {{ $row['costume']->pivot->note }}</span> @endif
                                                 </span>
-                                                <span class="text-gray-500 dark:text-gray-400">{{ $row['assigned'] }}/{{ $row['target'] }} ready</span>
+                                                <span class="font-mono text-ink-soft">{{ $row['assigned'] }}/{{ $row['target'] }} ready</span>
                                             </div>
-                                            <div class="h-2 overflow-hidden rounded-full bg-gray-100 dark:bg-gray-700">
-                                                <div class="h-full rounded-full bg-brand-primary dark:bg-brand-secondary" style="width: {{ $row['percent'] }}%"></div>
+                                            <div class="h-1.5 overflow-hidden rounded-full bg-line">
+                                                <div class="h-full rounded-full bg-brand" style="width: {{ $row['percent'] }}%"></div>
                                             </div>
                                             @if($row['shortfall'] > 0)
                                                 {{-- inventārā vispār nav tik daudz vienību, cik norādīts kā vajadzīgs --}}
-                                                <p class="mt-1 text-xs font-medium text-amber-600 dark:text-amber-400">
+                                                <p class="mt-1 text-xs font-medium text-rust">
                                                     ⚠ Only {{ $row['total'] }} in inventory — {{ $row['shortfall'] }} short of the {{ $row['target'] }} needed
                                                 </p>
                                             @endif
@@ -190,26 +202,36 @@
                                     @endforeach
                                 </div>
                             @else
-                                <div class="flex flex-wrap gap-1.5">
-                                    @foreach($ev->costumes as $costume)
-                                        <span class="rounded-full border border-brand-primary/25 bg-brand-light/40 px-2.5 py-1 text-xs font-medium text-brand-accent dark:border-brand-light/25 dark:bg-darkbrand-light/30 dark:text-brand-light">
-                                            {{ $costume->name }}@if($costume->pivot->note) · {{ $costume->pivot->note }} @endif
-                                        </span>
-                                    @endforeach
-                                </div>
+                                {{-- studentam: tikai viņa komplekta un kopīgie tērpi, atzīmējot, kas jau ir rokās --}}
+                                @php $mine = $ev->readinessFor(auth()->user()); @endphp
+                                @if(! $mine)
+                                    <p class="ui-alert ui-alert-warn">You're not performing in this concert, so you don't need costumes for it.</p>
+                                @elseif($mine['no_set'])
+                                    <p class="ui-alert ui-alert-warn">Your teacher hasn't put you in a set yet, so it isn't clear which costumes you need.</p>
+                                @else
+                                    @php $missingIds = $mine['missing']->pluck('id')->all(); @endphp
+                                    <div class="flex flex-wrap gap-1.5">
+                                        @foreach($mine['needed'] as $costume)
+                                            <span class="ui-chip {{ in_array($costume->id, $missingIds, true) ? 'ui-chip-late' : 'ui-chip-good' }}">
+                                                {{ in_array($costume->id, $missingIds, true) ? '○' : '✓' }} {{ $costume->name }}@if($costume->pivot->note) · {{ $costume->pivot->note }} @endif
+                                            </span>
+                                        @endforeach
+                                    </div>
+                                    <p class="ui-help mt-2">✓ you have it · ○ still to take</p>
+                                @endif
                             @endif
                         </div>
                     @endif
 
                     @if($canManage)
-                        <div class="mt-6 flex gap-2 border-t border-gray-100 pt-4 dark:border-gray-700">
-                            <a href="{{ route('admin.events.edit', $ev) }}" class="inline-flex items-center rounded-lg border border-brand-primary/25 bg-brand-light/50 px-3 py-1.5 text-xs font-semibold text-brand-accent hover:bg-brand-light/75 dark:border-brand-secondary/35 dark:bg-darkbrand-light/45 dark:text-brand-light">
+                        <div class="mt-6 flex gap-2 border-t border-line-soft pt-4">
+                            <a href="{{ route('admin.events.edit', $ev) }}" class="ui-btn-ghost ui-btn-sm">
                                 Edit
                             </a>
                             <form method="POST" action="{{ route('admin.events.destroy', $ev) }}" onsubmit="return confirm('Delete “{{ $ev->title }}”? This cannot be undone.');">
                                 @csrf
                                 @method('DELETE')
-                                <button type="submit" class="inline-flex items-center rounded-lg border border-red-200 bg-red-50 px-3 py-1.5 text-xs font-semibold text-red-700 hover:bg-red-100 dark:border-red-900 dark:bg-red-950/40 dark:text-red-300">
+                                <button type="submit" class="ui-btn-danger ui-btn-sm">
                                     Delete
                                 </button>
                             </form>

@@ -13,12 +13,19 @@ class Costume extends Model
         'code_prefix',
         'image',
         'quantity',
-        'group_id'
+        'group_id',
+        'costume_set_id',
     ];
 
     public function group()
     {
         return $this->belongsTo(Group::class);
+    }
+
+    // komplekts, kuram tērps paredzēts; null nozīmē kopīgu tērpu, kas vajadzīgs visiem
+    public function costumeSet()
+    {
+        return $this->belongsTo(CostumeSet::class);
     }
 
     // pilna, tīklā pieejama saite uz augšupielādēto foto (vai null, ja tāda nav)

@@ -29,13 +29,13 @@
 
         <div>
             <label for="password" class="auth-label">Password</label>
-            <input id="password" class="auth-input" type="password" name="password" required autocomplete="new-password">
+            <x-password-input id="password" class="auth-input" name="password" required autocomplete="new-password" />
             <x-input-error :messages="$errors->get('password')" class="mt-2" />
         </div>
 
         <div>
             <label for="password_confirmation" class="auth-label">Confirm password</label>
-            <input id="password_confirmation" class="auth-input" type="password" name="password_confirmation" required autocomplete="new-password">
+            <x-password-input id="password_confirmation" class="auth-input" name="password_confirmation" required autocomplete="new-password" />
             <x-input-error :messages="$errors->get('password_confirmation')" class="mt-2" />
         </div>
 

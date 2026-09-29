@@ -1,8 +1,8 @@
 <x-guest-layout>
 	{{-- pieslēdzies, bet nav šīs grupas dalībnieks --}}
-	<div class="rounded-xl border border-red-300/80 bg-red-50 px-4 py-4 sm:px-5 sm:py-5 text-red-800 dark:border-red-500/40 dark:bg-red-900/20 dark:text-red-300">
-		<p class="text-xs font-semibold uppercase tracking-[0.16em]">Not allowed</p>
-		<h1 class="mt-1 text-lg font-semibold">You're not in this group</h1>
+	<div class="ui-alert ui-alert-error py-4 sm:px-5 sm:py-5">
+		<p class="font-mono text-[11.5px] tracking-[0.1em] uppercase">Not allowed</p>
+		<h1 class="mt-1 font-display text-[26px] font-normal leading-tight tracking-[-0.01em]">You're not in this group</h1>
 		<p class="mt-2 text-sm text-red-700/90 dark:text-red-300/90">
 			Item <span class="font-semibold">{{ $item->code }}</span> ({{ $item->costume->name }}) belongs to
 			<span class="font-semibold">{{ $item->costume->group->name }}</span>.
@@ -11,12 +11,12 @@
 	</div>
 
 	<div class="mt-5 flex items-center gap-3">
-		<a href="{{ route('dashboard') }}" class="inline-flex items-center justify-center rounded-lg border border-brand-primary/25 bg-brand-primary px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-brand-accent focus:outline-none focus:ring-2 focus:ring-brand-secondary/50">
+		<a href="{{ route('dashboard') }}" class="ui-btn justify-center">
 			Back to dashboard
 		</a>
 		<form method="POST" action="{{ route('logout') }}">
 			@csrf
-			<button type="submit" class="text-sm font-medium text-gray-600 hover:text-brand-primary dark:text-gray-300 dark:hover:text-brand-secondary">
+			<button type="submit" class="text-sm font-medium text-ink-muted hover:text-brand">
 				Log out
 			</button>
 		</form>

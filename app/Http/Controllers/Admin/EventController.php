@@ -24,10 +24,11 @@ class EventController extends Controller
         $group = auth()->user()->adminGroups()->first();
         abort_if(is_null($group), 403, 'You do not have a group yet.');
 
-        $costumes = $group->costumes;
-        $memberCount = $group->members()->count();
+        $costumes = $group->costumes()->with('costumeSet')->get();
+        $members = $group->members()->orderBy('name')->get();
+        $sets = $group->costumeSets;
 
-        return view('admin.events.create', compact('costumes', 'memberCount'));
+        return view('admin.events.create', compact('costumes', 'members', 'sets'));
     }
 
     public function store(Request $request)
@@ -47,6 +48,7 @@ class EventController extends Controller
         ]);
 
         $this->syncCostumes($event, $request);
+        $this->syncAbsences($event, $request);
 
         return redirect()->route('admin.events.index')->with('success', "Concert “{$event->title}” added.");
     }
@@ -56,10 +58,12 @@ class EventController extends Controller
     {
         $this->authorize('update', $event);
 
-        $costumes = $event->group->costumes;
-        $memberCount = $event->group->members()->count();
+        $costumes = $event->group->costumes()->with('costumeSet')->get();
+        $members = $event->group->members()->orderBy('name')->get();
+        $sets = $event->group->costumeSets;
+        $event->load('absentees');
 
-        return view('admin.events.edit', compact('event', 'costumes', 'memberCount'));
+        return view('admin.events.edit', compact('event', 'costumes', 'members', 'sets'));
     }
 
     public function update(Request $request, Event $event)
@@ -76,6 +80,7 @@ class EventController extends Controller
         ]);
 
         $this->syncCostumes($event, $request);
+        $this->syncAbsences($event, $request);
 
         return redirect()->route('admin.events.index')->with('success', "Concert “{$event->title}” updated.");
     }
@@ -115,6 +120,9 @@ class EventController extends Controller
             'costume_notes.*' => 'nullable|string|max:255',
             'costume_targets' => 'nullable|array',
             'costume_targets.*' => 'nullable|integer|min:1|max:1000',
+            'attendance_sent' => 'nullable|boolean',
+            'attending_ids' => 'nullable|array',
+            'attending_ids.*' => 'integer',
         ]);
     }
 
@@ -133,5 +141,24 @@ class EventController extends Controller
             ->all();
 
         $event->costumes()->sync($sync);
+    }
+
+    // saglabā, kuri grupas dalībnieki koncertā NEpiedalās – formā tie ir neatzīmētie
+    // (attendance_sent pasargā no visu izslēgšanas, ja forma sarakstu vispār nesūtīja)
+    private function syncAbsences(Event $event, Request $request): void
+    {
+        if (! $request->boolean('attendance_sent')) {
+            return;
+        }
+
+        $attending = collect($request->input('attending_ids', []))->map(fn ($id) => (int) $id);
+
+        $absentIds = $event->group->members()
+            ->pluck('users.id')
+            ->reject(fn ($id) => $attending->contains((int) $id))
+            ->values()
+            ->all();
+
+        $event->absentees()->sync($absentIds);
     }
 }

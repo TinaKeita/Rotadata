@@ -57,9 +57,10 @@ class User extends Authenticatable
         return $this->hasMany(Group::class, 'admin_id');
     }
 
+    // pivot costume_set_id – studenta tērpu komplekts katrā grupā
     public function memberGroups()
     {
-        return $this->belongsToMany(Group::class, 'group_user');
+        return $this->belongsToMany(Group::class, 'group_user')->withPivot('costume_set_id');
     }
 
     // grupa, kuras dēļ šis konts tika deaktivizēts (grupas dzēšana vai skolotāja veikta izņemšana)

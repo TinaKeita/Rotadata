@@ -25,10 +25,14 @@ class CostumeController extends Controller
             ->costumeAssignments()
             ->whereNotNull('returned_at')
             ->whereHas('item.costume', fn($query) => $query->where('group_id', $group->id))
-            ->with('item.costume')
+            ->with(['item.costume', 'returnedBy'])
             ->get();
 
-        return view('member.index', compact('items', 'group', 'history'));
+        // studenta komplekts šajā grupā (nosaka, kuri koncerta tērpi viņam vajadzīgi)
+        $setId = auth()->user()->memberGroups()->whereKey($group->id)->first()?->pivot->costume_set_id;
+        $setName = $setId ? \App\Models\CostumeSet::whereKey($setId)->value('name') : null;
+
+        return view('member.index', compact('items', 'group', 'history', 'setName'));
     }
 
     // noņem tērpa vienību no lietotāja

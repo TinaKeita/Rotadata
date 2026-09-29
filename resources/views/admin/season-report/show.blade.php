@@ -5,15 +5,15 @@
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<title>{{ $group->name }} — {{ $season['label'] }} season report</title>
 	<link rel="preconnect" href="https://fonts.bunny.net">
-	<link href="https://fonts.bunny.net/css?family=figtree:400,500,600,700&display=swap" rel="stylesheet" />
+	<link href="https://fonts.bunny.net/css?family=newsreader:400|public-sans:400,500,600,700|ibm-plex-mono:400,500&display=swap" rel="stylesheet" />
 	<style>
 		* { box-sizing: border-box; }
 
 		body {
 			margin: 0;
-			font-family: 'Figtree', system-ui, -apple-system, sans-serif;
-			color: #1f2937;
-			background: #f3f4f6;
+			font-family: 'Public Sans', system-ui, -apple-system, sans-serif;
+			color: #1B1B19;
+			background: #FBFAF8;
 		}
 
 		.toolbar {
@@ -26,7 +26,7 @@
 			gap: .5rem;
 			padding: .75rem 1rem;
 			background: #fff;
-			border-bottom: 1px solid #e5e7eb;
+			border-bottom: 1px solid #E7E4DE;
 		}
 
 		.toolbar a, .toolbar button {
@@ -35,38 +35,40 @@
 			font-weight: 600;
 			text-decoration: none;
 			padding: .4rem .8rem;
-			border-radius: .5rem;
-			border: 1px solid #d1d5db;
+			border-radius: 999px;
+			border: 1px solid #D9D5CD;
 			background: #fff;
-			color: #374151;
+			color: #1B1B19;
 			cursor: pointer;
 		}
 
-		.toolbar .primary { background: #4f6150; border-color: #4f6150; color: #fff; }
+		.toolbar .primary { background: #2F5D46; border-color: #2F5D46; color: #FBFAF8; }
 		.toolbar .spacer { flex: 1 1 auto; }
 
 		.sheet { max-width: 900px; margin: 0 auto; padding: 12mm 8mm; }
 
-		h1 { font-size: 1.4rem; margin: 0 0 .15rem; }
-		.subtitle { color: #6b7280; font-size: .9rem; margin: 0 0 1.5rem; }
+		h1 { font-family: 'Newsreader', Georgia, serif; font-weight: 400; font-size: 2rem; letter-spacing: -.02em; margin: 0 0 .15rem; }
+		.subtitle { color: #6E6A61; font-size: .9rem; margin: 0 0 1.5rem; }
 
 		h2 {
-			font-size: .78rem;
+			font-family: 'IBM Plex Mono', monospace;
+			font-weight: 400;
+			font-size: .72rem;
 			text-transform: uppercase;
 			letter-spacing: .08em;
-			color: #4f6150;
+			color: #2F5D46;
 			margin: 2rem 0 .6rem;
-			border-bottom: 1px solid #e5e7eb;
+			border-bottom: 1px solid #E7E4DE;
 			padding-bottom: .35rem;
 		}
 
 		table { width: 100%; border-collapse: collapse; font-size: .85rem; }
-		th, td { text-align: left; padding: .45rem .5rem; border-bottom: 1px solid #eef0ee; }
-		th { color: #6b7280; font-weight: 600; font-size: .72rem; text-transform: uppercase; letter-spacing: .04em; }
+		th, td { text-align: left; padding: .45rem .5rem; border-bottom: 1px solid #F4F2EE; }
+		th { color: #6E6A61; font-family: 'IBM Plex Mono', monospace; font-weight: 400; font-size: .7rem; text-transform: uppercase; letter-spacing: .1em; }
 		td.num, th.num { text-align: right; }
 
-		.days-high { color: #b45309; font-weight: 600; }
-		.empty { padding: 1.5rem 0; text-align: center; color: #9ca3af; font-size: .85rem; }
+		.days-high { color: #8A4B33; font-weight: 600; }
+		.empty { padding: 1.5rem 0; text-align: center; color: #6E6A61; font-size: .85rem; }
 
 		@media print {
 			body { background: #fff; }

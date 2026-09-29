@@ -3,13 +3,19 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\CostumeItem;
-use App\Models\CostumeItemAssignment;
-use App\Models\User;
-use Illuminate\Support\Facades\DB;
+use App\Models\Event;
+use App\Models\Group;
+use App\Support\GroupActivity;
+use App\Support\Season;
+use Illuminate\Support\Collection;
 
+// skolotāja panelis kā darāmo darbu saraksts: kas jāizdara tagad, tuvākais koncerts un kluss kopsavilkums;
+// detalizētā statistika pārcelta uz aktivitātes lapu (ActivityController)
 class DashboardController extends Controller
 {
+    // koncerta rindas "Needs you" sarakstā parādās tikai tad, kad līdz koncertam ir ne vairāk kā tik dienu
+    public const NEEDS_WINDOW_DAYS = 14;
+
     public function index()
     {
         $group = auth()->user()->adminGroups()->first();
@@ -18,250 +24,104 @@ class DashboardController extends Controller
         $notifications = auth()->user()->unreadNotifications;
 
         if (! $group) {
-            return view('admin.dashboard', ['group' => null, 'stats' => null, 'notifications' => $notifications, 'upcoming' => collect(), 'past' => collect()]);
+            return view('admin.dashboard', [
+                'group' => null,
+                'notifications' => $notifications,
+                'upcoming' => collect(),
+                'past' => collect(),
+            ]);
         }
 
         $upcoming = $group->events()->with(['costumes', 'group'])->upcoming()->get();
         $past = $group->events()->with(['costumes', 'group'])->past()->get();
 
-        $itemIds = CostumeItem::whereHas('costume', fn ($q) => $q->where('group_id', $group->id))->pluck('id');
+        // tuvākais koncerts; kad tas ir pagājis, upcoming() automātiski dod nākamo
+        $nextEvent = $upcoming->first();
+        $readiness = $nextEvent?->studentReadiness();
 
-        $stats = [
-            'overview'      => $this->overview($group, $itemIds),
-            'activityWeek'  => $this->activityThisWeek($itemIds),
-            'readiness'     => $this->readiness($itemIds),
-            'feed'          => $this->recentActivity($itemIds),
-            'longestOut'    => $this->longestOut($itemIds),
-            'topHolders'    => $this->topHolders($itemIds),
-            'fullyOut'      => $this->fullyOut($group),
-            'inDemand'      => $this->inDemand($group),
-            'mostTravelled' => $this->mostTravelled($itemIds),
-            'busiestCostume' => $this->busiestCostume($itemIds),
-            'weeks'         => $this->weeklyActivity($itemIds),
-        ];
+        $activity = new GroupActivity($group);
 
-        return view('admin.dashboard', compact('group', 'stats', 'notifications', 'upcoming', 'past'));
-    }
-
-    private function overview($group, $itemIds): array
-    {
-        $total = $itemIds->count();
-        $out = CostumeItem::whereIn('id', $itemIds)->whereNotNull('assigned_to')->count();
-
-        return [
-            'totalItems'    => $total,
-            'itemsOut'      => $out,
-            'available'     => max(0, $total - $out),
-            'utilisation'   => $total > 0 ? (int) round($out / $total * 100) : 0,
-            'memberCount'   => $group->members()->count(),
-            'equippedCount' => CostumeItem::whereIn('id', $itemIds)
-                ->whereNotNull('assigned_to')
-                ->distinct()
-                ->count('assigned_to'),
-        ];
-    }
-
-    private function activityThisWeek($itemIds): array
-    {
-        $since = now()->subDays(7);
-
-        return [
-            'assigned' => CostumeItemAssignment::whereIn('costume_item_id', $itemIds)
-                ->where('assigned_at', '>=', $since)->count(),
-            'returned' => CostumeItemAssignment::whereIn('costume_item_id', $itemIds)
-                ->where('returned_at', '>=', $since)->count(),
-        ];
-    }
-
-    private function readiness($itemIds): array
-    {
-        $total = $itemIds->count();
-        $out = CostumeItem::whereIn('id', $itemIds)->whereNotNull('assigned_to')->count();
-        $back = max(0, $total - $out);
-
-        return [
-            'percent' => $total > 0 ? (int) round($back / $total * 100) : 100,
-            'back'    => $back,
-            'out'     => $out,
-            'total'   => $total,
-        ];
-    }
-
-    private function recentActivity($itemIds)
-    {
-        $window = now()->subDays(45);
-
-        $rows = CostumeItemAssignment::with(['item.costume', 'returnedBy'])
-            ->whereIn('costume_item_id', $itemIds)
-            ->where(fn ($q) => $q->where('assigned_at', '>=', $window)->orWhere('returned_at', '>=', $window))
-            ->get();
-
-        // nodošanas "pieņemšanas puse": vienība + brīdis, kad tā tika nodota tālāk
-        // tos "paņēma" ierakstus izlaižam, lai plūsmā par nodošanu būtu tikai viens (zilais) ieraksts
-        $handoverKeys = $rows
-            ->where('return_note', 'transfer')
-            ->filter(fn ($a) => $a->returned_at)
-            ->map(fn ($a) => $a->costume_item_id.'|'.$a->returned_at->timestamp)
-            ->all();
-
-        return $rows
-            ->flatMap(function (CostumeItemAssignment $a) use ($window, $handoverKeys) {
-                $events = [];
-
-                $isHandoverPickup = in_array($a->costume_item_id.'|'.$a->assigned_at?->timestamp, $handoverKeys, true);
-
-                if ($a->assigned_at >= $window && ! $isHandoverPickup) {
-                    $events[] = [
-                        'at'      => $a->assigned_at,
-                        'type'    => 'assigned',
-                        'code'    => $a->item?->code,
-                        'costume' => $a->item?->costume?->name,
-                        'who'     => $a->user_name,
-                        'actor'   => null,
-                    ];
-                }
-
-                if ($a->returned_at && $a->returned_at >= $window) {
-                    $events[] = [
-                        'at'      => $a->returned_at,
-                        'type'    => match ($a->return_note) {
-                            'admin' => 'taken_back',
-                            'transfer' => 'handed_over',
-                            'removed' => 'freed',
-                            'left_group' => 'left_group',
-                            default => 'returned',
-                        },
-                        'code'    => $a->item?->code,
-                        'costume' => $a->item?->costume?->name,
-                        'who'     => $a->user_name,
-                        'actor'   => $a->returnedBy?->name,
-                    ];
-                }
-
-                return $events;
-            })
-            ->sortByDesc('at')
-            ->take(10)
-            ->values();
-    }
-
-    private function longestOut($itemIds)
-    {
-        return CostumeItemAssignment::with('item.costume')
-            ->whereIn('costume_item_id', $itemIds)
-            ->whereNull('returned_at')
-            ->orderBy('assigned_at')
-            ->take(5)
-            ->get()
-            ->map(fn (CostumeItemAssignment $a) => [
-                'code'    => $a->item?->code,
-                'costume' => $a->item?->costume?->name,
-                'who'     => $a->user_name,
-                'days'    => (int) $a->assigned_at->diffInDays(now()),
-            ]);
-    }
-
-    private function topHolders($itemIds)
-    {
-        $rows = DB::table('costume_items')
-            ->whereIn('id', $itemIds)
-            ->whereNotNull('assigned_to')
-            ->select('assigned_to', DB::raw('count(*) as held'))
-            ->groupBy('assigned_to')
-            ->orderByDesc('held')
-            ->limit(5)
-            ->get();
-
-        $names = User::whereIn('id', $rows->pluck('assigned_to'))->pluck('name', 'id');
-
-        return $rows->map(fn ($r) => [
-            'name' => $names[$r->assigned_to] ?? 'Unknown',
-            'held' => (int) $r->held,
+        return view('admin.dashboard', [
+            'group' => $group,
+            'notifications' => $notifications,
+            'upcoming' => $upcoming,
+            'past' => $past,
+            'nextEvent' => $nextEvent,
+            'readiness' => $readiness,
+            'needs' => $this->needs($group, $upcoming, $notifications),
+            'fullyOut' => $activity->fullyOut(),
+            'overview' => $activity->overview(),
+            'today' => $activity->activityToday(),
         ]);
     }
 
-    private function fullyOut($group)
+    /**
+     * "Needs you" rindas: tikai tas, ko skolotājs var izdarīt tagad.
+     * Koncerta rindas parādās divas nedēļas pirms koncerta un pazūd pašas, kad problēma atrisināta vai koncerts pagājis;
+     * paziņojumus un neizdevušos uzaicinājumu var aizvērt.
+     */
+    private function needs(Group $group, Collection $upcoming, Collection $notifications): array
     {
-        return $group->costumes()
-            ->withCount([
-                'items as items_total',
-                'items as items_out' => fn ($q) => $q->whereNotNull('assigned_to'),
-            ])
-            ->get()
-            ->filter(fn ($c) => $c->items_total > 0 && $c->items_total === $c->items_out)
-            ->map(fn ($c) => ['name' => $c->name, 'count' => $c->items_total])
-            ->values();
-    }
+        $rows = [];
 
-    private function inDemand($group)
-    {
-        return $group->costumes()
-            ->withCount([
-                'items as items_total',
-                'items as items_out' => fn ($q) => $q->whereNotNull('assigned_to'),
-            ])
-            ->get()
-            ->filter(fn ($c) => $c->items_total > 0)
-            ->map(fn ($c) => [
-                'name'    => $c->name,
-                'out'     => $c->items_out,
-                'total'   => $c->items_total,
-                'percent' => (int) round($c->items_out / $c->items_total * 100),
-            ])
-            ->sortByDesc('percent')
-            ->take(4)
-            ->values();
-    }
+        // tikai koncerti tuvāko divu nedēļu laikā; tālākiem koncertiem vēl nav jāsatraucas
+        $soon = $upcoming->filter(fn (Event $e) => $e->starts_at->lte(now()->addDays(self::NEEDS_WINDOW_DAYS)));
 
-    private function mostTravelled($itemIds)
-    {
-        $row = CostumeItemAssignment::whereIn('costume_item_id', $itemIds)
-            ->select('costume_item_id', DB::raw('count(distinct user_id) as travellers'))
-            ->groupBy('costume_item_id')
-            ->orderByDesc('travellers')
-            ->first();
+        foreach ($soon as $event) {
+            $readiness = $event->studentReadiness();
 
-        if (! $row || $row->travellers < 2) {
-            return null;
+            if (! $readiness['hasCostumes']) {
+                continue;
+            }
+
+            // inventārā nepietiek vienību vajadzīgajam skaitam
+            foreach ($event->costumeReadiness()->where('shortfall', '>', 0) as $row) {
+                $rows[] = [
+                    'type' => 'shortage',
+                    'costume' => $row['costume'],
+                    'total' => $row['total'],
+                    'target' => $row['target'],
+                    'shortfall' => $row['shortfall'],
+                    'event' => $event,
+                ];
+            }
+
+            // komplekts nav izvēlēts, bet koncertam ir komplektu tērpi
+            $noSet = $readiness['students']->where('no_set', true);
+            if ($noSet->isNotEmpty()) {
+                $rows[] = [
+                    'type' => 'no_set',
+                    'students' => $noSet->pluck('student'),
+                    'event' => $event,
+                ];
+            }
+
+            // studentiem trūkst kāds sava komplekta tērps – katram sava rinda, saraksts ritinās
+            foreach ($readiness['students']->filter(fn ($r) => ! $r['no_set'] && $r['missing']->isNotEmpty()) as $r) {
+                $rows[] = [
+                    'type' => 'missing',
+                    'student' => $r['student'],
+                    'missing' => $r['missing'],
+                    'event' => $event,
+                ];
+            }
         }
 
-        $item = CostumeItem::with('costume')->find($row->costume_item_id);
+        // uzaicinājuma e-pasts nav piegādāts
+        foreach ($group->members()->whereNotNull('invite_email_failed_at')->orderBy('name')->get() as $member) {
+            $rows[] = ['type' => 'invite', 'student' => $member];
+        }
 
-        return [
-            'code'       => $item?->code,
-            'costume'    => $item?->costume?->name,
-            'travellers' => (int) $row->travellers,
-        ];
-    }
+        // students pametis grupu
+        foreach ($notifications as $notification) {
+            $rows[] = ['type' => 'left', 'notification' => $notification];
+        }
 
-    private function busiestCostume($itemIds)
-    {
-        $row = CostumeItemAssignment::query()
-            ->whereIn('costume_item_id', $itemIds)
-            ->where('costume_item_assignments.assigned_at', '>=', now()->subDays(120))
-            ->join('costume_items', 'costume_items.id', '=', 'costume_item_assignments.costume_item_id')
-            ->join('costumes', 'costumes.id', '=', 'costume_items.costume_id')
-            ->select('costumes.name', DB::raw('count(*) as times'))
-            ->groupBy('costumes.name')
-            ->orderByDesc('times')
-            ->first();
+        // sezonas noslēgums – laiks eksportēt atskaiti (no maija līdz augusta beigām)
+        if (Season::isClosingSoon()) {
+            $rows[] = ['type' => 'season', 'label' => Season::label()];
+        }
 
-        return $row ? ['name' => $row->name, 'times' => (int) $row->times] : null;
-    }
-
-    private function weeklyActivity($itemIds)
-    {
-        return collect(range(5, 0))->map(function ($weeksAgo) use ($itemIds) {
-            $start = now()->startOfWeek()->subWeeks($weeksAgo);
-            $end = (clone $start)->addWeek();
-
-            return [
-                'label'    => $start->format('d.m'),
-                'assigned' => CostumeItemAssignment::whereIn('costume_item_id', $itemIds)
-                    ->whereBetween('assigned_at', [$start, $end])->count(),
-                'returned' => CostumeItemAssignment::whereIn('costume_item_id', $itemIds)
-                    ->whereBetween('returned_at', [$start, $end])->count(),
-            ];
-        });
+        return $rows;
     }
 }

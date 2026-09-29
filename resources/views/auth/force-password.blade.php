@@ -1,9 +1,9 @@
 <x-guest-layout>
     {{-- obligātā paroles maiņa pēc pieslēgšanās ar pagaidu paroli --}}
     <div class="mb-6 text-center">
-        <p class="text-xs font-semibold uppercase tracking-[0.16em] text-brand-primary dark:text-brand-secondary">Rotadata</p>
-        <h1 class="mt-2 text-2xl font-semibold text-brand-accent dark:text-brand-light">Set your password</h1>
-        <p class="mt-2 text-sm text-gray-600 dark:text-gray-300">
+        <p class="font-mono text-[11.5px] tracking-[0.1em] uppercase text-brand">Rotadata</p>
+        <h1 class="font-display text-[32px] font-normal leading-tight tracking-[-0.02em] text-ink mt-2">Set your password</h1>
+        <p class="mt-2 text-sm text-ink-muted">
             The password from the email works only once. Choose your own password to continue.
         </p>
     </div>
@@ -14,13 +14,13 @@
 
         <div>
             <x-input-label for="password" :value="__('New password')" />
-            <x-text-input id="password" class="mt-1.5" type="password" name="password" required autofocus autocomplete="new-password" />
+            <x-password-input id="password" class="ui-input mt-1.5" name="password" required autofocus autocomplete="new-password" />
             <x-input-error :messages="$errors->get('password')" class="mt-2" />
         </div>
 
         <div>
             <x-input-label for="password_confirmation" :value="__('Confirm new password')" />
-            <x-text-input id="password_confirmation" class="mt-1.5" type="password" name="password_confirmation" required autocomplete="new-password" />
+            <x-password-input id="password_confirmation" class="ui-input mt-1.5" name="password_confirmation" required autocomplete="new-password" />
             <x-input-error :messages="$errors->get('password_confirmation')" class="mt-2" />
         </div>
 
@@ -33,7 +33,7 @@
 
     <form method="POST" action="{{ route('logout') }}" class="mt-4 text-center">
         @csrf
-        <button type="submit" class="text-sm font-medium text-gray-600 hover:text-brand-primary dark:text-gray-300 dark:hover:text-brand-secondary">
+        <button type="submit" class="text-sm font-medium text-ink-muted hover:text-brand">
             {{ __('Log out') }}
         </button>
     </form>

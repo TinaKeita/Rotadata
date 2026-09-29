@@ -1,65 +1,68 @@
 <x-app-layout>
-    {{-- studentu sākumlapa --}}
+    {{-- studenta inventārs vienā grupā: kas šobrīd rokās (ar atdošanu) un pagātnes tērpi --}}
     <x-slot name="header">
-        <x-page-header :title="$group->name.' — My Inventory'"
-            subtitle="Review your assigned costumes and unassign items when needed." />
+        <x-page-header :eyebrow="$group->name.' · '.($setName ? 'Set: '.$setName : 'No set')" title="My inventory"
+            subtitle="The costume items you have right now. Return an item here once you've handed it back." />
     </x-slot>
 
-    <div class="mb-4">
-        <a href="{{ route('dashboard') }}" class="inline-flex items-center gap-1.5 text-sm font-medium text-brand-secondary dark:text-brand-light hover:text-brand-accent dark:hover:text-white transition">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
-            </svg>
-            Back to Dashboard
-        </a>
+    <div class="mb-6">
+        <a href="{{ route('dashboard') }}" class="ui-back">&larr; Back to dashboard</a>
     </div>
 
-    <section class="space-y-3">
+    <section data-reveal="" class="ui-card !p-0">
+        <div class="flex items-center gap-3 border-b border-line px-5 py-4 sm:px-6">
+            <h2 class="ui-heading">With you now</h2>
+            <span class="ui-chip {{ $items->isNotEmpty() ? 'ui-chip-good' : '' }}">{{ $items->count() }}</span>
+        </div>
+
         @forelse($items as $item)
-            <div class="flex items-center justify-between gap-4 rounded-xl border border-brand-secondary/15 dark:border-brand-light/20 bg-white dark:bg-gray-900/50 px-5 py-3.5 shadow-sm">
-                <div class="flex items-center gap-4 min-w-0">
+            <div class="flex flex-wrap items-center gap-x-4 gap-y-2 border-b border-line-soft px-5 py-4 last:border-b-0 sm:px-6">
+                <div class="flex min-w-0 flex-1 items-center gap-4">
                     @if($item->costume->image)
-                        <img src="{{ $item->costume->imageUrl() }}" alt="" class="h-10 w-10 shrink-0 rounded-lg border border-gray-200 object-cover dark:border-gray-700">
+                        <img src="{{ $item->costume->imageUrl() }}" alt="" class="h-11 w-11 shrink-0 rounded-lg border border-line object-cover">
                     @endif
-                    <span class="shrink-0 rounded-md border border-brand-primary/25 dark:border-brand-light/25 bg-brand-light/50 dark:bg-darkbrand-light/40 px-2.5 py-0.5 text-xs font-semibold tracking-wide text-brand-accent dark:text-brand-light">
-                        {{ $item->code ?? '#NR.'.$item->id }}
-                    </span>
-                    <span class="truncate text-base font-medium text-gray-900 dark:text-gray-100">
-                        {{ $item->costume->name }}
-                    </span>
+                    <div class="min-w-0">
+                        <p class="truncate text-[15.5px] font-semibold">{{ $item->costume->name }}</p>
+                        <p class="font-mono text-[12px] text-ink-soft">
+                            {{ $item->code ?? '#NR.'.$item->id }}@if($item->assigned_at) · since {{ $item->assigned_at->format('d.m.Y') }}@endif
+                        </p>
+                    </div>
                 </div>
 
                 <form method="POST" action="{{ route('members.costumes.unassign', $item) }}" class="shrink-0">
                     @csrf
-                    <button class="inline-flex items-center justify-center rounded-lg border border-brand-secondary/35 bg-brand-secondary px-3 py-1.5 text-sm font-semibold text-white transition hover:bg-brand-accent focus:outline-none focus:ring-2 focus:ring-brand-primary/50 dark:bg-darkbrand-secondary dark:hover:bg-darkbrand-accent dark:border-brand-light/35">
-                        Unassign
-                    </button>
+                    <button type="submit" class="ui-btn-ghost ui-btn-sm">Return</button>
                 </form>
             </div>
         @empty
-            <p class="py-6 text-center text-sm text-gray-500 dark:text-gray-400">No costumes assigned yet.</p>
+            <p class="px-5 py-8 text-center text-[15px] text-ink-muted sm:px-6">No costumes with you right now.</p>
         @endforelse
     </section>
 
     @if($history->isNotEmpty())
-        <section class="mt-8">
-            <h3 class="mb-3 text-sm font-semibold uppercase tracking-[0.14em] text-gray-500 dark:text-gray-400">Past costumes</h3>
-            <ul class="space-y-2">
+        <section data-reveal="" data-reveal-delay="80" class="mt-6">
+            <h3 class="ui-eyebrow mb-3">Past costumes</h3>
+            <div class="ui-card !py-1">
                 @foreach($history as $log)
-                    <li class="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 rounded-lg border border-gray-200 dark:border-gray-700 px-4 py-2.5 text-sm">
-                        <span class="font-medium text-gray-700 dark:text-gray-200">
-                            {{ $log->item?->code ?? '—' }}
-                            <span class="text-gray-400">· {{ $log->item?->costume?->name ?? 'costume removed' }}</span>
+                    <div class="ui-row flex-wrap text-[14.5px]">
+                        <span class="min-w-0">
+                            <span class="font-medium">{{ $log->item?->costume?->name ?? 'costume removed' }}</span>
+                            <span class="font-mono text-[12px] text-ink-soft">· {{ $log->item?->code ?? '—' }}</span>
                         </span>
-                        <span class="text-gray-500 dark:text-gray-400">
+                        <span class="font-mono text-[12px] text-ink-soft">
                             {{ $log->assigned_at->format('d.m.Y') }} &rarr; {{ $log->returned_at->format('d.m.Y') }}
+                            {{-- tas pats iemesls, ko redz skolotājs tērpa vēsturē --}}
                             @if($log->return_note === 'transfer')
-                                <span class="text-gray-400">(handed over)</span>
+                                (handed over to {{ $log->returnedBy?->name ?? 'another member' }})
+                            @elseif($log->return_note === 'admin')
+                                (taken back by teacher)
+                            @elseif($log->return_note === 'left_group')
+                                (left the group)
                             @endif
                         </span>
-                    </li>
+                    </div>
                 @endforeach
-            </ul>
+            </div>
         </section>
     @endif
 </x-app-layout>

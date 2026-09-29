@@ -18,6 +18,8 @@
     --color-line-soft: 244 242 238;
     --color-brand: 47 93 70;
     --color-brand-tint: 237 241 236;
+    --color-rust: 138 75 51;
+    --color-rust-tint: 246 233 228;
   }
 
   .dark {
@@ -32,6 +34,8 @@
     --color-line-soft: 38 41 32;
     --color-brand: 111 190 147;
     --color-brand-tint: 30 42 33;
+    --color-rust: 226 165 140;
+    --color-rust-tint: 58 34 25;
   }
 }
 .toggle-switch {
@@ -92,10 +96,98 @@
 @tailwind base;
 @layer base {
   h1, h2, h3 { @apply font-sans font-semibold tracking-normal; }
+
+  /* formu elementiem tas pats fokusa tonis kā landing/auth lapās */
+  [type='checkbox'], [type='radio'] { @apply border-line-strong bg-paper text-brand focus:ring-brand/30 focus:ring-offset-0; }
 }
 
 @tailwind components;
 @layer components {
+  /* ===== kopīgā dizaina sistēma (landing lapas žetoni) – lieto visās iekšējās lapās ===== */
+
+  /* balta kartīte ar plānu līniju, bez ēnas */
+  .ui-card {
+    @apply rounded-[14px] border border-line bg-surface p-5 sm:p-6;
+  }
+
+  /* maziem virsrakstiem un datumiem – mono, lielie burti */
+  .ui-eyebrow {
+    @apply font-mono text-[11.5px] font-normal uppercase tracking-[0.1em] text-ink-soft;
+  }
+
+  /* serif sadaļas virsraksts */
+  .ui-heading {
+    @apply font-display text-[22px] font-normal leading-tight tracking-[-0.01em] text-ink;
+  }
+
+  /* pogas – vienmēr "pill" formā */
+  .ui-btn {
+    @apply inline-flex items-center justify-center gap-1.5 rounded-full bg-brand px-4 py-2 text-[14px] font-medium text-paper transition-colors hover:bg-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-paper disabled:cursor-not-allowed disabled:opacity-50;
+  }
+
+  .ui-btn-ghost {
+    @apply inline-flex items-center justify-center gap-1.5 rounded-full border border-line-strong px-4 py-2 text-[14px] font-medium text-ink transition-colors hover:border-brand hover:text-brand focus:outline-none focus-visible:ring-2 focus-visible:ring-brand/40 disabled:cursor-not-allowed disabled:opacity-50;
+  }
+
+  .ui-btn-danger {
+    @apply inline-flex items-center justify-center gap-1.5 rounded-full border border-red-300 px-4 py-2 text-[14px] font-medium text-red-700 transition-colors hover:bg-red-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-400 dark:border-red-500/40 dark:text-red-300 dark:hover:bg-red-900/20 disabled:cursor-not-allowed disabled:opacity-50;
+  }
+
+  .ui-btn-danger-solid {
+    @apply inline-flex items-center justify-center gap-1.5 rounded-full bg-red-600 px-4 py-2 text-[14px] font-medium text-white transition-colors hover:bg-red-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-400 disabled:cursor-not-allowed disabled:opacity-50;
+  }
+
+  /* mazāka pogas versija rindām un tabulām */
+  .ui-btn-sm {
+    @apply px-3 py-1.5 text-[13px];
+  }
+
+  .ui-input {
+    @apply w-full rounded-lg border-line-strong bg-paper px-3.5 py-2.5 text-[15px] text-ink placeholder:text-ink-soft focus:border-brand focus:ring-2 focus:ring-brand/20;
+  }
+
+  .ui-label {
+    @apply block text-sm font-medium text-ink;
+  }
+
+  .ui-help {
+    @apply text-[13px] text-ink-soft;
+  }
+
+  .ui-link {
+    @apply font-medium text-brand underline-offset-4 hover:underline;
+  }
+
+  /* atpakaļ saite lapas augšā */
+  .ui-back {
+    @apply inline-flex items-center gap-1.5 text-sm font-medium text-ink-muted hover:text-brand;
+  }
+
+  /* uzlīmes */
+  .ui-chip {
+    @apply inline-flex items-center rounded-full bg-surface-sunk px-2.5 py-0.5 font-mono text-[12px] text-ink-soft;
+  }
+  .ui-chip-good { @apply bg-brand-tint text-brand; }
+  .ui-chip-late { @apply bg-rust-tint text-rust; }
+
+  /* paziņojumu joslas */
+  .ui-alert {
+    @apply rounded-[14px] border px-4 py-3 text-sm;
+  }
+  .ui-alert-good { @apply border-brand/25 bg-brand-tint text-brand; }
+  .ui-alert-warn { @apply border-rust/25 bg-rust-tint text-rust; }
+  .ui-alert-error { @apply border-red-300 bg-red-50 text-red-800 dark:border-red-500/40 dark:bg-red-900/20 dark:text-red-200; }
+
+  /* tukšs stāvoklis */
+  .ui-empty {
+    @apply rounded-[14px] border border-dashed border-line-strong px-4 py-10 text-center text-[15px] text-ink-muted;
+  }
+
+  /* datu rindas ar plānu atdalītāju */
+  .ui-row {
+    @apply flex items-center justify-between gap-4 border-b border-line-soft py-3 last:border-b-0;
+  }
+
   .app-bg {
     @apply min-h-screen bg-paper dark:bg-gray-900;
   }

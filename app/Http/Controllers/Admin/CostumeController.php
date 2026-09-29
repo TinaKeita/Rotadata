@@ -15,7 +15,7 @@ class CostumeController extends Controller
     {
         $group = auth()->user()->adminGroups()->first();
         $costumes = $group
-            ? $group->costumes()->withCount(['items', 'items as items_out_count' => fn ($q) => $q->whereNotNull('assigned_to')])->get()
+            ? $group->costumes()->with('costumeSet')->withCount(['items', 'items as items_out_count' => fn ($q) => $q->whereNotNull('assigned_to')])->get()
             : collect();
 
         return view('admin.costumes.index', compact('costumes'));
@@ -24,7 +24,9 @@ class CostumeController extends Controller
     // forma jauna tērpa pievienošanai
     public function create()
     {
-        return view('admin.costumes.create');
+        $sets = auth()->user()->adminGroups()->first()?->costumeSets ?? collect();
+
+        return view('admin.costumes.create', compact('sets'));
     }
 
     public function store(Request $request)
@@ -36,10 +38,12 @@ class CostumeController extends Controller
             'name' => 'required|string|max:255',
             'quantity' => 'required|integer|min:1|max:200',
             'image' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:4096',
+            'costume_set_id' => 'nullable|integer|exists:costume_sets,id,group_id,'.$group->id,
         ]);
 
         $costume = Costume::create([
             'name' => $validated['name'],
+            'costume_set_id' => $validated['costume_set_id'] ?? null,
             'quantity' => 0,
             'image' => $request->hasFile('image') ? $request->file('image')->store('costumes', 'public') : null,
             'group_id' => $group->id,
@@ -55,7 +59,9 @@ class CostumeController extends Controller
     {
         $this->authorize('update', $costume);
 
-        return view('admin.costumes.edit', compact('costume'));
+        $sets = $costume->group->costumeSets;
+
+        return view('admin.costumes.edit', compact('costume', 'sets'));
     }
 
     public function update(Request $request, Costume $costume)
@@ -66,6 +72,7 @@ class CostumeController extends Controller
             'name' => 'required|string|max:255',
             'image' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:4096',
             'remove_image' => 'nullable|boolean',
+            'costume_set_id' => 'nullable|integer|exists:costume_sets,id,group_id,'.$costume->group_id,
         ]);
 
         // vecais foto jāizdzēš gan aizstājot, gan noņemot, lai nekrāj nelietotus failus krātuvē
@@ -80,10 +87,11 @@ class CostumeController extends Controller
         }
 
         $costume->name = $validated['name'];
+        $costume->costume_set_id = $validated['costume_set_id'] ?? null;
         $costume->save();
 
         return redirect()->route('admin.costumes.show', $costume)
-            ->with('success', "Costume renamed to “{$costume->name}”.");
+            ->with('success', "Costume “{$costume->name}” saved.");
     }
 
     // pievieno tērpam papildu vienības

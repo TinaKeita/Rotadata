@@ -1,6 +1,6 @@
 <x-guest-layout>
     <div class="mb-4">
-        <a href="{{ route('login') }}" class="inline-flex items-center gap-1.5 text-sm font-medium text-brand-secondary dark:text-brand-light hover:text-brand-accent dark:hover:text-white transition">
+        <a href="{{ route('login') }}" class="ui-back">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
             </svg>
@@ -10,7 +10,7 @@
 
     {{-- skaidrs, uzkrītošs paziņojums, ja žetons kaut kā nonācis pie studenta konta --}}
     @if (session('notice'))
-        <div class="mb-4 rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-sm font-medium text-amber-800 dark:border-amber-500/40 dark:bg-amber-900/20 dark:text-amber-300">
+        <div class="ui-alert ui-alert-warn mb-4 font-medium">
             {{ session('notice') }}
         </div>
     @endif
@@ -31,7 +31,7 @@
         <!-- Password -->
         <div class="mt-4">
             <x-input-label for="password" :value="__('Password')" />
-            <x-text-input id="password" class="block mt-1 w-full" type="password" name="password" required autocomplete="new-password" />
+            <x-password-input id="password" class="ui-input block mt-1 w-full" name="password" required autocomplete="new-password" />
             <x-input-error :messages="$errors->get('password')" class="mt-2" />
         </div>
 
@@ -39,8 +39,7 @@
         <div class="mt-4">
             <x-input-label for="password_confirmation" :value="__('Confirm Password')" />
 
-            <x-text-input id="password_confirmation" class="block mt-1 w-full"
-                                type="password"
+            <x-password-input id="password_confirmation" class="ui-input block mt-1 w-full"
                                 name="password_confirmation" required autocomplete="new-password" />
 
             <x-input-error :messages="$errors->get('password_confirmation')" class="mt-2" />

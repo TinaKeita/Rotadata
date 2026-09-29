@@ -5,15 +5,15 @@
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<title>{{ $costume->name }} — QR labels</title>
 	<link rel="preconnect" href="https://fonts.bunny.net">
-	<link href="https://fonts.bunny.net/css?family=figtree:400,500,600,700&display=swap" rel="stylesheet" />
+	<link href="https://fonts.bunny.net/css?family=newsreader:400|public-sans:400,500,600,700|ibm-plex-mono:400,500&display=swap" rel="stylesheet" />
 	<style>
 		* { box-sizing: border-box; }
 
 		body {
 			margin: 0;
-			font-family: 'Figtree', system-ui, -apple-system, sans-serif;
-			color: #1f2937;
-			background: #f3f4f6;
+			font-family: 'Public Sans', system-ui, -apple-system, sans-serif;
+			color: #1B1B19;
+			background: #FBFAF8;
 		}
 
 		.toolbar {
@@ -26,7 +26,7 @@
 			gap: .5rem;
 			padding: .75rem 1rem;
 			background: #fff;
-			border-bottom: 1px solid #e5e7eb;
+			border-bottom: 1px solid #E7E4DE;
 		}
 
 		.toolbar a,
@@ -36,17 +36,17 @@
 			font-weight: 600;
 			text-decoration: none;
 			padding: .4rem .8rem;
-			border-radius: .5rem;
-			border: 1px solid #d1d5db;
+			border-radius: 999px;
+			border: 1px solid #D9D5CD;
 			background: #fff;
-			color: #374151;
+			color: #1B1B19;
 			cursor: pointer;
 		}
 
-		.toolbar .primary { background: #4f6150; border-color: #4f6150; color: #fff; }
-		.toolbar .active { background: #E5E0D8; border-color: #748873; color: #4f6150; }
+		.toolbar .primary { background: #2F5D46; border-color: #2F5D46; color: #FBFAF8; }
+		.toolbar .active { background: #EDF1EC; border-color: #2F5D46; color: #2F5D46; }
 		.toolbar .group { display: inline-flex; gap: .35rem; align-items: center; }
-		.toolbar .label-text { font-size: .72rem; font-weight: 600; text-transform: uppercase; letter-spacing: .08em; color: #9ca3af; }
+		.toolbar .label-text { font-family: 'IBM Plex Mono', monospace; font-size: .7rem; font-weight: 400; text-transform: uppercase; letter-spacing: .1em; color: #6E6A61; }
 		.toolbar .spacer { flex: 1 1 auto; }
 
 		.sheet { padding: 8mm; }
@@ -64,23 +64,23 @@
 			gap: 2mm;
 			padding: 4mm 2mm;
 			text-align: center;
-			border: 1px dashed #cbd5e1;
+			border: 1px dashed #D9D5CD;
 			border-radius: 4px;
 			page-break-inside: avoid;
 			break-inside: avoid;
 		}
 
 		.tag svg { width: 26mm; height: 26mm; }
-		.tag .code { font-weight: 700; font-size: 10pt; letter-spacing: .04em; }
-		.tag .name { font-size: 7.5pt; color: #6b7280; line-height: 1.2; }
+		.tag .code { font-family: 'IBM Plex Mono', monospace; font-weight: 500; font-size: 10pt; letter-spacing: .02em; }
+		.tag .name { font-size: 7.5pt; color: #6E6A61; line-height: 1.2; }
 
-		.empty { padding: 3rem 1rem; text-align: center; color: #6b7280; }
+		.empty { padding: 3rem 1rem; text-align: center; color: #6E6A61; }
 
 		@media print {
 			body { background: #fff; }
 			.toolbar { display: none; }
 			.sheet { padding: 0; }
-			.tag { border-color: #e5e7eb; }
+			.tag { border-color: #E7E4DE; }
 			@page { size: A4; margin: 10mm; }
 		}
 	</style>

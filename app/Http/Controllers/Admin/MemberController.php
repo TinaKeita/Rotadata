@@ -3,6 +3,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Mail\MemberAddedMail;
+use App\Mail\MemberRemovedMail;
 use App\Mail\MemberWelcomeMail;
 use App\Mail\PasswordResetByTeacherMail;
 use App\Models\Group;
@@ -17,7 +18,9 @@ class MemberController extends Controller
     // forma jauna lietotāja pievienošanai
     public function create()
     {
-        return view('admin.members.create');
+        $sets = auth()->user()->adminGroups()->first()?->costumeSets ?? collect();
+
+        return view('admin.members.create', compact('sets'));
     }
 
     // pieņem vienu vai vairākus studentus vienā reizē – katru rindu apstrādā neatkarīgi,
@@ -38,7 +41,11 @@ class MemberController extends Controller
             'members' => 'required|array|min:1|max:50',
             'members.*.name' => 'required|string|max:255',
             'members.*.email' => 'required|email|max:255|distinct',
+            // viens komplekts visai partijai – skolotājs parasti pievieno visas meitenes, tad visus puišus
+            'costume_set_id' => 'nullable|integer|exists:costume_sets,id,group_id,'.$adminGroup->id,
         ], [], $attributes);
+
+        $setId = $validated['costume_set_id'] ?? null;
 
         $created = 0;
         $attached = 0;
@@ -50,8 +57,8 @@ class MemberController extends Controller
             $existing = User::withTrashed()->where('email', $row['email'])->first();
 
             $result = $existing
-                ? $this->attachExisting($existing, $adminGroup)
-                : $this->createAndInvite($row, $adminGroup);
+                ? $this->attachExisting($existing, $adminGroup, $setId)
+                : $this->createAndInvite($row, $adminGroup, $setId);
 
             if ($result['status'] === 'created') {
                 $created++;
@@ -96,7 +103,7 @@ class MemberController extends Controller
     }
 
     // pievieno esošu kontu skolotāja grupai un paziņo par to e-pastā (bez paroles)
-    private function attachExisting(User $user, Group $group): array
+    private function attachExisting(User $user, Group $group, ?int $setId = null): array
     {
         if ($user->trashed()) {
             return ['status' => 'skipped', 'message' => "“{$user->email}” belongs to a deactivated account and can’t be added right now."];
@@ -115,7 +122,7 @@ class MemberController extends Controller
             $user->assignRole('member');
         }
 
-        $group->members()->attach($user->id);
+        $group->members()->attach($user->id, ['costume_set_id' => $setId]);
 
         rescue(fn () => Mail::to($user->email)->send(new MemberAddedMail($user, $group->name)));
 
@@ -124,7 +131,7 @@ class MemberController extends Controller
 
     // izveido jaunu kontu ar pagaidu paroli un nosūta uzaicinājuma e-pastu
     // konts tiek izveidots neatkarīgi no tā, vai e-pasts izdodas nosūtīt – e-pasta kļūme nekad nedrīkst bloķēt dalībnieka pievienošanu
-    private function createAndInvite(array $validated, Group $group): array
+    private function createAndInvite(array $validated, Group $group, ?int $setId = null): array
     {
         $tempPassword = Str::random(12);
 
@@ -136,7 +143,7 @@ class MemberController extends Controller
         ]);
 
         $member->assignRole('member');
-        $group->members()->attach($member->id);
+        $group->members()->attach($member->id, ['costume_set_id' => $setId]);
 
         if ($this->sendInvite($member, $group->name, $tempPassword)) {
             return ['status' => 'created', 'name' => $member->name, 'email' => $member->email];
@@ -222,6 +229,48 @@ class MemberController extends Controller
         }
     }
 
+    // maina komplektu vienam vai vairākiem studentiem (Members saraksts un studenta lapa)
+    public function updateSet(Request $request)
+    {
+        $adminGroup = auth()->user()->adminGroups()->first();
+        abort_if(is_null($adminGroup), 403, 'You do not have a group yet.');
+
+        $validated = $request->validate([
+            'user_ids' => 'required|array|min:1',
+            'user_ids.*' => 'integer',
+            'costume_set_id' => 'nullable|integer|exists:costume_sets,id,group_id,'.$adminGroup->id,
+        ], [
+            'user_ids.required' => 'Tick at least one student first.',
+        ]);
+
+        // tikai šīs grupas dalībnieki – svešus id klusi ignorējam
+        $ids = $adminGroup->members()->whereIn('users.id', $validated['user_ids'])->pluck('users.id');
+
+        foreach ($ids as $id) {
+            $adminGroup->members()->updateExistingPivot($id, ['costume_set_id' => $validated['costume_set_id'] ?? null]);
+        }
+
+        $setName = isset($validated['costume_set_id'])
+            ? $adminGroup->costumeSets()->whereKey($validated['costume_set_id'])->value('name')
+            : null;
+
+        $message = $setName
+            ? $ids->count().' '.Str::plural('student', $ids->count())." moved to “{$setName}”."
+            : $ids->count().' '.Str::plural('student', $ids->count()).' now have no set.';
+
+        return back()->with('success', $message);
+    }
+
+    // skolotājs jau iedeva paroli citādi – noņem brīdinājumu par nepiegādāto uzaicinājumu
+    public function dismissInvite(User $member)
+    {
+        $this->authorize('view', $member);
+
+        $member->update(['invite_email_failed_at' => null]);
+
+        return back()->with('success', "Invite warning for {$member->name} dismissed.");
+    }
+
     // parāda visus lietotājus
     public function index()
     {
@@ -239,7 +288,9 @@ class MemberController extends Controller
                 ->get()
             : collect();
 
-        return view('admin.members.index', compact('members', 'trashedMembers'));
+        $sets = $adminGroup?->costumeSets ?? collect();
+
+        return view('admin.members.index', compact('members', 'trashedMembers', 'sets'));
     }
 
     public function show(User $user)
@@ -257,7 +308,12 @@ class MemberController extends Controller
             },
         ]);
 
-        return view('admin.members.show', compact('user'));
+        // komplekts skolotāja grupā (students var būt vairākās grupās, bet skolotājam ir viena)
+        $adminGroup = auth()->user()->adminGroups()->first();
+        $sets = $adminGroup?->costumeSets ?? collect();
+        $currentSetId = $adminGroup?->members()->whereKey($user->id)->first()?->pivot->costume_set_id;
+
+        return view('admin.members.show', compact('user', 'sets', 'currentSetId'));
     }
 
     public function destroy(User $user)
@@ -282,6 +338,9 @@ class MemberController extends Controller
 
             $adminGroup->members()->detach($user->id);
 
+            // students uzzina par izņemšanu (tāpat kā par pievienošanu); e-pasta kļūme darbību neaptur
+            rescue(fn () => Mail::to($user->email)->send(new MemberRemovedMail($user, $adminGroup->name)));
+
             $reason = $user->hasRole('admin') ? "they're a teacher" : "they're still in other groups";
 
             return redirect()->route('admin.members.index')
@@ -300,6 +359,8 @@ class MemberController extends Controller
         $user->delete();
 
         $purgeDate = now()->addDays(Group::PURGE_AFTER_DAYS)->format('d.m.Y');
+
+        rescue(fn () => Mail::to($user->email)->send(new MemberRemovedMail($user, $adminGroup->name, $purgeDate)));
 
         return redirect()->route('admin.members.index')
             ->with('success', "Member “{$name}” deleted. Their costumes have been released. You can restore the account until {$purgeDate}.");

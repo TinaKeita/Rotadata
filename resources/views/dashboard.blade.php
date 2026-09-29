@@ -1,71 +1,125 @@
 <x-app-layout>
+    {{-- studenta sākumlapa: paša gatavība nākamajam koncertam, koncerti un grupas (inventārs, grupas pamešana) --}}
+    @php
+        $firstName = \Illuminate\Support\Str::before(trim(auth()->user()->name), ' ');
+
+        // cik dienu līdz koncertam, cilvēkam saprotamā formā (tāpat kā skolotāja panelī)
+        $whenLabel = function ($event) {
+            $days = (int) now()->startOfDay()->diffInDays($event->starts_at->copy()->startOfDay());
+
+            return match (true) {
+                $days === 0 => 'Today',
+                $days === 1 => 'Tomorrow',
+                default => "in {$days} days",
+            };
+        };
+    @endphp
+
     <x-slot name="header">
-        <x-page-header title="Member Dashboard" subtitle="Browse your group inventories and manage assigned costumes." />
+        <x-page-header :eyebrow="now()->format('l, j F')" :title="'Hello, '.$firstName.'.'"
+            subtitle="Your next concert, the costumes you have and the groups you're in." />
     </x-slot>
 
-    <section class="space-y-6">
-        @php
-            $groups = auth()->user()->memberGroups;
-        @endphp
-
-        <x-events.timeline :upcoming="$upcoming" :past="$past" />
-
-        <div class="rounded-2xl border border-brand-primary/20 dark:border-brand-light/15 bg-gradient-to-r from-brand-light/40 via-white to-brand-light/20 dark:from-darkbrand-light/40 dark:via-gray-800 dark:to-darkbrand-light/20 p-6 sm:p-8 shadow-sm">
-            <div class="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-                <div>
-                    <h3 class="text-2xl font-semibold text-brand-accent dark:text-brand-light">
-                        Your groups and inventories
-                    </h3>
-                    <p class="mt-2 max-w-2xl text-sm sm:text-base text-gray-700 dark:text-gray-200">
-                        Open your inventory directly from your assigned group.
-                    </p>
+    <div class="space-y-6">
+        {{-- nākamais koncerts, kurā students piedalās: kas jau ir un kas vēl jāpaņem --}}
+        @if($nextConcert)
+            @php
+                $event = $nextConcert['event'];
+                $row = $nextConcert['row'];
+                $missingIds = $row['missing']->pluck('id')->all();
+            @endphp
+            <section data-reveal="" data-reveal-delay="60" class="ui-card">
+                <div class="mb-3 flex flex-wrap items-center justify-between gap-3">
+                    <p class="ui-eyebrow">Before your next concert</p>
+                    <span class="ui-chip ui-chip-good">{{ $whenLabel($event) }}</span>
                 </div>
-                <p class="text-sm font-medium text-brand-secondary dark:text-brand-light">
-                    <span class="font-semibold">{{ $groups->count() }}</span>
-                    {{ Str::plural('group', $groups->count()) }} available
+
+                <button type="button" x-data x-on:click="$dispatch('open-events', { id: {{ $event->id }} })" class="block text-left hover:text-brand">
+                    <span class="block font-display text-[28px] leading-tight tracking-[-0.01em]">{{ $event->title }}</span>
+                </button>
+                <p class="mt-1 font-mono text-[12.5px] text-ink-soft">
+                    {{ $event->starts_at->format('D, d.m.Y · H:i') }}@if($event->location) · {{ $event->location }}@endif · {{ $event->group->name }}
                 </p>
-            </div>
-        </div>
 
-        <div class="grid gap-5 lg:grid-cols-2">
-            @forelse($groups as $group)
-                <article class="group rounded-2xl border border-brand-secondary/15 dark:border-brand-light/20 bg-white dark:bg-gray-900/50 p-6 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-lg">
-                    <div class="mb-5 flex items-start justify-between gap-4">
-                        <div>
-                            <h3 class="text-xl font-semibold text-gray-900 dark:text-gray-100">
-                                {{ $group->name }}
-                            </h3>
-                            <p class="mt-1 text-sm text-gray-600 dark:text-gray-300">
-                                Teacher: {{ $group->admin?->name ?? 'Not assigned' }}
-                            </p>
-                        </div>
-                        <span class="rounded-full border border-brand-primary/30 dark:border-brand-light/30 bg-brand-light/50 dark:bg-darkbrand-light/60 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-brand-accent dark:text-brand-light">
-                            Group
-                        </span>
-                    </div>
-
-                    <div class="flex flex-wrap items-center gap-2">
-                        <a href="{{ route('members.costumes.index', $group->id ?? 0) }}"
-                            class="inline-flex items-center justify-center rounded-lg border border-brand-secondary/35 dark:border-brand-light/35 bg-brand-secondary px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-brand-accent focus:outline-none focus:ring-2 focus:ring-brand-primary/50 dark:bg-darkbrand-secondary dark:hover:bg-darkbrand-accent">
-                            My Inventory
-                        </a>
-
-                        {{-- students pats pamet grupu – konts vienmēr paliek --}}
-                        <form method="POST" action="{{ route('members.costumes.leave', $group) }}"
-                            onsubmit="return confirm('Leave {{ $group->name }}? You can only do this once you\'ve returned every item from this group.');">
-                            @csrf
-                            <button type="submit"
-                                class="inline-flex items-center justify-center rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-semibold text-gray-600 transition hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700">
-                                Leave group
-                            </button>
-                        </form>
-                    </div>
-                </article>
-            @empty
-                <div class="lg:col-span-2 rounded-xl border border-dashed border-gray-300 px-4 py-10 text-center text-sm text-gray-500 dark:border-gray-600 dark:text-gray-400">
-                    You're not part of any group yet. Ask your teacher to add you.
+                <div class="mt-5 rounded-[14px] border px-4 py-3 text-[15px] {{ $row['ready'] ? 'border-brand/25 bg-brand-tint text-brand' : 'border-rust/25 bg-rust-tint text-rust' }}">
+                    @if($row['no_set'])
+                        Your teacher hasn't put you in a set yet, so it isn't clear which costumes you need. Ask them to choose your set.
+                    @elseif($row['ready'])
+                        You have everything you need. ✓
+                    @else
+                        You still need: <strong class="font-semibold">{{ $row['missing']->pluck('name')->implode(', ') }}</strong>
+                    @endif
                 </div>
-            @endforelse
+
+                @if($row['needed']->isNotEmpty())
+                    <div class="mt-4 flex flex-wrap gap-1.5">
+                        @foreach($row['needed'] as $costume)
+                            <span class="ui-chip {{ in_array($costume->id, $missingIds, true) ? 'ui-chip-late' : 'ui-chip-good' }}">
+                                {{ in_array($costume->id, $missingIds, true) ? '○' : '✓' }} {{ $costume->name }}
+                            </span>
+                        @endforeach
+                    </div>
+                @endif
+            </section>
+        @endif
+
+        <div data-reveal="" data-reveal-delay="100">
+            <x-events.timeline :upcoming="$upcoming" :past="$past" />
         </div>
-    </section>
+
+        <section data-reveal="" data-reveal-delay="140">
+            <div class="mb-3 flex items-baseline justify-between gap-3">
+                <h2 class="ui-heading">Your groups</h2>
+                <span class="ui-eyebrow">{{ $groups->count() }} {{ Str::plural('group', $groups->count()) }}</span>
+            </div>
+
+            <div class="grid gap-4 lg:grid-cols-2">
+                @forelse($groups as $group)
+                    @php $held = $itemsByGroup[$group->id] ?? collect(); @endphp
+                    <article class="ui-card flex flex-col gap-5">
+                        <div class="flex items-start justify-between gap-4">
+                            <div class="min-w-0">
+                                <h3 class="truncate font-display text-[26px] font-normal leading-tight tracking-[-0.01em]">{{ $group->name }}</h3>
+                                <p class="mt-1 font-mono text-[12px] text-ink-soft">Teacher · {{ $group->admin?->name ?? 'Not assigned' }}</p>
+                            </div>
+                            {{-- studenta komplekts šajā grupā --}}
+                            <span class="ui-chip shrink-0 {{ $group->pivot->costume_set_id ? 'ui-chip-good' : '' }}">
+                                {{ $setNames[$group->pivot->costume_set_id] ?? 'No set' }}
+                            </span>
+                        </div>
+
+                        {{-- kas šobrīd rokās no šīs grupas --}}
+                        <div>
+                            <p class="ui-eyebrow mb-1.5">With you now · {{ $held->count() }}</p>
+                            @forelse($held as $item)
+                                <p class="flex items-baseline justify-between gap-3 border-t border-line-soft py-1.5 text-[14.5px] first-of-type:border-t-0">
+                                    <span class="truncate">{{ $item->costume->name }}</span>
+                                    <span class="shrink-0 font-mono text-[12px] text-ink-soft">{{ $item->code }}</span>
+                                </p>
+                            @empty
+                                <p class="text-[14.5px] text-ink-muted">Nothing checked out from this group.</p>
+                            @endforelse
+                        </div>
+
+                        <div class="flex flex-wrap items-center gap-2">
+                            <a href="{{ route('members.costumes.index', $group->id ?? 0) }}" class="ui-btn">
+                                My inventory
+                            </a>
+
+                            {{-- students pats pamet grupu – konts vienmēr paliek --}}
+                            <form method="POST" action="{{ route('members.costumes.leave', $group) }}"
+                                onsubmit="return confirm('Leave {{ $group->name }}? You can only do this once you\'ve returned every item from this group.');">
+                                @csrf
+                                <button type="submit" class="ui-btn-ghost">Leave group</button>
+                            </form>
+                        </div>
+                    </article>
+                @empty
+                    <div class="ui-empty lg:col-span-2">
+                        You're not part of any group yet. Ask your teacher to add you.
+                    </div>
+                @endforelse
+            </div>
+        </section>
+    </div>
 </x-app-layout>

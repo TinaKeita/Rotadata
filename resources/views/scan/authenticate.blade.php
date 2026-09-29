@@ -1,19 +1,19 @@
 <x-guest-layout>
     {{-- lietotāja paroles ievade pēc QR skenēšanas --}}
     <div class="mb-6 text-center">
-        <p class="text-xs font-semibold uppercase tracking-[0.16em] text-brand-primary dark:text-brand-secondary">Rotadata</p>
-        <h1 class="mt-2 text-2xl font-semibold text-brand-accent dark:text-brand-light">Confirm it's you</h1>
-        <p class="mt-2 text-sm text-gray-600 dark:text-gray-300">Enter your password to claim this costume item.</p>
+        <p class="font-mono text-[11.5px] tracking-[0.1em] uppercase text-brand">Rotadata</p>
+        <h1 class="font-display text-[32px] font-normal leading-tight tracking-[-0.02em] text-ink mt-2">Confirm it's you</h1>
+        <p class="mt-2 text-sm text-ink-muted">Enter your password to claim this costume item.</p>
     </div>
 
-    <div class="mb-5 rounded-lg border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-700 dark:border-gray-700 dark:bg-gray-900/40 dark:text-gray-200">
+    <div class="mb-5 rounded-lg border border-line bg-surface-sunk px-4 py-3 text-sm text-ink-muted">
         <div>
-            <span class="font-semibold text-brand-accent dark:text-brand-light">{{ $item->costume->name }}</span>
+            <span class="font-semibold text-brand">{{ $item->costume->name }}</span>
             @if($item->costume->group)
-                <span class="text-gray-500 dark:text-gray-400"> &middot; {{ $item->costume->group->name }}</span>
+                <span class="text-ink-soft"> &middot; {{ $item->costume->group->name }}</span>
             @endif
         </div>
-        <div class="mt-0.5 text-xs font-semibold tracking-wide text-gray-500 dark:text-gray-400">{{ $item->code }}</div>
+        <div class="mt-0.5 text-xs font-semibold tracking-wide text-ink-soft">{{ $item->code }}</div>
     </div>
 
     <form method="POST" action="{{ route('scan.authenticate', $item->qr_code) }}" class="space-y-5"
@@ -29,12 +29,12 @@
 
         <div>
             <x-input-label for="password" :value="__('Password')" />
-            <x-text-input id="password" class="mt-1.5" type="password" name="password" required autocomplete="current-password" x-bind:disabled="lock > 0" />
+            <x-password-input id="password" class="ui-input mt-1.5" name="password" required autocomplete="current-password" x-bind:disabled="lock > 0" />
             <x-input-error :messages="$errors->get('password')" class="mt-2" />
         </div>
 
         @if(session('scanLockSeconds'))
-            <p x-show="lock > 0" class="text-sm font-medium text-amber-600 dark:text-amber-400">
+            <p x-show="lock > 0" class="text-sm font-medium text-rust">
                 Too many attempts. Try again in <span x-text="lock"></span>s.
             </p>
         @endif
@@ -43,7 +43,7 @@
             <x-primary-button class="justify-center" x-bind:disabled="lock > 0" x-bind:class="lock > 0 ? 'opacity-50 cursor-not-allowed' : ''">
                 {{ __('Continue') }}
             </x-primary-button>
-            <a href="{{ route('dashboard') }}" class="text-sm font-medium text-gray-600 hover:text-brand-primary dark:text-gray-300 dark:hover:text-brand-secondary">
+            <a href="{{ route('dashboard') }}" class="text-sm font-medium text-ink-muted hover:text-brand">
                 {{ __('Cancel') }}
             </a>
         </div>

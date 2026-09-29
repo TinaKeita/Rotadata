@@ -1,11 +1,11 @@
 <x-app-layout>
     <x-slot name="header">
-        <x-page-header title="Add Concert" subtitle="Schedule a new concert for your group." />
+        <x-page-header :eyebrow="auth()->user()->adminGroups()->value('name')" title="Add concert" subtitle="Schedule a new concert for your group." />
     </x-slot>
 
-    <div class="max-w-2xl rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+    <div class="ui-card max-w-2xl">
         @if ($errors->any())
-            <div class="mb-5 rounded-lg border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-800 dark:border-red-700 dark:bg-red-900/30 dark:text-red-300">
+            <div class="ui-alert ui-alert-error mb-5">
                 <ul class="list-disc list-inside space-y-1">
                     @foreach ($errors->all() as $error)
                         <li>{{ $error }}</li>
@@ -19,7 +19,7 @@
 
             @include('admin.events._form')
 
-            <button class="inline-flex items-center rounded-lg border border-brand-primary/20 bg-brand-primary px-4 py-2 text-sm font-semibold text-white transition hover:bg-brand-accent focus:outline-none focus:ring-2 focus:ring-brand-secondary/50">
+            <button class="ui-btn">
                 Create
             </button>
         </form>

@@ -1,25 +1,25 @@
 <x-guest-layout>
     {{-- apstiprina tērpa vienības piešķiršanu pašam pieslēgtajam lietotājam --}}
     <div class="mb-6 text-center">
-        <h1 class="text-2xl font-semibold text-brand-accent dark:text-brand-light">Assign this costume?</h1>
-        <p class="mt-2 text-sm text-gray-600 dark:text-gray-300">
-            Signed in as <span class="font-semibold text-brand-accent dark:text-brand-light">{{ auth()->user()->name }}</span>
+        <h1 class="font-display text-[32px] font-normal leading-tight tracking-[-0.02em] text-ink">Assign this costume?</h1>
+        <p class="mt-2 text-sm text-ink-muted">
+            Signed in as <span class="font-semibold text-brand">{{ auth()->user()->name }}</span>
         </p>
     </div>
 
-    <div class="mb-5 rounded-lg border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-700 dark:border-gray-700 dark:bg-gray-900/40 dark:text-gray-200">
+    <div class="mb-5 rounded-lg border border-line bg-surface-sunk px-4 py-3 text-sm text-ink-muted">
         <div class="flex items-center gap-3">
             @if($item->costume->image)
-                <img src="{{ $item->costume->imageUrl() }}" alt="" class="h-14 w-14 shrink-0 rounded-lg border border-gray-200 object-cover dark:border-gray-700">
+                <img src="{{ $item->costume->imageUrl() }}" alt="" class="h-14 w-14 shrink-0 rounded-lg border border-line object-cover">
             @endif
             <div class="min-w-0">
                 <div>
-                    <span class="font-semibold text-brand-accent dark:text-brand-light">{{ $item->costume->name }}</span>
+                    <span class="font-semibold text-brand">{{ $item->costume->name }}</span>
                     @if($item->costume->group)
-                        <span class="text-gray-500 dark:text-gray-400"> &middot; {{ $item->costume->group->name }}</span>
+                        <span class="text-ink-soft"> &middot; {{ $item->costume->group->name }}</span>
                     @endif
                 </div>
-                <div class="mt-0.5 text-xs font-semibold tracking-wide text-gray-500 dark:text-gray-400">{{ $item->code }}</div>
+                <div class="mt-0.5 text-xs font-semibold tracking-wide text-ink-soft">{{ $item->code }}</div>
             </div>
         </div>
     </div>
@@ -32,7 +32,7 @@
             </x-primary-button>
         </form>
 
-        <a href="{{ route('dashboard') }}" class="text-sm font-medium text-gray-600 hover:text-brand-primary dark:text-gray-300 dark:hover:text-brand-secondary">
+        <a href="{{ route('dashboard') }}" class="text-sm font-medium text-ink-muted hover:text-brand">
             {{ __('Cancel') }}
         </a>
     </div>

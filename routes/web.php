@@ -46,26 +46,8 @@ Route::get('/qr/{code}/download', function ($code) {
 */
 
 Route::middleware('auth')->group(function () {
-    Route::get('/dashboard', function () {
-        if (auth()->user()->hasRole('admin')) {
-            return redirect()->route('admin.dashboard');
-        }
-
-        // koncerti no visām grupām, kurās students ir dalībnieks, sakārtoti pēc datuma
-        $groupIds = auth()->user()->memberGroups()->pluck('groups.id');
-
-        $upcoming = \App\Models\Event::with(['costumes', 'group'])
-            ->whereIn('group_id', $groupIds)
-            ->upcoming()
-            ->get();
-
-        $past = \App\Models\Event::with(['costumes', 'group'])
-            ->whereIn('group_id', $groupIds)
-            ->past()
-            ->get();
-
-        return view('dashboard', compact('upcoming', 'past'));
-    })->name('dashboard');
+    // skolotāju pāradresē uz admin paneli, studentam – koncerti, gatavība un grupas
+    Route::get('/dashboard', [App\Http\Controllers\Member\DashboardController::class, 'index'])->name('dashboard');
 
     // Obligātā paroles maiņa pēc pieslēgšanās ar pagaidu paroli
     Route::get('/password/change', [App\Http\Controllers\Auth\ForcePasswordController::class, 'edit'])
@@ -97,6 +79,9 @@ Route::middleware('auth')->group(function () {
 Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->group(function () {
     Route::get('/dashboard', [App\Http\Controllers\Admin\DashboardController::class, 'index'])->name('dashboard');
 
+    // tērpu aprites žurnāls un statistika (pārcelts no paneļa)
+    Route::get('/activity', [App\Http\Controllers\Admin\ActivityController::class, 'index'])->name('activity');
+
     // Tērpi un to vienības
     Route::post('/costumes/items/{item}/unassign', [AdminCostumeController::class, 'unassign'])
         ->name('costumes.items.unassign');
@@ -114,6 +99,11 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     // Dalībnieki (studenti)
     Route::post('/members/{member}/resend-invite', [AdminMemberController::class, 'resendInvite'])
         ->name('members.resend-invite');
+    // skolotājs paroli jau iedevis citādi – noņem "uzaicinājums nav piegādāts" brīdinājumu
+    Route::post('/members/{member}/dismiss-invite', [AdminMemberController::class, 'dismissInvite'])
+        ->name('members.dismiss-invite');
+    // viena vai vairāku studentu tērpu komplekta maiņa
+    Route::patch('/members/set', [AdminMemberController::class, 'updateSet'])->name('members.set');
     // students aizmirsis paroli – skolotājs atiestata, apstiprinot ar savu paroli
     Route::post('/members/{member}/reset-password', [AdminMemberController::class, 'resetPassword'])
         ->name('members.reset-password');
@@ -140,6 +130,10 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::get('/group/delete', [AdminGroupController::class, 'confirm'])->name('group.delete');
     Route::delete('/group', [AdminGroupController::class, 'destroy'])->name('group.destroy');
     Route::post('/group/restore', [AdminGroupController::class, 'restore'])->name('group.restore');
+
+    // Tērpu komplekti (piem. "Meitenes", "Puiši") – pārvalda grupas iestatījumos
+    Route::resource('costume-sets', App\Http\Controllers\Admin\CostumeSetController::class)
+        ->only(['store', 'update', 'destroy']);
     Route::delete('/group/force', [AdminGroupController::class, 'forceDestroy'])->name('group.force-destroy');
 
     // Paziņojumi (piem. students pametis grupu)

@@ -1,8 +1,8 @@
 <x-guest-layout>
-	<div class="rounded-xl border border-emerald-300/80 bg-emerald-50 px-4 py-4 sm:px-5 sm:py-5 text-emerald-800 dark:border-emerald-500/40 dark:bg-emerald-900/20 dark:text-emerald-300">
-		<p class="text-xs font-semibold uppercase tracking-[0.16em]">Assignment status</p>
-		<h1 class="mt-1 text-lg font-semibold">Successfully assigned</h1>
-		<p class="mt-2 text-sm text-emerald-700/90 dark:text-emerald-300/90">
+	<div class="ui-alert ui-alert-good py-4 sm:px-5 sm:py-5">
+		<p class="font-mono text-[11.5px] tracking-[0.1em] uppercase">Assignment status</p>
+		<h1 class="mt-1 font-display text-[26px] font-normal leading-tight tracking-[-0.01em]">Successfully assigned</h1>
+		<p class="mt-2 text-sm text-brand">
 			@isset($item)
 				<span class="font-semibold">{{ $item->code }}</span> ({{ $item->costume->name }}) is now linked to you.
 			@else
@@ -12,7 +12,7 @@
 	</div>
 
 	<div class="mt-5">
-		<a href="{{ route('dashboard') }}" class="inline-flex w-full items-center justify-center rounded-lg border border-brand-primary/25 bg-brand-primary px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-brand-accent focus:outline-none focus:ring-2 focus:ring-brand-secondary/50">
+		<a href="{{ route('dashboard') }}" class="ui-btn w-full justify-center w-full">
 			Back to dashboard
 		</a>
 	</div>
