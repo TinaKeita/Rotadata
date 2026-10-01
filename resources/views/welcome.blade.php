@@ -289,14 +289,31 @@
         </section>
 
         {{-- CTA bloks --}}
-        {{-- PĀRBAUDĪT: sataisīt lai info.rotadata.lv dabū rederect no gmail --}}
         <section id="contact" class="mx-auto max-w-shell px-6 pt-[88px]">
             <div data-reveal="" class="rounded-block bg-brand-dark p-[clamp(40px,6vw,72px)] text-center text-[#F3F1EC]">
                 <h2 class="mx-auto mb-3.5 max-w-[18ch] text-balance font-display text-[length:clamp(30px,4.4vw,48px)] font-normal leading-[1.08] tracking-[-0.02em]">Start with one group.</h2>
                 <p class="mx-auto mb-[30px] max-w-[46ch] text-pretty text-[17px] text-[#C8C4BA]">Set it up in an afternoon, use it all season. Add your costumes, add your students, print the QR labels.</p>
                 <div class="flex flex-wrap justify-center gap-2.5">
                     <a href="{{ $signupHref }}" class="rounded-full bg-[#F3F1EC] px-7 py-[13px] text-[15.5px] font-medium text-brand-dark hover:bg-white">{{ $isAuth ? 'Go to dashboard' : 'Create a teacher account' }}</a>
-                    <a href="mailto:info@rotadata.lv" class="rounded-full border border-[#F3F1EC]/30 px-[26px] py-[13px] text-[15.5px] font-medium text-[#F3F1EC] hover:border-[#F3F1EC] hover:text-white">Email us</a>
+                    {{-- mailto: strādā tikai, ja apmeklētājam ir iestatīta pasta programma – tāpēc arī Gmail un adreses kopēšana --}}
+                    <div class="relative" x-data="{ open: false, copied: false }" @click.outside="open = false" @keydown.escape.window="open = false">
+                        <button type="button" @click="open = !open" :aria-expanded="open.toString()" aria-haspopup="true"
+                            class="rounded-full border border-[#F3F1EC]/30 px-[26px] py-[13px] text-[15.5px] font-medium text-[#F3F1EC] hover:border-[#F3F1EC] hover:text-white">
+                            Email us
+                        </button>
+                        <div x-show="open" x-transition.opacity style="display: none"
+                            class="absolute left-1/2 top-full z-20 mt-2 w-60 -translate-x-1/2 rounded-2xl border border-line bg-paper p-2 text-left shadow-nav">
+                            <p class="px-3 pb-1.5 pt-1 font-mono text-[11.5px] text-ink-soft">info@rotadata.lv</p>
+                            <a href="mailto:info@rotadata.lv" class="block rounded-xl px-3 py-2 text-sm font-medium text-ink-muted hover:bg-surface-sunk hover:text-ink">Open mail app</a>
+                            <a href="https://mail.google.com/mail/?view=cm&fs=1&to=info@rotadata.lv" target="_blank" rel="noopener"
+                                class="block rounded-xl px-3 py-2 text-sm font-medium text-ink-muted hover:bg-surface-sunk hover:text-ink">Write in Gmail</a>
+                            <button type="button"
+                                @click="navigator.clipboard?.writeText('info@rotadata.lv').then(() => { copied = true; setTimeout(() => copied = false, 2000) })"
+                                class="block w-full rounded-xl px-3 py-2 text-left text-sm font-medium text-ink-muted hover:bg-surface-sunk hover:text-ink">
+                                <span x-text="copied ? 'Copied ✓' : 'Copy address'">Copy address</span>
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </div>
         </section>
