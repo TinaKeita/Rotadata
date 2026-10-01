@@ -52,6 +52,12 @@ class User extends Authenticatable
             'invite_email_failed_at' => 'datetime',
         ];
     }
+    // "Forgot password" saite Rotadata e-pasta noformējumā, nevis Laravel noklusējuma veidnē
+    public function sendPasswordResetNotification($token): void
+    {
+        $this->notify(new \App\Notifications\ResetPasswordLinkNotification($token));
+    }
+
     public function adminGroups()
     {
         return $this->hasMany(Group::class, 'admin_id');
