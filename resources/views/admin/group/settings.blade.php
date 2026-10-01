@@ -1,7 +1,7 @@
 <x-app-layout>
     {{-- grupas iestatījumi: pārsaukšana, dzēšana un nesen dzēstas grupas atjaunošana --}}
     <x-slot name="header">
-        <x-page-header :eyebrow="auth()->user()->currentGroup()?->name" title="Group settings" subtitle="Name, sets, handover, season report and activity for this group." />
+        <x-page-header :eyebrow="auth()->user()->currentGroup()?->name" title="Group settings" subtitle="Name, sets, handover and season report for this group." />
     </x-slot>
 
     <div class="mb-4">
@@ -270,8 +270,6 @@
                 Delete group…
             </a>
         </div>
-
-        @include('admin.group._activity', ['stats' => $activity])
     @elseif(! $trashedGroup)
         <p class="rounded-[14px] border border-dashed border-line-strong px-4 py-8 text-center text-sm text-ink-soft">
             You don't have a group yet. Create one from your <a href="{{ route('profile.edit') }}#groups" class="ui-link">profile</a>.

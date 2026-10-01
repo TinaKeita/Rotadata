@@ -1,6 +1,6 @@
 <x-app-layout>
     {{-- skolotāja panelis kā darāmo darbu saraksts: "Needs you", tuvākais koncerts, kluss kopsavilkums.
-         Statistika un žurnāls ir grupas iestatījumu sadaļā "Activity"; koncertu saraksts, pagātne un rediģēšana – uznirstošajā logā --}}
+          koncertu saraksts, pagātne un rediģēšana – uznirstošajā logā --}}
 
 
     @php
@@ -332,8 +332,7 @@
                         </span>
                     @endforeach
                     <span class="font-mono text-[12px] text-ink-soft sm:ml-auto">
-                        Today: {{ $today['assigned'] }} issued, {{ $today['returned'] }} returned ·
-                        <a href="{{ route('admin.group.settings') }}#activity" class="text-brand hover:underline">Full log</a>
+                        Today: {{ $today['assigned'] }} issued, {{ $today['returned'] }} returned
                     </span>
                 </footer>
 

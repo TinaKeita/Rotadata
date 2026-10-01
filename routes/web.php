@@ -82,9 +82,6 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     // meklēšana: tērpu vienības (statuss un vēsture) un studenti
     Route::get('/search', [App\Http\Controllers\Admin\SearchController::class, 'index'])->name('search');
 
-    // tērpu aprites žurnāls un statistika (pārcelts no paneļa)
-    Route::get('/activity', [App\Http\Controllers\Admin\ActivityController::class, 'index'])->name('activity');
-
     // Tērpi un to vienības
     Route::post('/costumes/items/{item}/unassign', [AdminCostumeController::class, 'unassign'])
         ->name('costumes.items.unassign');

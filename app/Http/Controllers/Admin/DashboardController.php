@@ -10,7 +10,6 @@ use App\Support\Season;
 use Illuminate\Support\Collection;
 
 // skolotāja panelis kā darāmo darbu saraksts: kas jāizdara tagad, tuvākais koncerts un kluss kopsavilkums;
-// detalizētā statistika pārcelta uz aktivitātes lapu (ActivityController)
 class DashboardController extends Controller
 {
     // koncerta rindas "Needs you" sarakstā parādās tikai tad, kad līdz koncertam ir ne vairāk kā tik dienu

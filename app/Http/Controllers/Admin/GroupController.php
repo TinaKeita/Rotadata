@@ -29,10 +29,7 @@ class GroupController extends Controller
         // vēl neatbildēts pieprasījums nodot grupu citam skolotājam
         $pendingTransfer = $group?->transfers()->open()->with('toUser')->latest()->first();
 
-        // grupas aktivitātes sadaļa (žurnāls, rādītāji, grafiks)
-        $activity = $group ? (new \App\Support\GroupActivity($group))->all() : null;
-
-        return view('admin.group.settings', compact('group', 'trashedGroup', 'stats', 'pendingTransfer', 'activity'));
+        return view('admin.group.settings', compact('group', 'trashedGroup', 'stats', 'pendingTransfer'));
     }
 
     // skolotājs izveido vēl vienu grupu (no profila) – tā kļūst par pašreizējo

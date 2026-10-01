@@ -142,20 +142,6 @@ class ConcertReadinessTest extends TestCase
             ->assertSee('0 of 3 students ready');
     }
 
-    public function test_activity_page_keeps_the_old_statistics(): void
-    {
-        $this->give('Marta', 'Krekls');
-
-        $this->actingAs($this->teacher)->get(route('admin.activity'))->assertRedirect(route('admin.group.settings').'#activity');
-
-        $this->actingAs($this->teacher)
-            ->get(route('admin.group.settings'))
-            ->assertOk()
-            ->assertSee('Recent activity')
-            ->assertSee('Activity — last 6 weeks')
-            ->assertSee('Holding the most');
-    }
-
     public function test_unticked_students_are_saved_as_not_performing(): void
     {
         $this->actingAs($this->teacher)->put(route('admin.events.update', $this->event), [
