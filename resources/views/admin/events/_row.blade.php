@@ -24,6 +24,10 @@
         @endif
     </div>
     <div class="flex shrink-0 items-center gap-2">
+        {{-- notikušus koncertus vairs nevar mainīt vai dzēst --}}
+        @if($event->isPast())
+            <span class="ui-chip">Took place</span>
+        @else
         <a href="{{ route('admin.events.edit', $event) }}"
             class="ui-btn-ghost ui-btn-sm">
             Edit
@@ -35,5 +39,6 @@
                 Delete
             </button>
         </form>
+        @endif
     </div>
 </div>

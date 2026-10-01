@@ -224,7 +224,8 @@
                         </div>
                     @endif
 
-                    @if($canManage)
+                    {{-- notikušus koncertus vairs nevar mainīt vai dzēst, tāpēc pogas tiem nerāda --}}
+                    @if($canManage && ! $ev->isPast())
                         <div class="mt-6 flex gap-2 border-t border-line-soft pt-4">
                             <a href="{{ route('admin.events.edit', $ev) }}" class="ui-btn-ghost ui-btn-sm">
                                 Edit

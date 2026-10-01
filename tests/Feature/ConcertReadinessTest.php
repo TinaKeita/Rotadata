@@ -463,4 +463,31 @@ class ConcertReadinessTest extends TestCase
 
         $this->assertTrue($anna->fresh()->must_change_password);
     }
+
+    // notikušu koncertu nevar rediģēt vai dzēst – ne pogās, ne pa tiešo saiti
+    public function test_past_concert_cannot_be_edited_or_deleted(): void
+    {
+        $past = Event::create([
+            'group_id' => $this->group->id,
+            'title' => 'Pavasara koncerts',
+            'starts_at' => now()->subDays(3),
+            'created_by' => $this->teacher->id,
+        ]);
+
+        $this->actingAs($this->teacher);
+
+        $this->get(route('admin.events.index'))->assertOk()
+            ->assertSee('Took place')
+            ->assertDontSee(route('admin.events.edit', $past));
+
+        $this->get(route('admin.events.edit', $past))
+            ->assertRedirect(route('dashboard'))
+            ->assertSessionHas('error', '“Pavasara koncerts” has already taken place, so it can\'t be edited.');
+
+        $this->delete(route('admin.events.destroy', $past))->assertRedirect(route('dashboard'));
+        $this->assertNotNull($past->fresh());
+
+        // gaidāmo koncertu joprojām var rediģēt
+        $this->get(route('admin.events.edit', $this->event))->assertOk();
+    }
 }

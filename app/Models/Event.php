@@ -268,6 +268,12 @@ class Event extends Model
         return $this->absentees()->whereKey($user->id)->exists();
     }
 
+    // koncerts jau ir sācies vai noticis – to vairs nevar mainīt vai dzēst (paliek vēsturei un sezonas atskaitei)
+    public function isPast(): bool
+    {
+        return $this->starts_at->lt(now());
+    }
+
     // vēl nepienākuši koncerti, tuvākais pirmais
     public function scopeUpcoming(Builder $query): Builder
     {
