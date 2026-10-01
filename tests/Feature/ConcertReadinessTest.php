@@ -37,8 +37,9 @@ class ConcertReadinessTest extends TestCase
         $this->teacher->assignRole('admin');
         $this->group = Group::create(['name' => 'Folkloras kopa', 'admin_id' => $this->teacher->id]);
 
-        $this->girls = $this->group->costumeSets()->create(['name' => 'Girls']);
-        $this->boys = $this->group->costumeSets()->create(['name' => 'Boys']);
+        // iebūvētie komplekti rodas automātiski kopā ar grupu
+        $this->girls = $this->group->costumeSets()->where('name', 'Girls')->firstOrFail();
+        $this->boys = $this->group->costumeSets()->where('name', 'Boys')->firstOrFail();
 
         // Krekls ir kopīgs, Vainags tikai meitenēm, Veste tikai puišiem
         foreach (['Krekls' => null, 'Vainags' => $this->girls->id, 'Veste' => $this->boys->id] as $name => $setId) {
@@ -398,5 +399,18 @@ class ConcertReadinessTest extends TestCase
             ->assertSee('Inventory')
             ->assertSee('Marta')
             ->assertDontSee('Notes for next season');
+    }
+
+    // iebūvētos komplektus nevar pārsaukt vai dzēst, bet savus var pievienot
+    public function test_built_in_sets_are_protected(): void
+    {
+        $this->assertSame(['Girls', 'Boys'], $this->group->costumeSets()->pluck('name')->all());
+
+        $this->actingAs($this->teacher);
+        $this->delete(route('admin.costume-sets.destroy', $this->girls))->assertForbidden();
+        $this->patch(route('admin.costume-sets.update', $this->boys), ['set_name' => 'Puiši'])->assertForbidden();
+
+        $this->post(route('admin.costume-sets.store'), ['set_name' => 'Musicians'])->assertSessionHas('success');
+        $this->assertSame(['Girls', 'Boys', 'Musicians'], $this->group->costumeSets()->pluck('name')->all());
     }
 }

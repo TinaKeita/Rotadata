@@ -100,17 +100,46 @@
     @if($members->isEmpty())
         <p class="mt-1.5 text-sm text-ink-soft">Your group has no students yet.</p>
     @else
-        <div class="mt-2 grid gap-1.5 sm:grid-cols-2">
-            @foreach($members as $member)
-                <label class="flex items-center gap-2.5 rounded-lg border border-line px-3 py-2 text-sm">
-                    <input type="checkbox" name="attending_ids[]" value="{{ $member->id }}"
-                        @checked(in_array($member->id, $attendingIds, true))
-                        class="rounded border-line-strong text-brand focus:ring-brand/30">
-                    <span class="min-w-0 flex-1 truncate text-ink">{{ $member->name }}</span>
-                    @if($setNames->isNotEmpty())
-                        <span class="shrink-0 text-xs text-ink-soft">{{ $setNames[$member->pivot->costume_set_id] ?? 'no set' }}</span>
-                    @endif
-                </label>
+        @php
+            // viena kolonna katram komplektam (piem. meitenes / puiši), bez komplekta – atsevišķi beigās
+            $columns = $sets->map(fn ($set) => [
+                'title' => $set->name,
+                'members' => $members->filter(fn ($m) => (int) $m->pivot->costume_set_id === $set->id)->values(),
+            ])->filter(fn ($c) => $c['members']->isNotEmpty())->values();
+
+            $noSet = $members->filter(fn ($m) => ! $setNames->has($m->pivot->costume_set_id))->values();
+            if ($noSet->isNotEmpty()) {
+                $columns->push(['title' => $columns->isEmpty() ? 'Students' : 'No set', 'members' => $noSet]);
+            }
+
+            $colClass = match (min($columns->count(), 3)) {
+                1 => 'sm:grid-cols-1',
+                2 => 'sm:grid-cols-2',
+                default => 'sm:grid-cols-3',
+            };
+        @endphp
+
+        <div class="mt-2 grid items-start gap-4 {{ $colClass }}">
+            @foreach($columns as $column)
+                <div x-data class="min-w-0">
+                    <div class="mb-1.5 flex items-baseline justify-between gap-2">
+                        <p class="ui-eyebrow">{{ $column['title'] }} · {{ $column['members']->count() }}</p>
+                        <span class="flex gap-2 text-xs font-medium text-brand">
+                            <button type="button" x-on:click="$root.querySelectorAll('input[name^=attending_ids]').forEach(cb => cb.checked = true)" class="hover:underline">All</button>
+                            <button type="button" x-on:click="$root.querySelectorAll('input[name^=attending_ids]').forEach(cb => cb.checked = false)" class="hover:underline">None</button>
+                        </span>
+                    </div>
+                    <div class="space-y-1.5">
+                        @foreach($column['members'] as $member)
+                            <label class="flex items-center gap-2.5 rounded-lg border border-line px-3 py-2 text-sm">
+                                <input type="checkbox" name="attending_ids[]" value="{{ $member->id }}"
+                                    @checked(in_array($member->id, $attendingIds, true))
+                                    class="rounded border-line-strong text-brand focus:ring-brand/30">
+                                <span class="min-w-0 flex-1 truncate text-ink">{{ $member->name }}</span>
+                            </label>
+                        @endforeach
+                    </div>
+                </div>
             @endforeach
         </div>
     @endif

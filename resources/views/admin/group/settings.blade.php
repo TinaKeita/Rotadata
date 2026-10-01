@@ -100,7 +100,8 @@
         <div id="sets" class="ui-card mt-6 max-w-2xl">
             <h3 class="ui-eyebrow">Costume sets</h3>
             <p class="mt-2 text-sm text-ink-muted">
-                Sets like “Girls” and “Boys” sort who needs which costumes. A costume without a set is shared and everyone needs it.
+                Every group has the built-in sets “Girls” and “Boys”; a student without a set is shown as “No set”.
+                Sets sort who needs which costumes. A costume without a set is shared and everyone needs it.
                 A student is ready for a concert when they hold one item of every shared costume and every costume in their set.
                 Sets don't limit scanning.
             </p>
@@ -108,6 +109,14 @@
             @if($group->costumeSets->isNotEmpty())
                 <ul class="mt-4 space-y-2">
                     @foreach($group->costumeSets as $set)
+                        @if($set->built_in)
+                            {{-- iebūvētos komplektus nevar pārsaukt vai dzēst --}}
+                            <li class="flex items-center justify-between gap-2 rounded-lg border border-line px-3 py-2 text-sm">
+                                <span class="font-medium">{{ $set->name }}</span>
+                                <span class="ui-chip">built in</span>
+                            </li>
+                            @continue
+                        @endif
                         <li class="flex flex-wrap items-center gap-2">
                             <form method="POST" action="{{ route('admin.costume-sets.update', $set) }}" class="flex min-w-0 flex-1 items-center gap-2">
                                 @csrf
@@ -136,7 +145,7 @@
 
             <form method="POST" action="{{ route('admin.costume-sets.store') }}" class="mt-4 flex flex-wrap items-center gap-2 border-t border-line-soft pt-4">
                 @csrf
-                <input type="text" name="set_name" value="{{ old('set_name') }}" required maxlength="60" placeholder="New set, e.g. Girls" aria-label="New set name"
+                <input type="text" name="set_name" value="{{ old('set_name') }}" required maxlength="60" placeholder="Another set, e.g. Musicians" aria-label="New set name"
                     class="min-w-0 flex-1 rounded-lg border-line-strong px-3 py-2 text-sm text-ink focus:border-brand focus:ring-brand/30 bg-paper placeholder:text-ink-soft">
                 <button type="submit" class="ui-btn">
                     Add set

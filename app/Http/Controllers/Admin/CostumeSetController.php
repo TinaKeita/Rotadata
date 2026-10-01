@@ -27,6 +27,7 @@ class CostumeSetController extends Controller
     public function update(Request $request, CostumeSet $costumeSet)
     {
         $this->authorizeSet($costumeSet);
+        abort_if($costumeSet->built_in, 403, 'Built-in sets cannot be renamed.');
 
         $validated = $request->validateWithBag('costumeSet'.$costumeSet->id, [
             'set_name' => ['required', 'string', 'max:60', Rule::unique('costume_sets', 'name')->where('group_id', $costumeSet->group_id)->ignore($costumeSet->id)],
@@ -41,6 +42,7 @@ class CostumeSetController extends Controller
     public function destroy(CostumeSet $costumeSet)
     {
         $this->authorizeSet($costumeSet);
+        abort_if($costumeSet->built_in, 403, 'Built-in sets cannot be deleted.');
 
         $name = $costumeSet->name;
         $costumeSet->delete();

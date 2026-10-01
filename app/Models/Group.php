@@ -18,6 +18,17 @@ class Group extends Model
     // pēc cik dienām mīksti dzēsta grupa tiek neatgriezeniski iztīrīta
     public const PURGE_AFTER_DAYS = 30;
 
+    // katrai jaunai grupai uzreiz izveido iebūvētos komplektus ("Girls", "Boys"),
+    // lai skolotājam tie nav jāveido pašam
+    protected static function booted(): void
+    {
+        static::created(function (Group $group) {
+            foreach (CostumeSet::BUILT_IN as $name) {
+                $group->costumeSets()->create(['name' => $name, 'built_in' => true]);
+            }
+        });
+    }
+
     public function admin()
     {
         return $this->belongsTo(User::class, 'admin_id');
@@ -31,7 +42,11 @@ class Group extends Model
 
     public function costumeSets()
     {
-        return $this->hasMany(CostumeSet::class)->orderBy('name');
+        // vispirms "Girls", tad "Boys", tad skolotāja pievienotie pēc nosaukuma
+        return $this->hasMany(CostumeSet::class)
+            ->orderByDesc('built_in')
+            ->orderByRaw("CASE name WHEN 'Girls' THEN 0 WHEN 'Boys' THEN 1 ELSE 2 END")
+            ->orderBy('name');
     }
 
     public function costumes()
