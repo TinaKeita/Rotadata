@@ -23,6 +23,7 @@ class MemberAddedMail extends Mailable
     public function build()
     {
         return $this->subject("You've been added to “{$this->groupName}”")
-            ->view('emails.member-added');
+            ->view('emails.member-added')
+            ->text('emails.text.member-added');
     }
 }

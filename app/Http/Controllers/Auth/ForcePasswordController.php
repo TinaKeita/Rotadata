@@ -21,10 +21,13 @@ class ForcePasswordController extends Controller
     public function update(Request $request): RedirectResponse
     {
         $validated = $request->validate([
+            // vārds jau aizpildīts ar to, ko ievadīja skolotājs – students to var izlabot, bet nav obligāti
+            'name' => ['required', 'string', 'max:255'],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
         ]);
 
         $request->user()->update([
+            'name' => trim($validated['name']),
             'password' => Hash::make($validated['password']),
             'must_change_password' => false,
         ]);

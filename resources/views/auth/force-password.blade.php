@@ -5,12 +5,21 @@
         <h1 class="font-display text-[32px] font-normal leading-tight tracking-[-0.02em] text-ink mt-2">Set your password</h1>
         <p class="mt-2 text-sm text-ink-muted">
             The password from the email works only once. Choose your own password to continue.
+            You can also fix how your name is written.
         </p>
     </div>
 
     <form method="POST" action="{{ route('password.change.update') }}" class="space-y-5">
         @csrf
         @method('PUT')
+
+        {{-- vārds, ko ievadīja skolotājs; students var to izlabot, bet nav jāmaina --}}
+        <div>
+            <x-input-label for="name" :value="__('Your name')" />
+            <x-text-input id="name" class="mt-1.5" type="text" name="name" :value="old('name', auth()->user()->name)" required maxlength="255" autocomplete="name" />
+            <p class="ui-help mt-1.5">This is how your teacher wrote it. Change it only if it's wrong.</p>
+            <x-input-error :messages="$errors->get('name')" class="mt-2" />
+        </div>
 
         <div>
             <x-input-label for="password" :value="__('New password')" />

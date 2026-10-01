@@ -25,6 +25,7 @@ class PasswordResetByTeacherMail extends Mailable
     public function build()
     {
         return $this->subject('Your Rotadata password was reset')
-            ->view('emails.password-reset-by-teacher');
+            ->view('emails.password-reset-by-teacher')
+            ->text('emails.text.password-reset-by-teacher');
     }
 }

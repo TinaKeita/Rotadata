@@ -35,6 +35,6 @@ class GroupDeletionMail extends Mailable
             ? 'Your Rotadata account has been restored'
             : "Group “{$this->groupName}” was deleted";
 
-        return $this->subject($subject)->view('emails.group-deletion');
+        return $this->subject($subject)->view('emails.group-deletion')->text('emails.text.group-deletion');
     }
 }

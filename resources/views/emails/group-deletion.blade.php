@@ -92,7 +92,7 @@
 							@endif
 
 							<p style="margin:24px 0 0; font-size:12.5px; line-height:1.6; color:#9a9a92;">
-								This is an automated message. Replies aren't monitored.
+								Questions? Just reply to this email.
 							</p>
 						</td>
 					</tr>

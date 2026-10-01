@@ -438,4 +438,25 @@ class ConcertReadinessTest extends TestCase
         // students meklēšanai netiek klāt
         $this->actingAs($this->students['Marta'])->get(route('admin.search', ['q' => 'VAI']))->assertForbidden();
     }
+
+    // paroles maiņā students redz skolotāja ievadīto vārdu un var to atstāt vai izlabot
+    public function test_student_can_keep_or_fix_name_when_setting_password(): void
+    {
+        $anna = $this->students['Anna'];
+        $anna->update(['must_change_password' => true]);
+
+        $this->actingAs($anna)->get(route('password.change'))
+            ->assertOk()
+            ->assertSee('value="Anna"', false);
+
+        $this->actingAs($anna)->put(route('password.change.update'), [
+            'name' => 'Anna Kalniņa',
+            'password' => 'jauna-parole-123',
+            'password_confirmation' => 'jauna-parole-123',
+        ])->assertRedirect(route('dashboard'));
+
+        $anna->refresh();
+        $this->assertSame('Anna Kalniņa', $anna->name);
+        $this->assertFalse($anna->must_change_password);
+    }
 }

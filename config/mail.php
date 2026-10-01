@@ -112,8 +112,14 @@ return [
     */
 
     'from' => [
-        'address' => env('MAIL_FROM_ADDRESS', 'hello@example.com'),
-        'name' => env('MAIL_FROM_NAME', 'Example'),
+        'address' => env('MAIL_FROM_ADDRESS', 'info@rotadata.lv'),
+        'name' => env('MAIL_FROM_NAME', 'Rotadata'),
+    ],
+
+    // atbildes uz jebkuru lietotnes e-pastu nonāk info@rotadata.lv (Cloudflare pārsūta uz Gmail)
+    'reply_to' => [
+        'address' => env('MAIL_REPLY_TO_ADDRESS', 'info@rotadata.lv'),
+        'name' => env('MAIL_FROM_NAME', 'Rotadata'),
     ],
 
 ];
