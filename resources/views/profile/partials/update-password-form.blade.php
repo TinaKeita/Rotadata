@@ -22,6 +22,7 @@
         <div>
             <x-input-label for="update_password_password" :value="__('New Password')" />
             <x-password-input id="update_password_password" name="password" class="ui-input mt-1 block w-full" autocomplete="new-password" />
+            <p class="ui-help mt-1.5">At least 8 characters, with an uppercase and a lowercase letter, a number and a special character (e.g. ! ? - #).</p>
             <x-input-error :messages="$errors->updatePassword->get('password')" class="mt-2" />
         </div>
 

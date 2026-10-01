@@ -20,6 +20,11 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // jaunai parolei: vismaz 8 simboli, lielais un mazais burts, cipars un speciālā zīme
+        \Illuminate\Validation\Rules\Password::defaults(
+            fn () => \Illuminate\Validation\Rules\Password::min(8)->mixedCase()->numbers()->symbols()
+        );
+
         if ($this->app->environment('production')) {
             \URL::forceScheme('https');
         }

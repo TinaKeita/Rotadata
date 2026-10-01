@@ -452,12 +452,29 @@ class ConcertReadinessTest extends TestCase
 
         $this->actingAs($anna)->put(route('password.change.update'), [
             'name' => 'Anna Kalniņa',
-            'password' => 'jauna-parole-123',
-            'password_confirmation' => 'jauna-parole-123',
+            'password' => 'Jauna-Parole-123',
+            'password_confirmation' => 'Jauna-Parole-123',
         ])->assertRedirect(route('dashboard'));
 
         $anna->refresh();
         $this->assertSame('Anna Kalniņa', $anna->name);
         $this->assertFalse($anna->must_change_password);
+    }
+
+    // jaunai parolei vajag lielo un mazo burtu, ciparu un speciālo zīmi
+    public function test_weak_new_passwords_are_rejected(): void
+    {
+        $anna = $this->students['Anna'];
+        $anna->update(['must_change_password' => true]);
+
+        foreach (['aaaaaaaa', '12345678', 'Parole123', 'parole-123', 'Pa-1'] as $weak) {
+            $this->actingAs($anna)->put(route('password.change.update'), [
+                'name' => 'Anna',
+                'password' => $weak,
+                'password_confirmation' => $weak,
+            ])->assertSessionHasErrors('password');
+        }
+
+        $this->assertTrue($anna->fresh()->must_change_password);
     }
 }

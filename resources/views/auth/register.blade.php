@@ -30,6 +30,7 @@
         <div>
             <label for="password" class="auth-label">Password</label>
             <x-password-input id="password" class="auth-input" name="password" required autocomplete="new-password" />
+            <p class="mt-1.5 text-[13px] text-ink-soft">At least 8 characters, with an uppercase and a lowercase letter, a number and a special character (e.g. ! ? - #).</p>
             <x-input-error :messages="$errors->get('password')" class="mt-2" />
         </div>
 

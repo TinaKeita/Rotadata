@@ -24,6 +24,7 @@
         <div>
             <x-input-label for="password" :value="__('New password')" />
             <x-password-input id="password" class="ui-input mt-1.5" name="password" required autofocus autocomplete="new-password" />
+            <p class="ui-help mt-1.5">At least 8 characters, with an uppercase and a lowercase letter, a number and a special character (e.g. ! ? - #).</p>
             <x-input-error :messages="$errors->get('password')" class="mt-2" />
         </div>
 
