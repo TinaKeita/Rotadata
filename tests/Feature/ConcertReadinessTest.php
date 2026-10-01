@@ -75,6 +75,7 @@ class ConcertReadinessTest extends TestCase
         return Event::with('costumes')->find($this->event->id);
     }
 
+    #[\PHPUnit\Framework\Attributes\Group('core')]
     public function test_student_is_ready_only_with_every_piece_of_their_set(): void
     {
         $this->give('Marta', 'Krekls');
@@ -116,6 +117,7 @@ class ConcertReadinessTest extends TestCase
         $this->assertSame(1, $rows['Veste']['target']);
     }
 
+    #[\PHPUnit\Framework\Attributes\Group('core')]
     public function test_dashboard_lists_what_needs_the_teacher(): void
     {
         $this->give('Roberts', 'Krekls');
@@ -142,6 +144,7 @@ class ConcertReadinessTest extends TestCase
             ->assertSee('0 of 3 students ready');
     }
 
+    #[\PHPUnit\Framework\Attributes\Group('core')]
     public function test_unticked_students_are_saved_as_not_performing(): void
     {
         $this->actingAs($this->teacher)->put(route('admin.events.update', $this->event), [
@@ -184,6 +187,7 @@ class ConcertReadinessTest extends TestCase
     }
 
     // studenta lapas un QR skenēšana jaunajā izkārtojumā
+    #[\PHPUnit\Framework\Attributes\Group('core')]
     public function test_student_and_scan_pages_render(): void
     {
         $this->give('Marta', 'Krekls');
@@ -254,6 +258,7 @@ class ConcertReadinessTest extends TestCase
     }
 
     // skolotājs izsniedz konkrētu vienību no tērpa lapas
+    #[\PHPUnit\Framework\Attributes\Group('core')]
     public function test_teacher_can_assign_an_item_to_a_student(): void
     {
         $item = $this->costumes['Veste']->items()->orderBy('code')->first();
@@ -360,6 +365,7 @@ class ConcertReadinessTest extends TestCase
     }
 
     // sezonas atskaite: gatavība koncerta dienā tiek atjaunota no vēstures, nevis no šodienas stāvokļa
+    #[\PHPUnit\Framework\Attributes\Group('core')]
     public function test_season_report_rebuilds_readiness_on_concert_day(): void
     {
         $past = Event::create([
@@ -402,6 +408,7 @@ class ConcertReadinessTest extends TestCase
     }
 
     // meklēšana: vienība pēc koda (arī bez domuzīmes) rāda, pie kā tā ir, un vēsturi; students pēc vārda
+    #[\PHPUnit\Framework\Attributes\Group('core')]
     public function test_teacher_search_finds_items_and_students(): void
     {
         $this->give('Marta', 'Vainags');

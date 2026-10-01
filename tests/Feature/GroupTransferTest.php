@@ -81,6 +81,7 @@ class GroupTransferTest extends TestCase
         $this->assertSame(0, GroupTransfer::count());
     }
 
+    #[\PHPUnit\Framework\Attributes\Group('core')]
     public function test_recipient_accepts_and_takes_over_the_group(): void
     {
         Mail::fake();

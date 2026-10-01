@@ -18,7 +18,7 @@ test('users can authenticate using the login screen', function () {
 
     $this->assertAuthenticated();
     $response->assertRedirect(route('dashboard', absolute: false));
-});
+})->group('core');
 
 test('users can not authenticate with invalid password', function () {
     $user = User::factory()->create();
@@ -36,6 +36,7 @@ test('users can logout', function () {
 
     $response = $this->actingAs($user)->post('/logout');
 
+    // pēc iziešanas lietotne ved uz pieslēgšanās lapu, nevis sākumlapu
     $this->assertGuest();
-    $response->assertRedirect('/');
+    $response->assertRedirect('/login');
 });
