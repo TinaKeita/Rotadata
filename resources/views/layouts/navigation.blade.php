@@ -61,6 +61,20 @@
         </div>
 
         <div class="ml-auto flex shrink-0 items-center gap-2">
+            {{-- skolotāja meklēšana (vienības kods, tērps, students); "/" taustiņš ieliek kursoru laukā --}}
+            @if($isAdmin)
+                <form method="GET" action="{{ route('admin.search') }}" role="search" class="hidden xl:block"
+                    x-data @keydown.slash.window="if (! ['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement.tagName)) { $event.preventDefault(); $refs.q.focus() }">
+                    <input x-ref="q" type="search" name="q" value="{{ request()->routeIs('admin.search') ? request('q') : '' }}"
+                        placeholder="Search  /" aria-label="Search items and students"
+                        class="w-44 rounded-full border-line bg-surface-sunk px-3.5 py-1.5 text-sm text-ink placeholder:text-ink-soft focus:w-60 focus:border-brand focus:bg-paper focus:ring-2 focus:ring-brand/20 transition-[width]">
+                </form>
+                <a href="{{ route('admin.search') }}" aria-label="Search"
+                    class="hidden h-9 w-9 items-center justify-center rounded-full text-ink-muted hover:bg-surface-sunk hover:text-ink lg:flex xl:hidden">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-[18px] w-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+                </a>
+            @endif
+
             {{-- tumšā režīma pārslēgs --}}
             <div class="toggle-switch shrink-0">
                 <label class="switch-label">
@@ -121,6 +135,12 @@
         {{-- mazā ekrānā saites atveras zem kapsulas --}}
         <div id="app-menu" x-show="menu" @click.outside="menu = false" x-transition.opacity style="display: none"
             class="absolute inset-x-0 top-full mt-2 flex flex-col gap-0.5 rounded-2xl border border-line bg-paper p-2 shadow-nav lg:hidden">
+            @if($isAdmin)
+                <form method="GET" action="{{ route('admin.search') }}" role="search" class="mb-1 px-1 pt-1">
+                    <input type="search" name="q" placeholder="Search items and students" aria-label="Search items and students"
+                        class="w-full rounded-full border-line bg-surface-sunk px-3.5 py-2 text-sm text-ink placeholder:text-ink-soft focus:border-brand focus:bg-paper focus:ring-2 focus:ring-brand/20">
+                </form>
+            @endif
             @foreach($links as [$label, $href, $active, $badge])
                 <x-nav-link :href="$href" :active="$active" :badge="$badge" class="!flex w-full justify-between !rounded-xl py-2.5" @click="menu = false">{{ $label }}</x-nav-link>
             @endforeach

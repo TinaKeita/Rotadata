@@ -413,4 +413,29 @@ class ConcertReadinessTest extends TestCase
         $this->post(route('admin.costume-sets.store'), ['set_name' => 'Musicians'])->assertSessionHas('success');
         $this->assertSame(['Girls', 'Boys', 'Musicians'], $this->group->costumeSets()->pluck('name')->all());
     }
+
+    // meklēšana: vienība pēc koda (arī bez domuzīmes) rāda, pie kā tā ir, un vēsturi; students pēc vārda
+    public function test_teacher_search_finds_items_and_students(): void
+    {
+        $this->give('Marta', 'Vainags');
+
+        $this->actingAs($this->teacher);
+
+        $this->get(route('admin.search', ['q' => 'vai01']))
+            ->assertOk()
+            ->assertSee('VAI-01')
+            ->assertSee('Taken')
+            ->assertSee('Marta')
+            ->assertSee('History (1)');
+
+        $this->get(route('admin.search', ['q' => 'Robert']))
+            ->assertOk()
+            ->assertSee('Students · 1')
+            ->assertSee('holds nothing');
+
+        $this->get(route('admin.search', ['q' => 'zzz']))->assertOk()->assertSee('Nothing found');
+
+        // students meklēšanai netiek klāt
+        $this->actingAs($this->students['Marta'])->get(route('admin.search', ['q' => 'VAI']))->assertForbidden();
+    }
 }

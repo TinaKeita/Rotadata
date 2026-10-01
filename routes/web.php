@@ -79,6 +79,9 @@ Route::middleware('auth')->group(function () {
 Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->group(function () {
     Route::get('/dashboard', [App\Http\Controllers\Admin\DashboardController::class, 'index'])->name('dashboard');
 
+    // meklēšana: tērpu vienības (statuss un vēsture) un studenti
+    Route::get('/search', [App\Http\Controllers\Admin\SearchController::class, 'index'])->name('search');
+
     // tērpu aprites žurnāls un statistika (pārcelts no paneļa)
     Route::get('/activity', [App\Http\Controllers\Admin\ActivityController::class, 'index'])->name('activity');
 
