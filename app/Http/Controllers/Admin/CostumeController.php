@@ -14,7 +14,7 @@ class CostumeController extends Controller
 {
     public function index()
     {
-        $group = auth()->user()->adminGroups()->first();
+        $group = auth()->user()->currentGroup();
         $costumes = $group
             ? $group->costumes()->with('costumeSet')->withCount(['items', 'items as items_out_count' => fn ($q) => $q->whereNotNull('assigned_to')])->get()
             : collect();
@@ -25,14 +25,14 @@ class CostumeController extends Controller
     // forma jauna tērpa pievienošanai
     public function create()
     {
-        $sets = auth()->user()->adminGroups()->first()?->costumeSets ?? collect();
+        $sets = auth()->user()->currentGroup()?->costumeSets ?? collect();
 
         return view('admin.costumes.create', compact('sets'));
     }
 
     public function store(Request $request)
     {
-        $group = auth()->user()->adminGroups()->first();
+        $group = auth()->user()->currentGroup();
         abort_if(is_null($group), 403, 'You do not have a group yet.');
 
         $validated = $request->validate([

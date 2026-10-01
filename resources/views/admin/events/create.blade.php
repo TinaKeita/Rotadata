@@ -1,6 +1,6 @@
 <x-app-layout>
     <x-slot name="header">
-        <x-page-header :eyebrow="auth()->user()->adminGroups()->value('name')" title="Add concert" subtitle="Schedule a new concert for your group." />
+        <x-page-header :eyebrow="auth()->user()->currentGroup()?->name" title="Add concert" subtitle="Schedule a new concert for your group." />
     </x-slot>
 
     <div class="ui-card max-w-2xl">

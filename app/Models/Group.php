@@ -59,6 +59,12 @@ class Group extends Model
         return $this->hasMany(Event::class);
     }
 
+    // pieprasījumi nodot šo grupu citam skolotājam
+    public function transfers()
+    {
+        return $this->hasMany(GroupTransfer::class);
+    }
+
     // visas šīs grupas tērpu vienības (caur tērpiem)
     public function costumeItems()
     {

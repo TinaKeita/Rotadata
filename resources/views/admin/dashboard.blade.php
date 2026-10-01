@@ -1,6 +1,6 @@
 <x-app-layout>
     {{-- skolotāja panelis kā darāmo darbu saraksts: "Needs you", tuvākais koncerts, kluss kopsavilkums.
-         Statistika un žurnāls pārcelti uz admin.activity; koncertu saraksts, pagātne un rediģēšana – uznirstošajā logā --}}
+         Statistika un žurnāls ir grupas iestatījumu sadaļā "Activity"; koncertu saraksts, pagātne un rediģēšana – uznirstošajā logā --}}
 
 
     @php
@@ -32,7 +32,8 @@
                 @endforeach
 
                 <div class="rounded-[14px] border border-dashed border-line-strong px-4 py-12 text-center text-[15px] text-ink-muted">
-                    You don't manage a group yet, so there's nothing to show here.
+                    You don't run a group right now.
+                    <a href="{{ route('profile.edit') }}#groups" class="font-medium text-brand hover:underline">Create one from your profile</a>.
                 </div>
             @else
                 @php
@@ -72,7 +73,12 @@
                         <p class="mb-2 font-mono text-[11.5px] uppercase tracking-[0.1em] text-ink-soft">{{ now()->format('l, j F') }} · {{ $group->name }}</p>
                         <h1 class="font-display text-[length:clamp(32px,4vw,44px)] font-normal leading-[1.08] tracking-[-0.02em]">{{ $greeting }}</h1>
                     </div>
-                    <div class="flex flex-wrap gap-2">
+                    <div class="flex flex-wrap items-center gap-2">
+                        {{-- meklēšana: vienības kods, tērps vai students --}}
+                        <form method="GET" action="{{ route('admin.search') }}" role="search">
+                            <input type="search" name="q" placeholder="Search item code or student…" aria-label="Search items and students"
+                                class="w-56 rounded-full border-line-strong bg-paper px-4 py-2.5 text-[14.5px] text-ink placeholder:text-ink-soft focus:border-brand focus:ring-2 focus:ring-brand/20">
+                        </form>
                         <a href="{{ route('admin.events.create') }}" class="rounded-full border border-line-strong px-5 py-2.5 text-[14.5px] font-medium hover:border-brand hover:bg-surface hover:text-brand">Add concert</a>
                         <a href="{{ route('admin.members.create') }}" class="rounded-full bg-brand px-5 py-2.5 text-[14.5px] font-medium text-paper hover:bg-ink">Add students</a>
                     </div>
@@ -126,6 +132,10 @@
                                                 <p class="text-[15.5px]"><span class="font-semibold">{{ $row['notification']->data['student_name'] }}</span> <span class="text-ink-muted">left {{ $row['notification']->data['group_name'] }}</span></p>
                                                 <p class="mt-0.5 font-mono text-[12px] text-ink-soft">{{ $row['notification']->created_at->diffForHumans() }}</p>
                                                 @break
+                                            @case('transfer')
+                                                <p class="text-[15.5px]"><span class="font-semibold">{{ $row['transfer']->fromUser->name }}</span> <span class="text-ink-muted">wants to hand you “{{ $row['transfer']->group->name }}”</span></p>
+                                                <p class="mt-0.5 font-mono text-[12px] text-ink-soft">open until {{ $row['transfer']->expires_at->format('d.m.Y') }}</p>
+                                                @break
                                             @case('season')
                                                 <p class="text-[15.5px]"><span class="font-semibold">The {{ $row['label'] }} season</span> <span class="text-ink-muted">is wrapping up</span></p>
                                                 <p class="mt-0.5 font-mono text-[12px] text-ink-soft">export the report before summer break</p>
@@ -168,6 +178,10 @@
                                                     @csrf
                                                     <button type="submit" class="{{ $pill }}">Dismiss</button>
                                                 </form>
+                                                @break
+                                            @case('transfer')
+                                                <span class="rounded-full px-2.5 py-0.5 font-mono text-[12px] {{ $softChip }}">Handover</span>
+                                                <a href="{{ route('admin.group.transfer.show', $row['transfer']->token) }}" class="{{ $pill }}">Review</a>
                                                 @break
                                             @case('season')
                                                 <a href="{{ route('admin.season-report.show') }}" target="_blank" class="{{ $pill }}">Export report</a>
@@ -319,7 +333,7 @@
                     @endforeach
                     <span class="font-mono text-[12px] text-ink-soft sm:ml-auto">
                         Today: {{ $today['assigned'] }} issued, {{ $today['returned'] }} returned ·
-                        <a href="{{ route('admin.activity') }}" class="text-brand hover:underline">Full log</a>
+                        <a href="{{ route('admin.group.settings') }}#activity" class="text-brand hover:underline">Full log</a>
                     </span>
                 </footer>
 

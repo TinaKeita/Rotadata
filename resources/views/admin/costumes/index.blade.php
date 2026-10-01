@@ -1,6 +1,6 @@
 <x-app-layout>
     <x-slot name="header">
-        <x-page-header :eyebrow="auth()->user()->adminGroups()->value('name')" title="Costumes" subtitle="Every costume in your collection. Open one to manage its items and QR labels.">
+        <x-page-header :eyebrow="auth()->user()->currentGroup()?->name" title="Costumes" subtitle="Every costume in your collection. Open one to manage its items and QR labels.">
             <x-slot:actions>
                 <a href="{{ route('admin.costumes.create') }}"
                     class="ui-btn ui-btn-sm">

@@ -32,10 +32,13 @@ class AppServiceProvider extends ServiceProvider
             }
 
             if ($user->hasRole('admin')) {
-                $group = $user->adminGroups()->withCount('members')->first();
+                $current = $user->currentGroup();
+                $group = $current ? $current->loadCount('members') : null;
 
                 $view->with([
                     'navGroup' => $group,
+                    // visas skolotāja grupas – navigācijā rāda to nosaukumus (klikšķis atver grupas iestatījumus)
+                    'navOwnedGroups' => $user->adminGroups()->orderBy('id')->get(['id', 'name']),
                     'navMembersCount' => $group?->members_count ?? 0,
                     'navCostumesCount' => $group ? $group->costumes()->count() : 0,
                     'navEventsCount' => $group ? $group->events()->upcoming()->count() : 0,

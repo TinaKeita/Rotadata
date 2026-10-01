@@ -24,7 +24,15 @@
     </head>
 
     <body class="min-h-screen overflow-x-clip bg-paper font-body text-base leading-[1.55] text-ink antialiased">
-        {{-- peldošā navigācijas kapsula (tāpat kā landing lapā); sānjoslas vietā --}}
+        {{-- tumšā režīma pārslēgs stūrī, tāpat kā landing un login lapās --}}
+        <div class="toggle-switch fixed right-4 top-[22px] z-50 sm:right-6 sm:top-[26px]">
+            <label class="switch-label">
+                <input type="checkbox" class="checkbox" x-model="darkMode" aria-label="Toggle dark mode">
+                <span class="slider"></span>
+            </label>
+        </div>
+
+        {{-- peldošā navigācijas kapsula (tāpat kā landing lapā) --}}
         @include('layouts.navigation')
 
         <main class="mx-auto w-full max-w-[1100px] px-4 pb-16 pt-4 sm:px-6 sm:pt-8">

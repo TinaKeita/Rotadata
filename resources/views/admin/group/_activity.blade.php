@@ -1,14 +1,8 @@
-<x-app-layout>
-    {{-- tērpu aprites žurnāls un statistika – pārcelts no paneļa, lai tur paliek tikai darāmais --}}
-    <x-slot name="header">
-        <x-page-header :eyebrow="$group?->name" title="Activity" subtitle="Costume movements, trends and highlights." />
-    </x-slot>
+{{-- grupas aktivitāte (agrāk atsevišķa lapa): rādītāji, žurnāls, izcēlumi un 6 nedēļu grafiks --}}
+<section id="activity" class="mt-10 scroll-mt-24">
+    <h2 class="ui-heading mb-1">Activity</h2>
+    <p class="mb-5 text-sm text-ink-muted">Costume movements, trends and highlights for this group.</p>
 
-    @if(is_null($stats))
-        <div class="rounded-[14px] border border-dashed border-line-strong px-4 py-12 text-center text-sm text-ink-soft">
-            You don't manage a group yet, so there's nothing to show here.
-        </div>
-    @else
         @php
             $o = $stats['overview'];
             $r = $stats['readiness'];
@@ -220,5 +214,4 @@
                 </div>
             </div>
         </section>
-    @endif
-</x-app-layout>
+</section>

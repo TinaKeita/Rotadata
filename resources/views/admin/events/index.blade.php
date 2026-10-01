@@ -1,6 +1,6 @@
 <x-app-layout>
     <x-slot name="header">
-        <x-page-header :eyebrow="auth()->user()->adminGroups()->value('name')" title="Concerts" subtitle="Schedule concerts and let students know what's needed.">
+        <x-page-header :eyebrow="auth()->user()->currentGroup()?->name" title="Concerts" subtitle="Schedule concerts and let students know what's needed.">
             <x-slot:actions>
                 <a href="{{ route('admin.events.create') }}"
                     class="ui-btn ui-btn-sm">

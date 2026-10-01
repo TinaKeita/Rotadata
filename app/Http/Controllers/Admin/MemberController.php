@@ -19,7 +19,7 @@ class MemberController extends Controller
     // forma jauna lietotāja pievienošanai
     public function create()
     {
-        $sets = auth()->user()->adminGroups()->first()?->costumeSets ?? collect();
+        $sets = auth()->user()->currentGroup()?->costumeSets ?? collect();
 
         return view('admin.members.create', compact('sets'));
     }
@@ -28,7 +28,7 @@ class MemberController extends Controller
     // lai viena rindas kļūda nebloķē pārējo veiksmīgo pievienošanu
     public function store(Request $request)
     {
-        $adminGroup = auth()->user()->adminGroups()->first();
+        $adminGroup = auth()->user()->currentGroup();
         abort_if(is_null($adminGroup), 403, 'You do not have a group yet.');
 
         // pielāgo kļūdu ziņojumus, lai tajos būtu rindas numurs ("Row 2 email"), nevis "members.1.email"
@@ -233,7 +233,7 @@ class MemberController extends Controller
     // maina komplektu vienam vai vairākiem studentiem (Members saraksts un studenta lapa)
     public function updateSet(Request $request)
     {
-        $adminGroup = auth()->user()->adminGroups()->first();
+        $adminGroup = auth()->user()->currentGroup();
         abort_if(is_null($adminGroup), 403, 'You do not have a group yet.');
 
         $validated = $request->validate([
@@ -268,7 +268,7 @@ class MemberController extends Controller
     {
         $this->authorize('view', $user);
 
-        $adminGroup = auth()->user()->adminGroups()->first();
+        $adminGroup = auth()->user()->currentGroup();
         abort_if(is_null($adminGroup), 403, 'You do not have a group yet.');
 
         $validated = $request->validate([
@@ -301,7 +301,7 @@ class MemberController extends Controller
     // parāda visus lietotājus
     public function index()
     {
-        $adminGroup = auth()->user()->adminGroups()->first();
+        $adminGroup = auth()->user()->currentGroup();
         // roles un citu grupu skaits jau šeit, lai skats var izvēlēties "Remove" (atsaista) vai "Delete" (dzēš kontu) pogu
         $members = $adminGroup
             ? $adminGroup->members()->with('roles')->withCount('memberGroups')->get()
@@ -336,7 +336,7 @@ class MemberController extends Controller
         ]);
 
         // komplekts skolotāja grupā (students var būt vairākās grupās, bet skolotājam ir viena)
-        $adminGroup = auth()->user()->adminGroups()->first();
+        $adminGroup = auth()->user()->currentGroup();
         $sets = $adminGroup?->costumeSets ?? collect();
         $currentSetId = $adminGroup?->members()->whereKey($user->id)->first()?->pivot->costume_set_id;
 
@@ -352,7 +352,7 @@ class MemberController extends Controller
     {
         $this->authorize('delete', $user);
 
-        $adminGroup = auth()->user()->adminGroups()->first();
+        $adminGroup = auth()->user()->currentGroup();
         abort_if(is_null($adminGroup), 403);
 
         $name = $user->name;

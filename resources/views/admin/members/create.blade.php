@@ -1,7 +1,7 @@
 <x-app-layout>
     {{-- pievieno vienu vai vairākus studentus vienā reizē --}}
     <x-slot name="header">
-        <x-page-header :eyebrow="auth()->user()->adminGroups()->value('name')" title="Add students" subtitle="Add one or more students to your group — new or existing." />
+        <x-page-header :eyebrow="auth()->user()->currentGroup()?->name" title="Add students" subtitle="Add one or more students to your group — new or existing." />
     </x-slot>
 
     <div class="mb-4">

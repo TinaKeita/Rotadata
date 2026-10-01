@@ -63,6 +63,35 @@ class User extends Authenticatable
         return $this->hasMany(Group::class, 'admin_id');
     }
 
+    // sesijas atslēga, kurā glabā skolotāja pašlaik atvērto grupu
+    public const CURRENT_GROUP_KEY = 'current_group_id';
+
+    // vienā pieprasījumā nolasītā pašreizējā grupa (false – vēl nav nolasīta)
+    private Group|null|false $currentGroupCache = false;
+
+    /**
+     * Skolotāja pašlaik atvērtā grupa: tā, ko viņš pēdējo izvēlējās navigācijā, vai vecākā no viņa grupām.
+     * Visas skolotāja lapas (panelis, dalībnieki, tērpi, koncerti, iestatījumi) strādā ar šo grupu.
+     */
+    public function currentGroup(): ?Group
+    {
+        if ($this->currentGroupCache !== false) {
+            return $this->currentGroupCache;
+        }
+
+        $id = session(self::CURRENT_GROUP_KEY);
+        $group = $id ? $this->adminGroups()->whereKey($id)->first() : null;
+
+        return $this->currentGroupCache = $group ?? $this->adminGroups()->orderBy('id')->first();
+    }
+
+    // padara grupu par pašreizējo (pārslēdzot navigācijā, izveidojot jaunu vai pārņemot)
+    public function switchToGroup(Group $group): void
+    {
+        session([self::CURRENT_GROUP_KEY => $group->id]);
+        $this->currentGroupCache = $group;
+    }
+
     // pivot costume_set_id – studenta tērpu komplekts katrā grupā
     public function memberGroups()
     {

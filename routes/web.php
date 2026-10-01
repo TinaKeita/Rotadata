@@ -134,10 +134,21 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
 
     // Grupas iestatījumi un dzēšana (ar 30 dienu atjaunošanas logu)
     Route::get('/group/settings', [AdminGroupController::class, 'edit'])->name('group.settings');
+    // vēl viena grupa (no profila) un pārslēgšanās starp savām grupām (navigācijā)
+    Route::post('/groups', [AdminGroupController::class, 'store'])->name('groups.store');
+    Route::get('/groups/{group}/open', [AdminGroupController::class, 'open'])->name('groups.open');
     Route::patch('/group', [AdminGroupController::class, 'update'])->name('group.update');
     Route::get('/group/delete', [AdminGroupController::class, 'confirm'])->name('group.delete');
     Route::delete('/group', [AdminGroupController::class, 'destroy'])->name('group.destroy');
     Route::post('/group/restore', [AdminGroupController::class, 'restore'])->name('group.restore');
+
+    // Grupas nodošana citam skolotājam: meklēšana, pieprasījums, atcelšana; saņēmējs pieņem vai noraida
+    Route::get('/group/transfer/teachers', [App\Http\Controllers\Admin\GroupTransferController::class, 'teachers'])->name('group.transfer.teachers');
+    Route::post('/group/transfer', [App\Http\Controllers\Admin\GroupTransferController::class, 'store'])->name('group.transfer.store');
+    Route::delete('/group/transfer', [App\Http\Controllers\Admin\GroupTransferController::class, 'cancel'])->name('group.transfer.cancel');
+    Route::get('/group/transfer/{token}', [App\Http\Controllers\Admin\GroupTransferController::class, 'show'])->name('group.transfer.show');
+    Route::post('/group/transfer/{token}/accept', [App\Http\Controllers\Admin\GroupTransferController::class, 'accept'])->name('group.transfer.accept');
+    Route::post('/group/transfer/{token}/decline', [App\Http\Controllers\Admin\GroupTransferController::class, 'decline'])->name('group.transfer.decline');
 
     // Tērpu komplekti (piem. "Meitenes", "Puiši") – pārvalda grupas iestatījumos
     Route::resource('costume-sets', App\Http\Controllers\Admin\CostumeSetController::class)

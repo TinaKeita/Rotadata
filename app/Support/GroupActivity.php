@@ -19,6 +19,24 @@ class GroupActivity
         $this->itemIds = CostumeItem::whereHas('costume', fn ($q) => $q->where('group_id', $group->id))->pluck('id');
     }
 
+    // viss aktivitātes sadaļai grupas iestatījumos
+    public function all(): array
+    {
+        return [
+            'overview'       => $this->overview(),
+            'activityWeek'   => $this->activityThisWeek(),
+            'readiness'      => $this->readiness(),
+            'feed'           => $this->recentActivity(25),
+            'longestOut'     => $this->longestOut(),
+            'topHolders'     => $this->topHolders(),
+            'fullyOut'       => $this->fullyOut(),
+            'inDemand'       => $this->inDemand(),
+            'mostTravelled'  => $this->mostTravelled(),
+            'busiestCostume' => $this->busiestCostume(),
+            'weeks'          => $this->weeklyActivity(),
+        ];
+    }
+
     public function overview(): array
     {
         $total = $this->itemIds->count();

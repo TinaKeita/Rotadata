@@ -10,7 +10,7 @@ class EventController extends Controller
 {
     public function index()
     {
-        $group = auth()->user()->adminGroups()->first();
+        $group = auth()->user()->currentGroup();
 
         $upcoming = $group ? $group->events()->with(['costumes', 'group'])->upcoming()->get() : collect();
         $past = $group ? $group->events()->with(['costumes', 'group'])->past()->get() : collect();
@@ -21,7 +21,7 @@ class EventController extends Controller
     // forma jauna koncerta pievienošanai
     public function create()
     {
-        $group = auth()->user()->adminGroups()->first();
+        $group = auth()->user()->currentGroup();
         abort_if(is_null($group), 403, 'You do not have a group yet.');
 
         $costumes = $group->costumes()->with('costumeSet')->get();
@@ -33,7 +33,7 @@ class EventController extends Controller
 
     public function store(Request $request)
     {
-        $group = auth()->user()->adminGroups()->first();
+        $group = auth()->user()->currentGroup();
         abort_if(is_null($group), 403, 'You do not have a group yet.');
 
         $validated = $this->validated($request, $group->id, null);

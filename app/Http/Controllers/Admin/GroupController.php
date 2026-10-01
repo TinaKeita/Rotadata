@@ -20,18 +20,52 @@ class GroupController extends Controller
         $group = $this->activeGroup();
         $trashedGroup = $this->trashedGroup();
 
-        abort_if(is_null($group) && is_null($trashedGroup), 404);
+        if (is_null($group) && is_null($trashedGroup)) {
+            return redirect()->route('dashboard')->with('error', "You don't have a group yet. Create one from your profile.");
+        }
 
         $stats = $group ? $this->impact($group) : null;
 
-        return view('admin.group.settings', compact('group', 'trashedGroup', 'stats'));
+        // vēl neatbildēts pieprasījums nodot grupu citam skolotājam
+        $pendingTransfer = $group?->transfers()->open()->with('toUser')->latest()->first();
+
+        // grupas aktivitātes sadaļa (žurnāls, rādītāji, grafiks)
+        $activity = $group ? (new \App\Support\GroupActivity($group))->all() : null;
+
+        return view('admin.group.settings', compact('group', 'trashedGroup', 'stats', 'pendingTransfer', 'activity'));
+    }
+
+    // skolotājs izveido vēl vienu grupu (no profila) – tā kļūst par pašreizējo
+    public function store(Request $request)
+    {
+        $validated = $request->validateWithBag('newGroup', [
+            'group_name' => 'required|string|max:255',
+        ]);
+
+        $group = Group::create(['name' => $validated['group_name'], 'admin_id' => auth()->id()]);
+        auth()->user()->switchToGroup($group);
+
+        return redirect()->route('admin.group.settings')
+            ->with('success', "Group “{$group->name}” created. It's now the group you're working in.");
+    }
+
+    // pārslēdzas uz citu savu grupu un atver tās iestatījumus (navigācijas grupu saites)
+    public function open(Group $group)
+    {
+        if (! auth()->user()->ownsGroup($group)) {
+            return redirect()->route('dashboard')->with('error', "That group isn't yours.");
+        }
+
+        auth()->user()->switchToGroup($group);
+
+        return redirect()->route('admin.group.settings');
     }
 
     // pārsauc grupu
     public function update(Request $request)
     {
         $group = $this->activeGroup();
-        abort_if(is_null($group), 404);
+        abort_if(is_null($group), 404, "You don't have a group to do that with.");
         $this->authorize('update', $group);
 
         $validated = $request->validate([
@@ -48,7 +82,7 @@ class GroupController extends Controller
     public function confirm()
     {
         $group = $this->activeGroup();
-        abort_if(is_null($group), 404);
+        abort_if(is_null($group), 404, "You don't have a group to do that with.");
         $this->authorize('delete', $group);
 
         $stats = $this->impact($group);
@@ -60,7 +94,7 @@ class GroupController extends Controller
     public function destroy(Request $request)
     {
         $group = $this->activeGroup();
-        abort_if(is_null($group), 404);
+        abort_if(is_null($group), 404, "You don't have a group to do that with.");
         $this->authorize('delete', $group);
 
         $request->validate([
@@ -107,7 +141,7 @@ class GroupController extends Controller
     public function restore(Request $request)
     {
         $group = $this->trashedGroup();
-        abort_if(is_null($group), 404);
+        abort_if(is_null($group), 404, "You don't have a group to do that with.");
         $this->authorize('restore', $group);
 
         $groupName = $group->name;
@@ -129,7 +163,7 @@ class GroupController extends Controller
     public function forceDestroy(Request $request)
     {
         $group = $this->trashedGroup();
-        abort_if(is_null($group), 404);
+        abort_if(is_null($group), 404, "You don't have a group to do that with.");
         $this->authorize('forceDelete', $group);
 
         $request->validate([
@@ -145,7 +179,7 @@ class GroupController extends Controller
 
     private function activeGroup(): ?Group
     {
-        return auth()->user()->adminGroups()->first();
+        return auth()->user()->currentGroup();
     }
 
     private function trashedGroup(): ?Group

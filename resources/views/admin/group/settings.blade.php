@@ -1,7 +1,7 @@
 <x-app-layout>
     {{-- grupas iestatījumi: pārsaukšana, dzēšana un nesen dzēstas grupas atjaunošana --}}
     <x-slot name="header">
-        <x-page-header :eyebrow="auth()->user()->adminGroups()->value('name')" title="Group settings" subtitle="Rename your group, or delete it with a 30-day recovery window." />
+        <x-page-header :eyebrow="auth()->user()->currentGroup()?->name" title="Group settings" subtitle="Name, sets, handover, season report and activity for this group." />
     </x-slot>
 
     <div class="mb-4">
@@ -61,7 +61,9 @@
                 @enderror
             </details>
         </div>
-    @elseif($group)
+    @endif
+
+    @if($group)
         {{-- pārsaukšana --}}
         <div class="ui-card max-w-2xl">
             <h3 class="ui-eyebrow">Group name</h3>
@@ -156,6 +158,87 @@
             </form>
         </div>
 
+        {{-- grupas nodošana citam skolotājam (saņēmējam jāpieņem e-pastā) --}}
+        <div id="handover" class="ui-card mt-6 max-w-2xl scroll-mt-24">
+            <h3 class="ui-eyebrow">Hand over this group</h3>
+            <p class="mt-2 text-sm text-ink-muted">
+                Give the group, with all its students, costumes, concerts and history, to another teacher who already has a Rotadata account.
+                They get an email and have to accept. Their own groups stay; this one is added to them. Until then, nothing changes.
+            </p>
+
+            @if($pendingTransfer)
+                <div class="ui-alert ui-alert-warn mt-4 flex flex-wrap items-center justify-between gap-3">
+                    <span>
+                        Waiting for <strong>{{ $pendingTransfer->toUser->name }}</strong> ({{ $pendingTransfer->toUser->email }}) to accept.
+                        Open until {{ $pendingTransfer->expires_at->format('d.m.Y') }}.
+                    </span>
+                    <form method="POST" action="{{ route('admin.group.transfer.cancel') }}">
+                        @csrf
+                        @method('DELETE')
+                        <button type="submit" class="ui-btn-ghost ui-btn-sm">Cancel request</button>
+                    </form>
+                </div>
+            @else
+                <form method="POST" action="{{ route('admin.group.transfer.store') }}" class="mt-4 space-y-4"
+                    x-data="{
+                        q: '', results: [], selected: null, open: false, loading: false,
+                        async search() {
+                            this.selected = null;
+                            if (this.q.trim().length < 2) { this.results = []; this.open = false; return; }
+                            this.loading = true;
+                            try {
+                                const r = await fetch('{{ route('admin.group.transfer.teachers') }}?q=' + encodeURIComponent(this.q.trim()), { headers: { Accept: 'application/json' } });
+                                this.results = r.ok ? await r.json() : [];
+                            } finally { this.loading = false; this.open = true; }
+                        },
+                        pick(t) { this.selected = t; this.q = t.name; this.open = false; }
+                    }"
+                    @click.outside="open = false">
+                    @csrf
+
+                    {{-- skolotāja meklēšana: ieteikumi parādās rakstot (vismaz 2 burti) --}}
+                    <div class="relative">
+                        <label for="transfer_teacher" class="ui-label">Teacher</label>
+                        <input id="transfer_teacher" type="text" x-model="q" @input.debounce.250ms="search()" @focus="if (results.length) open = true"
+                            autocomplete="off" placeholder="Start typing a name or email…" class="ui-input mt-1.5">
+                        <input type="hidden" name="to_user_id" :value="selected ? selected.id : ''">
+
+                        <div x-show="open" x-transition.opacity style="display: none"
+                            class="absolute inset-x-0 top-full z-20 mt-1 max-h-72 overflow-y-auto rounded-xl border border-line bg-paper p-1 shadow-nav">
+                            <p x-show="loading" class="px-3 py-2 text-sm text-ink-soft">Searching…</p>
+                            <p x-show="!loading && results.length === 0" class="px-3 py-2 text-sm text-ink-soft">No teacher accounts match.</p>
+                            <template x-for="t in results" :key="t.id">
+                                <button type="button" @click="pick(t)"
+                                    class="flex w-full items-baseline justify-between gap-3 rounded-lg px-3 py-2 text-left text-sm hover:bg-surface-sunk">
+                                    <span class="min-w-0">
+                                        <span class="block truncate font-medium" x-text="t.name"></span>
+                                        <span class="block truncate font-mono text-[12px] text-ink-soft" x-text="t.email"></span>
+                                    </span>
+                                </button>
+                            </template>
+                        </div>
+                        <p x-show="selected" class="ui-help mt-1.5" style="display: none">
+                            Handing over to <strong x-text="selected?.name"></strong> (<span x-text="selected?.email"></span>).
+                        </p>
+                        @if($errors->transfer->has('to_user_id'))
+                            <p class="mt-1.5 text-sm text-red-700 dark:text-red-300">{{ $errors->transfer->first('to_user_id') }}</p>
+                        @endif
+                    </div>
+
+                    {{-- apstiprinājums ar paša paroli --}}
+                    <div>
+                        <label for="transfer_password" class="ui-label">Your password</label>
+                        <x-password-input id="transfer_password" name="password" class="ui-input mt-1.5" required autocomplete="current-password" />
+                        @if($errors->transfer->has('password'))
+                            <p class="mt-1.5 text-sm text-red-700 dark:text-red-300">{{ $errors->transfer->first('password') }}</p>
+                        @endif
+                    </div>
+
+                    <button type="submit" class="ui-btn" :disabled="!selected">Send handover request</button>
+                </form>
+            @endif
+        </div>
+
         {{-- sezonas atskaite – vienmēr pieejama, ne tikai sezonas beigās --}}
         <div class="ui-card mt-6 max-w-2xl">
             <h3 class="ui-eyebrow">Season report</h3>
@@ -187,9 +270,11 @@
                 Delete group…
             </a>
         </div>
-    @else
+
+        @include('admin.group._activity', ['stats' => $activity])
+    @elseif(! $trashedGroup)
         <p class="rounded-[14px] border border-dashed border-line-strong px-4 py-8 text-center text-sm text-ink-soft">
-            You don't have a group yet.
+            You don't have a group yet. Create one from your <a href="{{ route('profile.edit') }}#groups" class="ui-link">profile</a>.
         </p>
     @endif
 </x-app-layout>

@@ -1,7 +1,7 @@
 <x-app-layout>
     {{-- pievieno jaunu tērpu --}}
     <x-slot name="header">
-        <x-page-header :eyebrow="auth()->user()->adminGroups()->value('name')" title="Add costume" subtitle="Add a new costume and generate inventory items." />
+        <x-page-header :eyebrow="auth()->user()->currentGroup()?->name" title="Add costume" subtitle="Add a new costume and generate inventory items." />
     </x-slot>
 
     <div class="ui-card max-w-2xl">

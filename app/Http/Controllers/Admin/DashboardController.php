@@ -18,7 +18,7 @@ class DashboardController extends Controller
 
     public function index()
     {
-        $group = auth()->user()->adminGroups()->first();
+        $group = auth()->user()->currentGroup();
 
         // piem. paziņojums, ka students pametis grupu – jāredz neatkarīgi no tā, vai grupa vēl pastāv
         $notifications = auth()->user()->unreadNotifications;
@@ -106,6 +106,11 @@ class DashboardController extends Controller
                     'event' => $event,
                 ];
             }
+        }
+
+        // cits skolotājs vēlas nodot savu grupu šim skolotājam
+        foreach (\App\Models\GroupTransfer::open()->where('to_user_id', auth()->id())->with(['group', 'fromUser'])->get() as $transfer) {
+            $rows[] = ['type' => 'transfer', 'transfer' => $transfer];
         }
 
         // uzaicinājuma e-pasts nav piegādāts

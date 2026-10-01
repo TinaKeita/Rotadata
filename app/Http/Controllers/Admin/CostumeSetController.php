@@ -12,7 +12,7 @@ class CostumeSetController extends Controller
 {
     public function store(Request $request)
     {
-        $group = auth()->user()->adminGroups()->first();
+        $group = auth()->user()->currentGroup();
         abort_if(is_null($group), 403, 'You do not have a group yet.');
 
         $validated = $request->validateWithBag('costumeSet', [

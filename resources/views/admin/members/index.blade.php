@@ -1,7 +1,7 @@
 <x-app-layout>
     {{-- studentu saraksts --}}
     <x-slot name="header">
-        <x-page-header :eyebrow="auth()->user()->adminGroups()->value('name')" title="Members" subtitle="Your students, their sets and invites.">
+        <x-page-header :eyebrow="auth()->user()->currentGroup()?->name" title="Members" subtitle="Your students, their sets and invites.">
             <x-slot:actions>
                 <a href="{{ route('admin.members.create') }}"
                     class="ui-btn ui-btn-sm">

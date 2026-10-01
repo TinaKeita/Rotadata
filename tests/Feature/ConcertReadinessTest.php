@@ -146,8 +146,10 @@ class ConcertReadinessTest extends TestCase
     {
         $this->give('Marta', 'Krekls');
 
+        $this->actingAs($this->teacher)->get(route('admin.activity'))->assertRedirect(route('admin.group.settings').'#activity');
+
         $this->actingAs($this->teacher)
-            ->get(route('admin.activity'))
+            ->get(route('admin.group.settings'))
             ->assertOk()
             ->assertSee('Recent activity')
             ->assertSee('Activity — last 6 weeks')
@@ -186,7 +188,6 @@ class ConcertReadinessTest extends TestCase
             route('admin.events.edit', $this->event),
             route('admin.group.settings'),
             route('admin.group.delete'),
-            route('admin.activity'),
             route('admin.season-report.show'),
             route('admin.costumes.show', $this->costumes['Vainags']),
             route('admin.costumes.labels', $this->costumes['Vainags']),
@@ -407,8 +408,8 @@ class ConcertReadinessTest extends TestCase
         $this->assertSame(['Girls', 'Boys'], $this->group->costumeSets()->pluck('name')->all());
 
         $this->actingAs($this->teacher);
-        $this->delete(route('admin.costume-sets.destroy', $this->girls))->assertForbidden();
-        $this->patch(route('admin.costume-sets.update', $this->boys), ['set_name' => 'Puiši'])->assertForbidden();
+        $this->delete(route('admin.costume-sets.destroy', $this->girls))->assertRedirect(route('dashboard'));
+        $this->patch(route('admin.costume-sets.update', $this->boys), ['set_name' => 'Puiši'])->assertRedirect(route('dashboard'));
 
         $this->post(route('admin.costume-sets.store'), ['set_name' => 'Musicians'])->assertSessionHas('success');
         $this->assertSame(['Girls', 'Boys', 'Musicians'], $this->group->costumeSets()->pluck('name')->all());
@@ -436,7 +437,7 @@ class ConcertReadinessTest extends TestCase
         $this->get(route('admin.search', ['q' => 'zzz']))->assertOk()->assertSee('Nothing found');
 
         // students meklēšanai netiek klāt
-        $this->actingAs($this->students['Marta'])->get(route('admin.search', ['q' => 'VAI']))->assertForbidden();
+        $this->actingAs($this->students['Marta'])->get(route('admin.search', ['q' => 'VAI']))->assertRedirect(route('dashboard'));
     }
 
     // paroles maiņā students redz skolotāja ievadīto vārdu un var to atstāt vai izlabot

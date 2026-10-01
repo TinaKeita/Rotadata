@@ -49,7 +49,7 @@ class SeasonReportController extends Controller
 
     private function group(): Group
     {
-        $group = auth()->user()->adminGroups()->first();
+        $group = auth()->user()->currentGroup();
         abort_if(is_null($group), 403, 'You do not have a group yet.');
 
         return $group;

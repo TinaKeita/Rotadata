@@ -14,7 +14,7 @@ class SearchController extends Controller
 
     public function index(Request $request)
     {
-        $group = auth()->user()->adminGroups()->first();
+        $group = auth()->user()->currentGroup();
         $q = trim((string) $request->query('q', ''));
 
         if (! $group || $q === '') {
