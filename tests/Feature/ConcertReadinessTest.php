@@ -370,4 +370,33 @@ class ConcertReadinessTest extends TestCase
         $this->assertSame(1, $this->event->studentCostumes()->count());
         $this->assertNull($this->event->costumes()->first()->pivot->target_count);
     }
+
+    // sezonas atskaite: gatavība koncerta dienā tiek atjaunota no vēstures, nevis no šodienas stāvokļa
+    public function test_season_report_rebuilds_readiness_on_concert_day(): void
+    {
+        $past = Event::create([
+            'group_id' => $this->group->id,
+            'title' => 'Vasaras koncerts',
+            'starts_at' => now()->subDays(2),
+            'created_by' => $this->teacher->id,
+        ]);
+        $past->costumes()->sync([$this->costumes['Krekls']->id]);
+
+        // Marta Kreklu paņēma pirms koncerta, Roberts – tikai pēc tā
+        $this->give('Marta', 'Krekls');
+        $this->students['Marta']->costumeAssignments()->update(['assigned_at' => now()->subDays(5)]);
+        $this->give('Roberts', 'Krekls');
+
+        $day = Event::with('costumes')->find($past->id)->asOf($past->starts_at)->studentReadiness();
+        $this->assertSame(1, $day['ready']);
+
+        $this->actingAs($this->teacher)
+            ->get(route('admin.season-report.show'))
+            ->assertOk()
+            ->assertSee('Vasaras koncerts')
+            ->assertSee('Still to collect')
+            ->assertSee('Inventory')
+            ->assertSee('Marta')
+            ->assertDontSee('Notes for next season');
+    }
 }

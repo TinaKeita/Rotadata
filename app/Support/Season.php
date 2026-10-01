@@ -21,6 +21,29 @@ class Season
         return Carbon::create($year, self::START_MONTH, 1)->startOfDay();
     }
 
+    // jebkuras sezonas robežas pēc tās sākuma gada (piem. 2025 → 2025/2026); null – pašreizējā sezona
+    public static function bounds(?int $startYear = null): array
+    {
+        $start = $startYear
+            ? Carbon::create($startYear, self::START_MONTH, 1)->startOfDay()
+            : self::start();
+        $end = $start->copy()->addYear()->subDay()->endOfDay();
+
+        return [
+            'year' => $start->year,
+            'start' => $start,
+            'end' => $end,
+            'label' => $start->year.'/'.$end->year,
+            'current' => now()->between($start, $end),
+        ];
+    }
+
+    // sezonas sākuma gads datumam (piem. 2026. gada marts → 2025)
+    public static function startYearOf(Carbon $date): int
+    {
+        return $date->month >= self::START_MONTH ? $date->year : $date->year - 1;
+    }
+
     // pašreizējās sezonas beigas (nākamā gada 31. augusts)
     public static function end(): Carbon
     {
