@@ -76,13 +76,7 @@
     ];
 @endphp
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="scroll-smooth motion-reduce:scroll-auto"
-    x-data="{ darkMode: localStorage.getItem('darkMode') === 'true' }"
-    x-init="$watch('darkMode', val => {
-        localStorage.setItem('darkMode', val);
-        document.documentElement.classList.toggle('dark', val);
-    })"
-    :class="{ 'dark': darkMode }"
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="scroll-smooth motion-reduce:scroll-auto">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -98,15 +92,6 @@
     @vite(['resources/css/app.css', 'resources/js/app.js', 'resources/js/landing-reveal.js'])
 </head>
 <body class="overflow-x-clip bg-paper font-body text-base leading-[1.55] text-ink antialiased">
-
-    {{-- tumšā režīma pārslēgs, tāpat kā login/register lapās; tas pats localStorage atslēgas vārds,
-         tāpēc izvēle saglabājas arī pāriejot uz tām --}}
-    <div class="toggle-switch fixed right-4 top-4 z-40 sm:right-6 sm:top-6">
-        <label class="switch-label">
-            <input type="checkbox" class="checkbox" x-model="darkMode" aria-label="Toggle dark mode">
-            <span class="slider"></span>
-        </label>
-    </div>
 
     {{-- peldošā navigācijas kapsula; zem 768px saites paslēptas aiz "Menu" pogas --}}
     <header class="pointer-events-none sticky top-0 z-30 flex justify-center px-4 py-3.5"

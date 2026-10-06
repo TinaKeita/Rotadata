@@ -3,14 +3,7 @@
 {{-- login/register izkārtojums landing lapas stilā: tie paši žetoni, fonti, navigācijas kapsula un kartīte;
      pārējās guest lapas (scan, paroles) joprojām lieto x-guest-layout --}}
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}"
-    x-data="{ darkMode: localStorage.getItem('darkMode') === 'true' }"
-    x-init="$watch('darkMode', val => {
-        localStorage.setItem('darkMode', val);
-        document.documentElement.classList.toggle('dark', val);
-    })"
-    :class="{ 'dark': darkMode }"
->
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -25,14 +18,6 @@
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 <body class="flex min-h-screen flex-col overflow-x-clip bg-paper font-body text-base leading-[1.55] text-ink antialiased">
-
-    {{-- tumšā režīma pārslēgs ar to pašu localStorage atslēgu kā landing lapā --}}
-    <div class="toggle-switch fixed right-4 top-4 z-40 sm:right-6 sm:top-6">
-        <label class="switch-label">
-            <input type="checkbox" class="checkbox" x-model="darkMode" aria-label="Toggle dark mode">
-            <span class="slider"></span>
-        </label>
-    </div>
 
     {{-- vienkāršota landing navigācijas kapsula: logotips un atpakaļ saite --}}
     <header class="flex justify-center px-4 py-3.5">

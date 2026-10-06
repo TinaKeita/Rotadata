@@ -1,12 +1,5 @@
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}"
-    x-data="{ darkMode: localStorage.getItem('darkMode') === 'true' }"
-    x-init="$watch('darkMode', val => {
-        localStorage.setItem('darkMode', val);
-        document.documentElement.classList.toggle('dark', val);
-    })"
-    :class="{ 'dark': darkMode }"
->
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -24,14 +17,6 @@
     </head>
 
     <body class="min-h-screen overflow-x-clip bg-paper font-body text-base leading-[1.55] text-ink antialiased">
-        {{-- tumšā režīma pārslēgs stūrī, tāpat kā landing un login lapās --}}
-        <div class="toggle-switch fixed right-4 top-[22px] z-50 sm:right-6 sm:top-[26px]">
-            <label class="switch-label">
-                <input type="checkbox" class="checkbox" x-model="darkMode" aria-label="Toggle dark mode">
-                <span class="slider"></span>
-            </label>
-        </div>
-
         {{-- peldošā navigācijas kapsula (tāpat kā landing lapā) --}}
         @include('layouts.navigation')
 

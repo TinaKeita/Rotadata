@@ -2,7 +2,7 @@ import defaultTheme from 'tailwindcss/defaultTheme';
 import forms from '@tailwindcss/forms';
 
 // ļauj krāsu definēt kā CSS mainīgo (piem. "251 250 248"), lai tā pati Tailwind klase
-// (piem. bg-paper) automātiski pielāgotos tumšajam režīmam, kad main pārslēdz .dark uz <html>
+// (piem. bg-paper) automātiski pielāgotos ierīces tumšajam režīmam
 function withOpacityValue(variable) {
     return ({ opacityValue }) => {
         if (opacityValue === undefined) {
@@ -14,7 +14,8 @@ function withOpacityValue(variable) {
 
 /** @type {import('tailwindcss').Config} */
 export default {
-    darkMode: 'class',
+    // dark: klases seko ierīces iestatījumam (prefers-color-scheme), bez pārslēga
+    darkMode: 'media',
 
     content: [
         './vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php',
@@ -27,7 +28,7 @@ export default {
             colors: {
                 // jaunie dizaina žetoni landing lapas pārbūvei – "page chrome" toņi (fons, virsma, teksts,
                 // līnijas, akcents) ir CSS mainīgie, lai landing lapa dabūtu tumšo režīmu bez katras
-                // klases pārrakstīšanas; tumšās vērtības skat. resources/css/app.css (:root un .dark)
+                // klases pārrakstīšanas; tumšās vērtības skat. resources/css/app.css (:root un prefers-color-scheme: dark)
                 paper: withOpacityValue('--color-paper'),
                 surface: { DEFAULT: withOpacityValue('--color-surface'), sunk: withOpacityValue('--color-surface-sunk') },
                 ink: {

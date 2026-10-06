@@ -53,7 +53,7 @@
     }
 @endphp
 
-{{-- vienkārša kapsula kā landing lapā: logotips, saites, profils un iziešana; tumšā režīma pārslēgs ir stūrī (app.blade.php) --}}
+{{-- vienkārša kapsula kā landing lapā: logotips, saites, profils un iziešana --}}
 <header class="pointer-events-none sticky top-0 z-40 flex justify-center px-3 py-3 sm:px-4 sm:py-3.5"
     x-data="{ menu: false, account: false }" @keydown.escape.window="menu = false; account = false">
     <nav aria-label="Main"
