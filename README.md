@@ -1,59 +1,120 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Rotadata
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Costume inventory for folk dance and music groups. Teachers keep track of what the group owns, who has which costume, and whether everyone is ready for the next concert. Students take a costume by scanning the QR label sewn into it.
 
-## About Laravel
+## What it does
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+**For teachers**
+- **Costumes:** add each costume once with a quantity. Rotadata gives every item its own code (e.g. `KRE-03`) and a printable QR label.
+- **Students:** add a whole class at once by name and email. Each student gets a sign-in invite by email.
+- **Sets:** sort students and costumes into sets such as "Girls" and "Boys", so each student is only asked for the costumes they need.
+- **Concerts:** plan a concert, tick who is performing and add extra costumes for soloists. The dashboard shows who is still missing what.
+- **Hand out and take back:** teachers can do this without scanning, and every item keeps a full history.
+- **Search:** look up any item by its code, or any student by name.
+- **Season report:** a printable report for the school year (1 September – 31 August), showing what is still out and how costumes were used.
+- **Several groups:** a teacher can run more than one group, switch between them, and hand a group over to another teacher.
+- **Undo window:** a deleted group or removed student can be restored for 30 days.
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+**For students**
+- Scan a QR label to take that costume, or take it over from a classmate.
+- See their own costumes, history and concert readiness, and return items from their list.
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+## Built with
 
-## Learning Laravel
+| Part | Tools |
+|---|---|
+| Back end | PHP 8.3, [Laravel 12](https://laravel.com) |
+| Sign-in | Scaffolded with [Laravel Breeze](https://laravel.com/docs/starter-kits), then customised: forced password change on first sign-in, students invited by their teacher, password reset by email link |
+| Roles | [spatie/laravel-permission](https://spatie.be/docs/laravel-permission): `admin` (teacher) and `member` (student) |
+| QR codes | [simplesoftwareio/simple-qrcode](https://github.com/SimpleSoftwareIO/simple-qrcode) |
+| Email | [Resend](https://resend.com) in production; written to the log locally |
+| Front end | Blade templates, [Tailwind CSS 3](https://tailwindcss.com), [Alpine.js](https://alpinejs.dev), built with [Vite](https://vitejs.dev) |
+| Tests | [Pest](https://pestphp.com) / PHPUnit |
+| Package managers | Composer (PHP) and npm (JavaScript) |
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+The interface follows the device's light or dark mode automatically.
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+## Requirements
 
-## Laravel Sponsors
+- PHP 8.3 or newer, with the `gd` extension (needed for QR images)
+- Composer 2, a recent version (run `composer self-update`)
+- Node.js 20.19 or newer, and npm
+- SQLite (the default) or MySQL. Laragon provides all of these.
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+## Setup
 
-### Premium Partners
+```bash
+git clone <repository-url> rotadata
+cd rotadata
+composer setup
+```
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+`composer setup` does all of the following:
+- installs the packages
+- creates `.env` from `.env.example` and generates an app key
+- creates the database tables and the `admin`/`member` roles
+- links storage for costume photos
+- builds the front end
 
-## Contributing
+Then open the site:
+- **With Laragon:** open the project's Laragon URL (e.g. `http://rotadata.test`).
+- **Without Laragon:** run `composer dev`. It starts the web server, the Vite dev server and a live log viewer together.
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+Go to **Create a teacher account** to register. Registering creates your first group. There is no default account.
 
-## Code of Conduct
+## Configuration
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+Set these in `.env`:
 
-## Security Vulnerabilities
+| Setting | Why it matters |
+|---|---|
+| `APP_URL` | **Must be the address students will open.** QR labels contain this URL, so labels printed with `http://localhost` won't work on a phone. |
+| `APP_TIMEZONE` | `Europe/Riga` by default. Concert times are stored in this local time. |
+| `DB_CONNECTION` | `sqlite` by default. For MySQL, also set `DB_HOST`, `DB_DATABASE`, `DB_USERNAME` and `DB_PASSWORD`. |
+| `MAIL_MAILER` | `log` writes emails to `storage/logs/laravel.log`, which is useful locally. Use `resend` with `RESEND_API_KEY` to really send them. |
+| `MAIL_FROM_ADDRESS` | The sender of invites and password-reset emails. |
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+## Scheduled clean-up
 
-## License
+Deleted groups and removed students are kept for 30 days so they can be restored. After that, two commands delete them for good:
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+| Command | Runs |
+|---|---|
+| `php artisan groups:purge` | daily at 03:00 |
+| `php artisan members:purge` | daily at 03:05 |
+
+On a server, add Laravel's scheduler to cron:
+
+```
+* * * * * cd /path/to/rotadata && php artisan schedule:run >> /dev/null 2>&1
+```
+
+Locally you can run `php artisan schedule:work` instead.
+
+## Tests
+
+```bash
+composer test        # all tests
+composer test:core   # a short set of the most important tests
+```
+
+Tests use an in-memory SQLite database, so your own data is never touched. They cover:
+- signing in, registration and password reset
+- scanning, taking and taking over costumes
+- returning costumes, and leaving a group
+- adding, removing and restoring students
+- concert readiness, group handover, and who may access what
+
+## Where things are
+
+| Path | Contents |
+|---|---|
+| `app/Http/Controllers/Admin/` | Teacher pages (costumes, members, concerts, group settings, reports) |
+| `app/Http/Controllers/Member/` | Student pages |
+| `app/Http/Controllers/ScanController.php` | Everything that happens after a QR scan |
+| `app/Policies/` | Who is allowed to do what (one file per model) |
+| `app/Models/` | Database models; costume hand-out logic is in `CostumeItem` |
+| `app/Support/` | Season dates and dashboard activity |
+| `resources/views/` | Blade templates; emails are in `emails/` |
+| `resources/css/app.css` | Shared styles and the light/dark colour variables |
+| `routes/web.php` | All routes (sign-in routes are in `routes/auth.php`) |
