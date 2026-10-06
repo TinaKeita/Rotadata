@@ -12,17 +12,6 @@
         {{ __('Forgot your password? No problem. Just let us know your email address and we will email you a password reset link that will allow you to choose a new one.') }}
     </div>
 
-    <div class="ui-alert ui-alert-good mb-4 px-3 py-2">
-        This only works for teacher accounts. Students should ask their teacher to reset their password from the admin dashboard.
-    </div>
-
-    {{-- pēc mēģinājuma parāda skaidru, uzkrītošu paziņojumu, ja e-pasts pieder studenta kontam --}}
-    @if (session('notice'))
-        <div class="ui-alert ui-alert-warn mb-4 font-medium">
-            {{ session('notice') }}
-        </div>
-    @endif
-
     <!-- Session Status -->
     <x-auth-session-status class="mb-4" :status="session('status')" />
 

@@ -36,9 +36,6 @@
         <div class="pt-1">
             <button type="submit" class="auth-button">Log in</button>
         </div>
-
-        {{-- studentiem šeit paroli neatiestatīt – tas jālūdz skolotājam --}}
-        <p class="text-center font-mono text-[11.5px] text-ink-soft">Students: ask your teacher to reset your password.</p>
     </form>
 
     @if (session('trashed_login_email'))

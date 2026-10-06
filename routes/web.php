@@ -109,9 +109,6 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::post('/members/{user}/hand-out', [AdminMemberController::class, 'handOut'])->name('members.hand-out');
     // viena vai vairāku studentu tērpu komplekta maiņa
     Route::patch('/members/set', [AdminMemberController::class, 'updateSet'])->name('members.set');
-    // students aizmirsis paroli – skolotājs atiestata, apstiprinot ar savu paroli
-    Route::post('/members/{member}/reset-password', [AdminMemberController::class, 'resetPassword'])
-        ->name('members.reset-password');
     Route::resource('members', AdminMemberController::class)
         ->only(['index', 'create', 'store', 'show', 'destroy'])
         ->parameters(['members' => 'user']);

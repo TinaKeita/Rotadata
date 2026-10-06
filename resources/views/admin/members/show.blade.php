@@ -74,49 +74,12 @@
         </dl>
     </div>
 
-    {{-- students aizmirsis paroli – skolotājs atiestata, apstiprinot ar SAVU paroli --}}
+    {{-- paroli maina tikai pats dalībnieks ar e-pasta saiti – skolotājs paroli neredz un nemaina --}}
     <div class="ui-card mt-5 max-w-2xl">
         <h3 class="ui-eyebrow">Forgot password?</h3>
         <p class="mt-1 text-sm text-ink-muted">
-            Send {{ $user->name }} a new temporary password by email. Their old password stops working immediately,
-            and they'll be asked to set their own on next sign-in.
+            {{ $user->name }} can reset it with “Forgot your password?” on the sign-in page. They'll get a link by email to choose a new one.
         </p>
-
-        <button type="button" x-data x-on:click.prevent="$dispatch('open-modal', 'confirm-password-reset')"
-            class="ui-btn-ghost ui-btn-sm mt-3">
-            Reset password
-        </button>
-
-        <x-modal name="confirm-password-reset" :show="$errors->resetPassword->isNotEmpty()" focusable>
-            <form method="POST" action="{{ route('admin.members.reset-password', $user) }}" class="p-6">
-                @csrf
-                <h2 class="ui-heading">
-                    Reset {{ $user->name }}'s password?
-                </h2>
-                <p class="mt-1 text-sm text-ink-muted">
-                    Enter <strong>your own</strong> password to confirm. {{ $user->name }} will get a new temporary
-                    password by email and their old one will stop working right away.
-                </p>
-
-                <div class="mt-6">
-                    <x-input-label for="reset_password" value="Your password" class="sr-only" />
-                    <x-password-input id="reset_password" name="password" class="ui-input mt-1 block w-full"
-                        placeholder="Your password" autocomplete="current-password" />
-                    <x-input-error :messages="$errors->resetPassword->get('password')" class="mt-2" />
-                </div>
-
-                <div class="mt-6 flex justify-end gap-3">
-                    <button type="button" x-on:click="$dispatch('close')"
-                        class="ui-btn-ghost">
-                        Cancel
-                    </button>
-                    <button type="submit"
-                        class="ui-btn">
-                        Reset password
-                    </button>
-                </div>
-            </form>
-        </x-modal>
     </div>
 
     @php

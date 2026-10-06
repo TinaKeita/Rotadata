@@ -101,7 +101,7 @@
                                 View
                             </a>
 
-                            @if($member->invite_email_failed_at)
+                            @if($member->invite_email_failed_at && $member->must_change_password)
                                 <form action="{{ route('admin.members.resend-invite', $member) }}" method="POST">
                                     @csrf
                                     <button type="submit" class="ui-btn-ghost ui-btn-sm">

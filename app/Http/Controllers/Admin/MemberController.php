@@ -6,12 +6,12 @@ use App\Exceptions\CostumeItemUnavailableException;
 use App\Mail\MemberAddedMail;
 use App\Mail\MemberRemovedMail;
 use App\Mail\MemberWelcomeMail;
-use App\Mail\PasswordResetByTeacherMail;
 use App\Models\Group;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Str;
 
 class MemberController extends Controller
@@ -153,7 +153,8 @@ class MemberController extends Controller
         return ['status' => 'created_email_failed', 'name' => $member->name, 'email' => $member->email, 'password' => $tempPassword];
     }
 
-    // vēlreiz nosūta uzaicinājumu ar jaunu pagaidu paroli – tikai kamēr dalībnieks vēl nav pats pieslēdzies
+    // uzaicinājums nav pienācis – nosūta saiti, ar kuru dalībnieks pats izvēlas paroli.
+    // Skolotājs paroli neredz un nemaina, tāpēc šādi nevar pārņemt kāda cita kontu
     public function resendInvite(User $member)
     {
         $this->authorize('view', $member);
@@ -161,54 +162,22 @@ class MemberController extends Controller
         abort_unless($member->must_change_password, 403,
             'This member has already signed in and set their own password — an invite can no longer be resent.');
 
-        $tempPassword = Str::random(12);
-        $member->update(['password' => Hash::make($tempPassword), 'must_change_password' => true]);
-
-        $groupName = auth()->user()->adminGroups()
-            ->whereHas('members', fn ($query) => $query->whereKey($member->id))
-            ->value('name');
-
-        if ($this->sendInvite($member, $groupName, $tempPassword)) {
-            return back()->with('success', "Invite resent to {$member->email}.");
-        }
-
-        return back()->with('warning', "Could not send the email. New temporary password: {$tempPassword} — give it to the member in person.");
-    }
-
-    // students aizmirsis paroli – skolotājs var to atiestatīt, bet tikai apstiprinot ar SAVU paroli
-    // (aizsardzība pret nejaušu klikšķi vai svešu piekļuvi neaizslēgtai sesijai)
-    public function resetPassword(Request $request, User $member)
-    {
-        $this->authorize('view', $member);
-
-        $request->validateWithBag('resetPassword', [
-            'password' => ['required', 'current_password'],
-        ]);
-
-        $tempPassword = Str::random(12);
-        $member->update([
-            'password' => Hash::make($tempPassword),
-            'must_change_password' => true, // vecā parole vairs nederēs, jaunā ir tikai vienreizējai pieslēgšanās reizei
-        ]);
-
-        $groupName = auth()->user()->adminGroups()
-            ->whereHas('members', fn ($query) => $query->whereKey($member->id))
-            ->value('name');
-
         try {
-            Mail::to($member->email)->send(new PasswordResetByTeacherMail($member, $tempPassword, $groupName));
-
-            return redirect()->route('admin.members.show', $member)
-                ->with('success', "{$member->name}’s password was reset. They’ll get a new temporary password by email.");
+            $status = Password::sendResetLink(['email' => $member->email]);
         } catch (\Throwable $e) {
-            \Log::error('Failed to send teacher-initiated password reset email: '.$e->getMessage(), [
-                'email' => $member->email,
-                'member_id' => $member->id,
-            ]);
+            \Log::error('Failed to send invite link: '.$e->getMessage(), ['member_id' => $member->id]);
+            $member->update(['invite_email_failed_at' => now()]);
 
-            return redirect()->route('admin.members.show', $member)
-                ->with('warning', "Password reset, but the email could not be sent. New temporary password: {$tempPassword} — give it to {$member->name} in person.");
+            return back()->with('warning', "Could not send the email to {$member->email}. Check the address and try again later.");
         }
+
+        if ($status === Password::RESET_THROTTLED) {
+            return back()->with('warning', 'A link was sent to this member a moment ago. Wait a minute before sending another.');
+        }
+
+        $member->update(['invite_email_failed_at' => null]);
+
+        return back()->with('success', "Sent {$member->email} a link to set their password.");
     }
 
     // mēģina nosūtīt uzaicinājuma e-pastu; atzīmē kontu, ja neizdodas, lai skolotājs to redz un var mēģināt vēlreiz
