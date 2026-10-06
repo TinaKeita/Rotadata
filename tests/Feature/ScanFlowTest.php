@@ -138,6 +138,15 @@ class ScanFlowTest extends TestCase
         $this->assertSame($this->marta->id, $this->item->fresh()->assigned_to);
     }
 
+    // QR koda PNG lejupielāde ar salasāmo kodu faila nosaukumā
+    public function test_qr_code_downloads_as_png_named_after_the_item(): void
+    {
+        $this->get(route('qr.download', $this->item->qr_code))
+            ->assertOk()
+            ->assertHeader('Content-Type', 'image/png')
+            ->assertHeader('Content-Disposition', 'attachment; filename="qr-'.$this->item->code.'.png"');
+    }
+
     // jauns QR kods aizstāj veco – vecā birka vairs nedarbojas
     public function test_regenerated_qr_makes_the_old_label_invalid(): void
     {

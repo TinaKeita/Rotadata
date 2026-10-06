@@ -9,7 +9,6 @@ use App\Http\Controllers\Member\CostumeController as MemberCostumeController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ScanController;
 use Illuminate\Support\Facades\Route;
-use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
 /*
 |--------------------------------------------------------------------------
@@ -24,21 +23,18 @@ Route::get('/scan/{code}', [ScanController::class, 'show'])->name('scan.show');
 Route::post('/scan/{code}/authenticate', [ScanController::class, 'authenticate'])
     ->middleware('throttle:20,1') // maks. 20 mēģinājumi minūtē no vienas ierīces
     ->name('scan.authenticate');
-Route::post('/scan/{code}/assign', [ScanController::class, 'assign'])->name('scan.assign');
+// paņemšana un pārņemšana – maks. 30 minūtē no vienas ierīces (pietiek pat ļoti ātrai skenēšanai)
+Route::post('/scan/{code}/assign', [ScanController::class, 'assign'])
+    ->middleware('throttle:30,1')
+    ->name('scan.assign');
 
 // pārņem citam dalībniekam izsniegtu vienību sev (kad tērps fiziski jau nonācis pie skenētāja)
-Route::post('/scan/{code}/takeover', [ScanController::class, 'takeover'])->name('scan.takeover');
+Route::post('/scan/{code}/takeover', [ScanController::class, 'takeover'])
+    ->middleware('throttle:30,1')
+    ->name('scan.takeover');
 
 // QR koda PNG lejupielāde – faila nosaukumā izmanto salasāmo kodu (piem. qr-BRU-01.png)
-Route::get('/qr/{code}/download', function ($code) {
-    $label = \App\Models\CostumeItem::where('qr_code', $code)->value('code') ?? $code;
-
-    $png = QrCode::format('png')->size(300)->generate(url('/scan/'.$code));
-
-    return response($png)
-        ->header('Content-Type', 'image/png')
-        ->header('Content-Disposition', 'attachment; filename="qr-'.$label.'.png"');
-})->name('qr.download');
+Route::get('/qr/{code}/download', [ScanController::class, 'downloadQr'])->name('qr.download');
 
 /*
 |--------------------------------------------------------------------------

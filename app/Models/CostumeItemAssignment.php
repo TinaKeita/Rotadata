@@ -47,9 +47,4 @@ class CostumeItemAssignment extends Model
     {
         return $query->whereNull('returned_at');
     }
-
-    public function getIsOpenAttribute(): bool
-    {
-        return is_null($this->returned_at);
-    }
 }

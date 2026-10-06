@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
+use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
 class ScanController extends Controller
 {
@@ -159,6 +160,18 @@ class ScanController extends Controller
         }
 
         return view('scan.success', compact('item'));
+    }
+
+    // QR koda PNG lejupielāde – faila nosaukumā izmanto salasāmo kodu (piem. qr-BRU-01.png)
+    public function downloadQr($code)
+    {
+        $label = CostumeItem::where('qr_code', $code)->value('code') ?? $code;
+
+        $png = QrCode::format('png')->size(300)->generate(url('/scan/'.$code));
+
+        return response($png)
+            ->header('Content-Type', 'image/png')
+            ->header('Content-Disposition', 'attachment; filename="qr-'.$label.'.png"');
     }
 
     // parāda jau izsniegtas vienības lapu kopā ar norādi, vai skenētājs to var pārņemt sev

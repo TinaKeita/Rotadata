@@ -36,12 +36,6 @@ class CostumeItem extends Model
         return $this->hasMany(CostumeItemAssignment::class)->latest('assigned_at');
     }
 
-    // pašreiz atvērtais (vēl neatdotais) vēstures ieraksts
-    public function openAssignment()
-    {
-        return $this->hasOne(CostumeItemAssignment::class)->whereNull('returned_at');
-    }
-
     // piešķir vienību lietotājam un atver jaunu vēstures ierakstu
     // rindu slēdzam un pārbaudi atkārtojam transakcijā, lai divi vienlaicīgi skenējumi (piem. dubultklikšķis
     // lēnā tīklā) nevarētu abi "uzvarēt" – ja kāds cits jau paspējis piešķirt, izmet CostumeItemUnavailableException

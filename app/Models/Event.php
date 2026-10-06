@@ -25,11 +25,6 @@ class Event extends Model
         return $this->belongsTo(Group::class);
     }
 
-    public function createdBy()
-    {
-        return $this->belongsTo(User::class, 'created_by');
-    }
-
     // nepieciešamie tērpu veidi šim koncertam (neobligāti, pievienojami vēlāk)
     public function costumes()
     {
