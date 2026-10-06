@@ -23,8 +23,8 @@
     // šie divi paliek ar saviem fiksētajiem toņiem abiem režīmiem (nevis kopīgajiem lapas žetoniem),
     // jo tā ir maketa "ekrānuzņēmuma" statusa uzlīme, nevis pati lapa
     $badges = [
-        'Out' => 'bg-[#E8EFE9] text-brand dark:bg-[#1d2b22] dark:text-[#8fd6ac]',
-        'Available' => 'bg-[#F0EEE8] text-ink-soft dark:bg-[#2a2823] dark:text-[#a39d8f]',
+        'Out' => 'bg-brand-tint text-brand',
+        'Available' => 'bg-line-soft text-ink-soft',
     ];
 
     $rows = [

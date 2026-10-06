@@ -166,10 +166,10 @@
     </div>
 
     {{-- bīstamā zona: visa tērpa dzēšana --}}
-    <div class="mt-8 flex flex-wrap items-center justify-between gap-3 rounded-[14px] border border-red-200 bg-red-50/60 p-4 dark:border-red-500/30 dark:bg-red-900/10">
+    <div class="mt-8 flex flex-wrap items-center justify-between gap-3 rounded-[14px] border border-danger/25 bg-danger-tint/60 p-4">
         <div>
-            <p class="text-sm font-semibold text-red-800 dark:text-red-300">Delete this costume</p>
-            <p class="text-xs text-red-700/80 dark:text-red-300/70">Removes the costume and all its items and QR codes. This cannot be undone.</p>
+            <p class="text-sm font-semibold text-danger">Delete this costume</p>
+            <p class="text-xs text-danger/80">Removes the costume and all its items and QR codes. This cannot be undone.</p>
         </div>
         <form action="{{ route('admin.costumes.destroy', $costume->id) }}" method="POST" onsubmit="return confirm('Are you sure you want to delete this costume?');">
             @csrf

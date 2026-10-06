@@ -46,7 +46,7 @@
                     Change set
                 </button>
                 @error('user_ids')
-                    <span class="text-red-600 dark:text-red-400">{{ $message }}</span>
+                    <span class="text-danger">{{ $message }}</span>
                 @enderror
             @endif
         </form>

@@ -20,6 +20,8 @@
     --color-brand-tint: 237 241 236;
     --color-rust: 138 75 51;
     --color-rust-tint: 246 233 228;
+    --color-danger: 185 28 28;
+    --color-danger-tint: 254 242 242;
   }
 
   @media (prefers-color-scheme: dark) {
@@ -37,6 +39,8 @@
       --color-brand-tint: 30 42 33;
       --color-rust: 226 165 140;
       --color-rust-tint: 58 34 25;
+      --color-danger: 248 160 150;
+      --color-danger-tint: 60 30 26;
     }
   }
 }
@@ -78,11 +82,11 @@
   }
 
   .ui-btn-danger {
-    @apply inline-flex items-center justify-center gap-1.5 rounded-full border border-red-300 px-4 py-2 text-[14px] font-medium text-red-700 transition-colors hover:bg-red-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-400 dark:border-red-500/40 dark:text-red-300 dark:hover:bg-red-900/20 disabled:cursor-not-allowed disabled:opacity-50;
+    @apply inline-flex items-center justify-center gap-1.5 rounded-full border border-danger/25 px-4 py-2 text-[14px] font-medium text-danger transition-colors hover:bg-danger-tint focus:outline-none focus-visible:ring-2 focus-visible:ring-danger/50 disabled:cursor-not-allowed disabled:opacity-50;
   }
 
   .ui-btn-danger-solid {
-    @apply inline-flex items-center justify-center gap-1.5 rounded-full bg-red-600 px-4 py-2 text-[14px] font-medium text-white transition-colors hover:bg-red-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-400 disabled:cursor-not-allowed disabled:opacity-50;
+    @apply inline-flex items-center justify-center gap-1.5 rounded-full bg-red-600 px-4 py-2 text-[14px] font-medium text-white transition-colors hover:bg-red-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-danger/50 disabled:cursor-not-allowed disabled:opacity-50;
   }
 
   /* mazāka pogas versija rindām un tabulām */
@@ -124,7 +128,7 @@
   }
   .ui-alert-good { @apply border-brand/25 bg-brand-tint text-brand; }
   .ui-alert-warn { @apply border-rust/25 bg-rust-tint text-rust; }
-  .ui-alert-error { @apply border-red-300 bg-red-50 text-red-800 dark:border-red-500/40 dark:bg-red-900/20 dark:text-red-200; }
+  .ui-alert-error { @apply border-danger/25 bg-danger-tint text-danger; }
 
   /* tukšs stāvoklis */
   .ui-empty {
@@ -134,53 +138,6 @@
   /* datu rindas ar plānu atdalītāju */
   .ui-row {
     @apply flex items-center justify-between gap-4 border-b border-line-soft py-3 last:border-b-0;
-  }
-
-  .app-bg {
-    @apply min-h-screen bg-paper dark:bg-gray-900;
-  }
-
-  .app-shell {
-    @apply min-h-screen lg:grid lg:grid-cols-[14.5rem_1fr] lg:grid-rows-[auto_1fr];
-  }
-
-  .app-brand-panel {
-    @apply hidden lg:flex lg:row-start-1 lg:col-start-1 items-center gap-3 px-5 bg-brand-primary dark:bg-darkbrand-primary border-b border-black/10 dark:border-white/10;
-  }
-
-  .app-header {
-    @apply lg:row-start-1 lg:col-start-2 sticky top-0 z-40 bg-white/95 dark:bg-gray-800/95 backdrop-blur border-b border-gray-200/80 dark:border-gray-700/80;
-  }
-
-  .app-header-inner {
-    @apply px-4 py-3 sm:px-6 sm:py-4 lg:px-8 flex items-center justify-between gap-3;
-  }
-
-  .app-mobile-toggle {
-    @apply inline-flex lg:hidden h-10 w-10 items-center justify-center rounded-lg border border-brand-primary/20 bg-brand-light/60 text-brand-accent dark:border-brand-light/30 dark:bg-darkbrand-light/80 dark:text-brand-light;
-  }
-
-  .app-mobile-backdrop {
-    @apply fixed inset-0 z-30 bg-black/30 lg:hidden;
-  }
-
-  .app-sidebar {
-    @apply lg:row-start-2 lg:col-start-1 lg:translate-y-0 lg:opacity-100 lg:pointer-events-auto fixed lg:static inset-x-4 top-[4.5rem] z-40 rounded-2xl lg:rounded-none shadow-2xl lg:shadow-none border border-brand-primary/20 lg:border-0 bg-brand-primary dark:bg-darkbrand-primary text-white border-r border-black/10 dark:border-white/10 transition duration-200;
-  }
-
-  .app-main {
-    @apply lg:row-start-2 lg:col-start-2 p-3 sm:p-5 lg:p-7;
-  }
-
-  .app-card {
-    @apply rounded-xl sm:rounded-2xl border border-line bg-white p-4 sm:p-6 dark:border-gray-700/70 dark:bg-gray-800;
-  }
-
-  .guest-bg {
-    @apply min-h-screen flex flex-col items-center justify-center px-4 py-6 sm:px-6 sm:py-10 dark:bg-gray-900;
-    background-image:
-      radial-gradient(1000px 450px at 12% 0%, rgba(116, 136, 115, 0.18), transparent),
-      radial-gradient(700px 300px at 92% 0%, rgba(209, 169, 128, 0.22), transparent);
   }
 
   /* login/register formu elementi landing lapas žetonos (skat. x-auth-layout) */
@@ -198,10 +155,6 @@
 
   .auth-link {
     @apply font-medium text-brand underline-offset-4 hover:underline;
-  }
-
-  .guest-card {
-    @apply w-full max-w-md px-5 py-6 sm:px-6 sm:py-7 bg-white/95 dark:bg-gray-800/95 border border-white/60 dark:border-gray-700 shadow-[0_10px_35px_rgba(0,0,0,0.08)] overflow-hidden rounded-xl sm:rounded-2xl;
   }
 }
 

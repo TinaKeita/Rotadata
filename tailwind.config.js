@@ -41,9 +41,10 @@ export default {
                     strong: withOpacityValue('--color-line-strong'),
                     soft: withOpacityValue('--color-line-soft'),
                 },
-                sand: '#D1A980', // tikai akcents, nekad teksts uz balta fona
                 // rust – "nokavēts"/brīdinājuma tonis; CSS mainīgais, lai tumšajā režīmā paliktu salasāms
                 rust: { DEFAULT: withOpacityValue('--color-rust'), tint: withOpacityValue('--color-rust-tint') },
+                // danger – kļūdas un dzēšana; CSS mainīgais, tāpēc tumšajā režīmā pielāgojas pats (bez dark: klasēm)
+                danger: { DEFAULT: withOpacityValue('--color-danger'), tint: withOpacityValue('--color-danger-tint') },
 
                 brand: {
                     // DEFAULT arī ir CSS mainīgais – gaišajā režīmā tumši zaļš teksta akcents, tumšajā
@@ -53,25 +54,12 @@ export default {
                     // dark paliek fiksēts: to lieto tikai CTA blokā, kas ar savu tumšo fonu
                     // ir apzināti "pretējs" pārējai lapai neatkarīgi no gaišā/tumšā režīma
                     dark: '#24301F',
-                    // vecie nosaukumi paliek, lai pārējā lietotne nesalūst
-                    primary: '#748873',
-                    secondary: '#D1A980',
-                    accent: '#4f6150',
-                    light: '#E5E0D8',
                 },
-
-                darkbrand: {
-                    primary: '#3d4d3c',
-                    secondary: '#a07850',
-                    accent: '#2d3d2d',
-                    light: '#2a2724',
-                }
             },
 
             fontFamily: {
                 // visa lietotne lieto landing lapas pamatfontu (Public Sans ielādē app, guest un auth izkārtojumi)
                 sans: ['"Public Sans"', ...defaultTheme.fontFamily.sans],
-                logo: ['Playfair Display', 'serif'],
                 // Public Sans landing lapas pamatteksts; vēlāk (pārējās lapas) to var piesaistīt pie sans
                 body: ['"Public Sans"', 'Helvetica', 'Arial', 'sans-serif'],
                 display: ['Newsreader', 'Georgia', 'serif'],

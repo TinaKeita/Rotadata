@@ -57,7 +57,7 @@
                     </button>
                 </form>
                 @error('password')
-                    <p class="mt-2 text-sm text-red-700 dark:text-red-300">{{ $message }}</p>
+                    <p class="mt-2 text-sm text-danger">{{ $message }}</p>
                 @enderror
             </details>
         </div>
@@ -74,7 +74,7 @@
                     <input type="text" name="name" value="{{ old('name', $group->name) }}" required autocomplete="off"
                         class="w-full rounded-lg border-line-strong px-3 py-2.5 text-ink focus:border-brand focus:ring-brand/30 bg-paper placeholder:text-ink-soft">
                     @error('name')
-                        <p class="mt-1.5 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
+                        <p class="mt-1.5 text-sm text-danger">{{ $message }}</p>
                     @enderror
                 </div>
                 <button type="submit" class="ui-btn">
@@ -138,7 +138,7 @@
                                 </button>
                             </form>
                             @if($errors->{'costumeSet'.$set->id}->any())
-                                <p class="w-full text-sm text-red-600 dark:text-red-400">{{ $errors->{'costumeSet'.$set->id}->first('set_name') }}</p>
+                                <p class="w-full text-sm text-danger">{{ $errors->{'costumeSet'.$set->id}->first('set_name') }}</p>
                             @endif
                         </li>
                     @endforeach
@@ -153,7 +153,7 @@
                     Add set
                 </button>
                 @if($errors->costumeSet->any())
-                    <p class="w-full text-sm text-red-600 dark:text-red-400">{{ $errors->costumeSet->first('set_name') }}</p>
+                    <p class="w-full text-sm text-danger">{{ $errors->costumeSet->first('set_name') }}</p>
                 @endif
             </form>
         </div>
@@ -221,7 +221,7 @@
                             Handing over to <strong x-text="selected?.name"></strong> (<span x-text="selected?.email"></span>).
                         </p>
                         @if($errors->transfer->has('to_user_id'))
-                            <p class="mt-1.5 text-sm text-red-700 dark:text-red-300">{{ $errors->transfer->first('to_user_id') }}</p>
+                            <p class="mt-1.5 text-sm text-danger">{{ $errors->transfer->first('to_user_id') }}</p>
                         @endif
                     </div>
 
@@ -230,7 +230,7 @@
                         <label for="transfer_password" class="ui-label">Your password</label>
                         <x-password-input id="transfer_password" name="password" class="ui-input mt-1.5" required autocomplete="current-password" />
                         @if($errors->transfer->has('password'))
-                            <p class="mt-1.5 text-sm text-red-700 dark:text-red-300">{{ $errors->transfer->first('password') }}</p>
+                            <p class="mt-1.5 text-sm text-danger">{{ $errors->transfer->first('password') }}</p>
                         @endif
                     </div>
 
@@ -253,8 +253,8 @@
         </div>
 
         {{-- bīstamā zona --}}
-        <div class="mt-6 max-w-2xl rounded-[14px] border border-red-200 bg-surface p-6 dark:border-red-500/30">
-            <h3 class="font-mono text-[11.5px] uppercase tracking-[0.1em] text-red-700 dark:text-red-400">Delete this group</h3>
+        <div class="mt-6 max-w-2xl rounded-[14px] border border-danger/25 bg-surface p-6">
+            <h3 class="font-mono text-[11.5px] uppercase tracking-[0.1em] text-danger">Delete this group</h3>
             <p class="mt-2 text-sm text-ink-muted">
                 The group is hidden immediately and kept for {{ \App\Models\Group::PURGE_AFTER_DAYS }} days so you can
                 restore it. After that, all {{ $stats['costumes'] }} costumes, {{ $stats['items'] }} items, their QR

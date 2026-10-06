@@ -13,7 +13,7 @@
         </a>
     </div>
 
-    <div class="max-w-2xl rounded-[14px] border border-red-200 bg-surface p-6 dark:border-red-500/30">
+    <div class="max-w-2xl rounded-[14px] border border-danger/25 bg-surface p-6">
 
         {{-- kas tiks ietekmēts --}}
         <h3 class="ui-eyebrow">What happens</h3>
@@ -50,13 +50,13 @@
                     Type the group name <span class="font-semibold">{{ $group->name }}</span> to confirm
                 </label>
                 <input type="text" name="name" id="name" required autocomplete="off" autofocus
-                    class="mt-1.5 w-full rounded-lg border-line-strong px-3 py-2.5 text-ink focus:border-red-400 focus:ring-red-300 bg-paper placeholder:text-ink-soft">
+                    class="mt-1.5 w-full rounded-lg border-line-strong px-3 py-2.5 text-ink focus:border-danger focus:ring-danger/30 bg-paper placeholder:text-ink-soft">
             </div>
 
             <div>
                 <label for="password" class="ui-label">Your password</label>
                 <x-password-input name="password" id="password" required autocomplete="current-password"
-                    class="mt-1.5 w-full rounded-lg border-line-strong px-3 py-2.5 text-ink focus:border-red-400 focus:ring-red-300 bg-paper placeholder:text-ink-soft" />
+                    class="mt-1.5 w-full rounded-lg border-line-strong px-3 py-2.5 text-ink focus:border-danger focus:ring-danger/30 bg-paper placeholder:text-ink-soft" />
             </div>
 
             <div class="flex items-center gap-3">

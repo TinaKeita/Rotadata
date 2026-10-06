@@ -74,7 +74,7 @@
                             class="ui-input min-w-0 flex-1 !py-2 !text-sm">
                         <button type="submit" class="ui-btn">Add group</button>
                         @if($errors->newGroup->any())
-                            <p class="w-full text-sm text-red-700 dark:text-red-300">{{ $errors->newGroup->first('group_name') }}</p>
+                            <p class="w-full text-sm text-danger">{{ $errors->newGroup->first('group_name') }}</p>
                         @endif
                     </form>
                 </div>

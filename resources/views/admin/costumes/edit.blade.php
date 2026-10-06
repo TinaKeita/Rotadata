@@ -61,7 +61,7 @@
                     <div class="mt-2 flex items-center gap-3">
                         <img src="{{ $costume->imageUrl() }}" alt="" class="h-16 w-16 rounded-lg border border-line object-cover">
                         <label class="inline-flex items-center gap-2 text-sm text-ink-muted">
-                            <input type="checkbox" name="remove_image" value="1" class="rounded border-line-strong text-red-600 focus:ring-red-400">
+                            <input type="checkbox" name="remove_image" value="1" class="rounded border-line-strong text-danger focus:ring-danger/30">
                             Remove photo
                         </label>
                     </div>

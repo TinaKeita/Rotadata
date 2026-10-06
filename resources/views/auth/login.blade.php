@@ -40,7 +40,7 @@
 
     @if (session('trashed_login_email'))
         {{-- parole sakrita ar dzēstu kontu – piedāvā to atjaunot --}}
-        <div class="mt-6 rounded-lg border border-amber-300 bg-amber-50 p-4 text-sm text-amber-800 dark:border-amber-500/40 dark:bg-amber-900/20 dark:text-amber-300">
+        <div class="mt-6 rounded-lg border border-rust/25 bg-rust-tint p-4 text-sm text-rust">
             <p>Enter your password once more to restore this account and sign in.</p>
             <form method="POST" action="{{ route('login.restore') }}" class="mt-3 flex flex-wrap items-end gap-3">
                 @csrf
