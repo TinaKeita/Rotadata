@@ -97,7 +97,7 @@
                 @csrf
                 <select name="item_id" required aria-label="Item to hand out"
                     class="min-w-0 flex-1 rounded-lg border-line-strong bg-paper py-2 text-sm text-ink focus:border-brand focus:ring-brand/20">
-                    <option value="" disabled selected>Choose the item by its code…</option>
+                    <option value="" disabled selected>Choose item by code…</option>
                     @foreach($costumes as $costume)
                         <optgroup label="{{ $costume->name }}{{ $costume->items->isEmpty() ? ' — none free' : '' }}">
                             @foreach($costume->items as $item)
@@ -119,21 +119,22 @@
         @else
             <ul class="mt-2 space-y-2 text-sm">
                 @foreach($currentlyHolds as $log)
+                    {{-- kods un tērps, datums zem tā; poga labajā pusē (kā studenta sarakstā) --}}
                     <li class="flex items-center justify-between gap-4">
-                        <span class="font-medium text-ink">
-                            {{ $log->item?->code ?? '—' }}
-                            <span class="text-ink-soft">· {{ $log->item?->costume?->name ?? 'deleted costume' }}</span>
-                        </span>
-                        <span class="flex items-center gap-3">
-                            <span class="font-mono text-[12px] text-ink-soft">since {{ $log->assigned_at->format('d.m.Y') }}</span>
-                            {{-- skolotājs paņem vienību atpakaļ (tas pats, kas tērpa lapā) --}}
-                            @if($log->item)
-                                <form method="POST" action="{{ route('admin.costumes.items.unassign', $log->item) }}">
-                                    @csrf
-                                    <button type="submit" class="ui-btn-ghost ui-btn-sm">Take back</button>
-                                </form>
-                            @endif
-                        </span>
+                        <div class="min-w-0">
+                            <p class="font-medium text-ink">
+                                {{ $log->item?->code ?? '—' }}
+                                <span class="text-ink-soft">· {{ $log->item?->costume?->name ?? 'deleted costume' }}</span>
+                            </p>
+                            <p class="font-mono text-[12px] text-ink-soft">since {{ $log->assigned_at->format('d.m.Y') }}</p>
+                        </div>
+                        {{-- skolotājs paņem vienību atpakaļ (tas pats, kas tērpa lapā) --}}
+                        @if($log->item)
+                            <form method="POST" action="{{ route('admin.costumes.items.unassign', $log->item) }}" class="shrink-0">
+                                @csrf
+                                <button type="submit" class="ui-btn-ghost ui-btn-sm">Take back</button>
+                            </form>
+                        @endif
                     </li>
                 @endforeach
             </ul>

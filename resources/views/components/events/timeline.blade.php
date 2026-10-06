@@ -55,7 +55,7 @@
                         <span class="font-normal normal-case text-ink-soft">· {{ $hero->group->name }}</span>
                     @endif
                 </p>
-                <p class="mt-1.5 truncate font-display text-[28px] leading-tight tracking-[-0.01em] text-ink">{{ $hero->title }}</p>
+                <p class="mt-1.5 line-clamp-2 font-display text-[28px] leading-tight tracking-[-0.01em] text-ink">{{ $hero->title }}</p>
                 @if(!$canManage && $hero->isAbsent(auth()->user()))
                     <span class="ui-chip mt-2">Not performing</span>
                 @endif
@@ -71,11 +71,11 @@
                 @foreach($next as $ev)
                     <button type="button"
                         x-on:click="selected = {{ $ev->id }}; $dispatch('open-modal', 'events-all')"
-                        class="flex items-center justify-between gap-3 rounded-lg border border-line bg-surface px-3.5 py-2.5 text-left text-[15px] transition-colors hover:border-brand hover:text-brand">
-                        <span class="min-w-0 truncate font-medium text-ink">
-                            {{ $ev->title }}
+                        class="flex w-full min-w-0 items-center justify-between gap-3 rounded-lg border border-line bg-surface px-3.5 py-2.5 text-left text-[15px] transition-colors hover:border-brand hover:text-brand">
+                        <span class="min-w-0">
+                            <span class="block truncate font-medium text-ink">{{ $ev->title }}</span>
                             @if(!$canManage && $ev->group)
-                                <span class="text-xs font-normal text-ink-soft">· {{ $ev->group->name }}</span>
+                                <span class="block truncate text-xs font-normal text-ink-soft">{{ $ev->group->name }}</span>
                             @endif
                         </span>
                         <span class="shrink-0 font-mono text-[12px] text-ink-soft">
@@ -120,10 +120,10 @@
                         @forelse($upcoming as $ev)
                             <button type="button" x-on:click="selected = {{ $ev->id }}"
                                 class="flex w-full items-center justify-between gap-3 rounded-lg border border-line px-3.5 py-2.5 text-left text-[15px] transition-colors hover:border-brand hover:text-brand">
-                                <span class="min-w-0 truncate font-medium text-ink">
-                                    {{ $ev->title }}
+                                <span class="min-w-0">
+                                    <span class="block truncate font-medium text-ink">{{ $ev->title }}</span>
                                     @if(!$canManage && $ev->group)
-                                        <span class="text-xs font-normal text-ink-soft">· {{ $ev->group->name }}</span>
+                                        <span class="block truncate text-xs font-normal text-ink-soft">{{ $ev->group->name }}</span>
                                     @endif
                                 </span>
                                 <span class="shrink-0 font-mono text-[12px] text-ink-soft">{{ $ev->starts_at->format('d.m.Y') }}</span>
@@ -136,10 +136,10 @@
                         @forelse($past as $ev)
                             <button type="button" x-on:click="selected = {{ $ev->id }}"
                                 class="flex w-full items-center justify-between gap-3 rounded-lg border border-line px-3.5 py-2.5 text-left text-[15px] transition-colors hover:border-brand hover:text-brand">
-                                <span class="min-w-0 truncate font-medium text-ink-muted">
-                                    {{ $ev->title }}
+                                <span class="min-w-0">
+                                    <span class="block truncate font-medium text-ink-muted">{{ $ev->title }}</span>
                                     @if(!$canManage && $ev->group)
-                                        <span class="text-xs font-normal text-ink-soft">· {{ $ev->group->name }}</span>
+                                        <span class="block truncate text-xs font-normal text-ink-soft">{{ $ev->group->name }}</span>
                                     @endif
                                 </span>
                                 <span class="shrink-0 font-mono text-[12px] text-ink-soft">{{ $ev->starts_at->format('d.m.Y') }}</span>

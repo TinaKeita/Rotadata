@@ -31,19 +31,20 @@
 
             <div class="space-y-3">
                 <template x-for="(row, index) in rows" :key="index">
+                    {{-- telefonā vārds un e-pasts viens zem otra, lai abiem pietiek vietas --}}
                     <div class="flex flex-wrap items-start gap-3 rounded-lg border border-line p-3">
-                        <div class="min-w-0 flex-1">
+                        <div class="min-w-0 basis-full sm:flex-1">
                             <label class="ui-label">Name</label>
                             <input type="text" :name="`members[${index}][name]`" x-model="row.name" required autocomplete="off"
                                 class="ui-input mt-1 !py-2 !text-sm">
                         </div>
-                        <div class="min-w-0 flex-1">
+                        <div class="min-w-0 basis-full sm:flex-1">
                             <label class="ui-label">Email</label>
                             <input type="email" :name="`members[${index}][email]`" x-model="row.email" required autocomplete="off"
                                 class="ui-input mt-1 !py-2 !text-sm">
                         </div>
                         <button type="button" x-show="rows.length > 1" @click="rows.splice(index, 1)"
-                            class="ui-btn-danger ui-btn-sm mt-6 shrink-0">
+                            class="ui-btn-danger ui-btn-sm shrink-0 sm:mt-6">
                             Remove
                         </button>
                     </div>
@@ -76,7 +77,7 @@
 
             <button type="submit" class="ui-btn">
                 <span>Add</span>
-                <span x-text="`${rows.length} ${rows.length === 1 ? 'Member' : 'Members'}`"></span>
+                <span x-text="`${rows.length} ${rows.length === 1 ? 'student' : 'students'}`"></span>
             </button>
         </form>
     </div>

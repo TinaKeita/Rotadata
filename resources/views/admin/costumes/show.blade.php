@@ -52,74 +52,73 @@
     <div class="space-y-3">
         @foreach($items as $item)
             <div class="ui-card">
-                <div class="mb-3 flex items-start justify-between gap-3">
-                    <p class="ui-eyebrow">
+                {{-- kods un statuss vienā rindā; darbība ar studentu – nākamajā, lai telefonā nekas nesaspiežas --}}
+                <div class="flex items-center justify-between gap-3">
+                    <p class="ui-eyebrow whitespace-nowrap">
                         {{ $item->code }}
                         <span class="ml-1 font-normal text-xs text-ink-soft">#{{ $item->id }}</span>
                     </p>
-
                     @if($item->assigned_to)
-                        <div class="flex items-center gap-2">
-                            <span class="ui-chip">
-                                With {{ $item->user->name }}
-                            </span>
-                            <form method="POST" action="{{ route('admin.costumes.items.unassign', $item) }}">
-                                @csrf
-                                <button type="submit" class="ui-btn-danger ui-btn-sm">
-                                    Unassign
-                                </button>
-                            </form>
-                        </div>
+                        <span class="ui-chip min-w-0 truncate">With {{ $item->user->name }}</span>
                     @else
-                        <div class="flex flex-wrap items-center justify-end gap-2">
-                            <span class="ui-chip ui-chip-good">Available</span>
-                            {{-- skolotājs izsniedz vienību pats, bez QR skenēšanas --}}
-                            @if($members->isNotEmpty())
-                                <form method="POST" action="{{ route('admin.costumes.items.assign', $item) }}" class="flex items-center gap-2">
-                                    @csrf
-                                    <select name="user_id" required aria-label="Student to assign {{ $item->code }} to"
-                                        class="rounded-lg border-line-strong bg-paper py-1.5 text-sm text-ink focus:border-brand focus:ring-brand/20">
-                                        <option value="" disabled selected>Assign to…</option>
-                                        @foreach($members as $member)
-                                            <option value="{{ $member->id }}">{{ $member->name }}</option>
-                                        @endforeach
-                                    </select>
-                                    <button type="submit" class="ui-btn ui-btn-sm">Assign</button>
-                                </form>
-                            @endif
-                        </div>
+                        <span class="ui-chip ui-chip-good">Available</span>
                     @endif
                 </div>
 
-                <div class="flex flex-wrap items-end gap-4">
-                    <figure class="text-center">
+                @if($item->assigned_to)
+                    <form method="POST" action="{{ route('admin.costumes.items.unassign', $item) }}" class="mt-3">
+                        @csrf
+                        <button type="submit" class="ui-btn-danger ui-btn-sm">
+                            Unassign
+                        </button>
+                    </form>
+                @elseif($members->isNotEmpty())
+                    {{-- skolotājs izsniedz vienību pats, bez QR skenēšanas --}}
+                    <form method="POST" action="{{ route('admin.costumes.items.assign', $item) }}" class="mt-3 flex items-center gap-2 sm:max-w-sm">
+                        @csrf
+                        <select name="user_id" required aria-label="Student to assign {{ $item->code }} to"
+                            class="min-w-0 flex-1 rounded-lg border-line-strong bg-paper py-1.5 text-sm text-ink focus:border-brand focus:ring-brand/20">
+                            <option value="" disabled selected>Assign to…</option>
+                            @foreach($members as $member)
+                                <option value="{{ $member->id }}">{{ $member->name }}</option>
+                            @endforeach
+                        </select>
+                        <button type="submit" class="ui-btn ui-btn-sm">Assign</button>
+                    </form>
+                @endif
+
+                {{-- QR kods ar darbībām blakus kolonnā --}}
+                <div class="mt-4 flex items-center gap-4">
+                    <figure class="shrink-0 text-center">
                         {!! QrCode::size(120)->generate(url('/scan/'.$item->qr_code)) !!}
                         <figcaption class="mt-1 text-xs font-semibold tracking-wide text-ink-muted">{{ $item->code }}</figcaption>
                     </figure>
 
-                    <a href="{{ route('qr.download', $item->qr_code) }}"
-                        class="ui-btn-ghost ui-btn-sm">
-                        Download
-                    </a>
+                    <div class="flex flex-col items-start gap-2">
+                        <a href="{{ route('qr.download', $item->qr_code) }}"
+                            class="ui-btn-ghost ui-btn-sm">
+                            Download
+                        </a>
 
-                    <form method="POST" action="{{ route('admin.costumes.items.regenerate-qr', $item) }}"
-                        onsubmit="return confirm('Generate a new QR code for {{ $item->code }}? The old printed label will stop working and must be replaced.');">
-                        @csrf
-                        <button type="submit" class="ui-btn-ghost ui-btn-sm">
-                            Regenerate QR
-                        </button>
-                    </form>
-
-                    @unless($item->assigned_to)
-                        <form method="POST" action="{{ route('admin.costumes.items.destroy', $item) }}"
-                            onsubmit="return confirm('Delete item {{ $item->code }}? This cannot be undone.');">
+                        <form method="POST" action="{{ route('admin.costumes.items.regenerate-qr', $item) }}"
+                            onsubmit="return confirm('Generate a new QR code for {{ $item->code }}? The old printed label will stop working and must be replaced.');">
                             @csrf
-                            @method('DELETE')
-                            <button type="submit" class="ui-btn-danger ui-btn-sm">
-                                Delete item
+                            <button type="submit" class="ui-btn-ghost ui-btn-sm">
+                                Regenerate QR
                             </button>
                         </form>
-                    @endunless
+
+                        @unless($item->assigned_to)
+                            <form method="POST" action="{{ route('admin.costumes.items.destroy', $item) }}"
+                                onsubmit="return confirm('Delete item {{ $item->code }}? This cannot be undone.');">
+                                @csrf
+                                @method('DELETE')
+                                <button type="submit" class="ui-btn-danger ui-btn-sm">
+                                    Delete item
+                                </button>
+                            </form>
+                        @endunless
+                    </div>
                 </div>
 
                 @if($item->assignments->isNotEmpty())

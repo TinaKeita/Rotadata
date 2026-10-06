@@ -73,11 +73,11 @@
                         <p class="mb-2 font-mono text-[11.5px] uppercase tracking-[0.1em] text-ink-soft">{{ now()->format('l, j F') }} · {{ $group->name }}</p>
                         <h1 class="font-display text-[length:clamp(32px,4vw,44px)] font-normal leading-[1.08] tracking-[-0.02em]">{{ $greeting }}</h1>
                     </div>
-                    <div class="flex flex-wrap items-center gap-2">
-                        {{-- meklēšana: vienības kods, tērps vai students --}}
-                        <form method="GET" action="{{ route('admin.search') }}" role="search">
+                    <div class="flex w-full flex-wrap items-center gap-2 sm:w-auto">
+                        {{-- meklēšana: vienības kods, tērps vai students; telefonā pāri visam platumam --}}
+                        <form method="GET" action="{{ route('admin.search') }}" role="search" class="w-full sm:w-auto">
                             <input type="search" name="q" placeholder="Search item code or student…" aria-label="Search items and students"
-                                class="w-56 rounded-full border-line-strong bg-paper px-4 py-2.5 text-[14.5px] text-ink placeholder:text-ink-soft focus:border-brand focus:ring-2 focus:ring-brand/20">
+                                class="w-full sm:w-72 rounded-full border-line-strong bg-paper px-4 py-2.5 text-[14.5px] text-ink placeholder:text-ink-soft focus:border-brand focus:ring-2 focus:ring-brand/20">
                         </form>
                         <a href="{{ route('admin.events.create') }}" class="rounded-full border border-line-strong px-5 py-2.5 text-[14.5px] font-medium hover:border-brand hover:bg-surface hover:text-brand">Add concert</a>
                         <a href="{{ route('admin.members.create') }}" class="rounded-full bg-brand px-5 py-2.5 text-[14.5px] font-medium text-paper hover:bg-ink">Add students</a>
@@ -110,7 +110,8 @@
                         <ul class="max-h-[15.5rem] overflow-y-auto overscroll-contain">
                             @foreach($needs as $row)
                                 <li class="flex flex-wrap items-center gap-x-4 gap-y-2 border-b border-line-soft px-5 py-4 last:border-b-0 sm:px-6">
-                                    <div class="min-w-0 flex-1">
+                                    {{-- telefonā teksts aizņem visu rindu, uzlīme un poga – zem tā --}}
+                                    <div class="min-w-0 basis-full sm:flex-1">
                                         @switch($row['type'])
                                             @case('shortage')
                                                 <p class="text-[15.5px]"><span class="font-semibold">{{ $row['costume']->name }}</span> <span class="text-ink-muted">isn't enough for {{ $row['event']->title }}</span></p>

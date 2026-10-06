@@ -76,10 +76,11 @@
             <div class="grid gap-4 lg:grid-cols-2">
                 @forelse($groups as $group)
                     @php $held = $itemsByGroup[$group->id] ?? collect(); @endphp
-                    <article class="ui-card flex flex-col gap-5">
+                    {{-- min-w-0: garš grupas nosaukums tiek saīsināts, nevis izstiepj kartīti platāku par ekrānu --}}
+                    <article class="ui-card flex min-w-0 flex-col gap-5">
                         <div class="flex items-start justify-between gap-4">
                             <div class="min-w-0">
-                                <h3 class="truncate font-display text-[26px] font-normal leading-tight tracking-[-0.01em]">{{ $group->name }}</h3>
+                                <h3 class="line-clamp-2 font-display text-[26px] font-normal leading-tight tracking-[-0.01em]">{{ $group->name }}</h3>
                                 <p class="mt-1 font-mono text-[12px] text-ink-soft">Teacher · {{ $group->admin?->name ?? 'Not assigned' }}</p>
                             </div>
                             {{-- studenta komplekts šajā grupā --}}

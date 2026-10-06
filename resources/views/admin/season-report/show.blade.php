@@ -79,6 +79,11 @@
 		section { break-inside: avoid-page; }
 		tr { break-inside: avoid; }
 
+		/* telefonā plata tabula ritinās pati, nevis izstiepj visu lapu (drukāšanu tas neietekmē) */
+		@media screen and (max-width: 640px) {
+			table { display: block; overflow-x: auto; white-space: nowrap; }
+		}
+
 		@media print {
 			body { background: #fff; }
 			.toolbar { display: none; }

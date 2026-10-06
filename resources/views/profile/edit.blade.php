@@ -21,13 +21,16 @@
                     <div class="mt-4">
                         @forelse($ownGroups as $g)
                             <div class="ui-row">
-                                <span class="min-w-0">
-                                    <span class="font-medium">{{ $g->name }}</span>
-                                    <span class="font-mono text-[12px] text-ink-soft">· {{ $g->members_count }} {{ Str::plural('student', $g->members_count) }}</span>
-                                    @if(auth()->user()->currentGroup()?->id === $g->id)
-                                        <span class="ui-chip ui-chip-good ml-1">current</span>
-                                    @endif
-                                </span>
+                                {{-- nosaukums savā rindā, skaits un "current" zem tā --}}
+                                <div class="min-w-0">
+                                    <p class="font-medium">{{ $g->name }}</p>
+                                    <p class="mt-0.5 flex flex-wrap items-center gap-2">
+                                        <span class="font-mono text-[12px] text-ink-soft">{{ $g->members_count }} {{ Str::plural('student', $g->members_count) }}</span>
+                                        @if(auth()->user()->currentGroup()?->id === $g->id)
+                                            <span class="ui-chip ui-chip-good">current</span>
+                                        @endif
+                                    </p>
+                                </div>
                                 <a href="{{ route('admin.groups.open', $g) }}" class="ui-btn-ghost ui-btn-sm">Open</a>
                             </div>
                         @empty

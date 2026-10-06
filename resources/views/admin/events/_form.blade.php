@@ -158,16 +158,17 @@
     @else
         <div class="mt-2 space-y-2">
             <template x-for="(row, index) in rows" :key="index">
+                {{-- telefonā katra izvēlne savā rindā, skaits un "Remove" – pēdējā; platākā ekrānā viss vienā rindā --}}
                 <div class="flex flex-wrap items-center gap-2 rounded-lg border border-line px-3 py-2">
                     <select :name="`extras[${index}][user_id]`" x-model="row.user_id" required aria-label="Student"
-                        class="min-w-0 flex-1 rounded-lg border-line-strong bg-paper py-1.5 text-sm text-ink focus:border-brand focus:ring-brand/20">
+                        class="min-w-0 basis-full sm:flex-1 rounded-lg border-line-strong bg-paper py-1.5 text-sm text-ink focus:border-brand focus:ring-brand/20">
                         <option value="">Student…</option>
                         @foreach($members as $member)
                             <option value="{{ $member->id }}">{{ $member->name }}</option>
                         @endforeach
                     </select>
                     <select :name="`extras[${index}][costume_id]`" x-model="row.costume_id" required aria-label="Costume"
-                        class="min-w-0 flex-1 rounded-lg border-line-strong bg-paper py-1.5 text-sm text-ink focus:border-brand focus:ring-brand/20">
+                        class="min-w-0 basis-full sm:flex-1 rounded-lg border-line-strong bg-paper py-1.5 text-sm text-ink focus:border-brand focus:ring-brand/20">
                         <option value="">Costume…</option>
                         @foreach($costumes as $costume)
                             <option value="{{ $costume->id }}">{{ $costume->name }}</option>

@@ -23,15 +23,17 @@
                             </svg>
                         </span>
                     @endif
+                    {{-- nosaukums savā rindā, komplekts un skaits zem tā (nesadalās pa vidu) --}}
                     <div class="min-w-0">
-                        <span class="text-sm font-medium text-ink">{{ $costume->name }}</span>
-                        @if($costume->costumeSet)
-                            <span class="ui-chip ui-chip-good ml-1.5">{{ $costume->costumeSet->name }}</span>
-                        @endif
-                        <span class="ml-2 text-xs text-ink-soft">
-                            {{ $costume->items_count }} {{ Str::plural('item', $costume->items_count) }}
-                            @if($costume->items_out_count > 0) · {{ $costume->items_out_count }} out @endif
-                        </span>
+                        <p class="text-sm font-medium text-ink">{{ $costume->name }}</p>
+                        <p class="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1">
+                            @if($costume->costumeSet)
+                                <span class="ui-chip ui-chip-good">{{ $costume->costumeSet->name }}</span>
+                            @endif
+                            <span class="whitespace-nowrap text-xs text-ink-soft">
+                                {{ $costume->items_count }} {{ Str::plural('item', $costume->items_count) }}@if($costume->items_out_count > 0) · {{ $costume->items_out_count }} out @endif
+                            </span>
+                        </p>
                     </div>
                 </div>
                 <a href="{{ route('admin.costumes.show', $costume) }}"

@@ -23,29 +23,28 @@
                 <div class="space-y-3">
                     @foreach($items as $item)
                         <article class="ui-card">
-                            <div class="flex flex-wrap items-start justify-between gap-3">
+                            {{-- kods un statuss vienmēr augšā; kam izsniegts un "Take back" – atsevišķā rindā zem tā --}}
+                            <div class="flex items-start justify-between gap-3">
                                 <div class="min-w-0">
                                     <p class="font-mono text-[15px] font-medium">{{ $item->code }}</p>
                                     <a href="{{ route('admin.costumes.show', $item->costume) }}" class="ui-link text-[14.5px]">{{ $item->costume->name }}</a>
                                     <span class="text-[13px] text-ink-soft">· {{ $item->costume->costumeSet?->name ?? 'shared' }}</span>
                                 </div>
-
-                                <div class="flex flex-wrap items-center gap-2">
-                                    @if($item->assigned_to)
-                                        <span class="ui-chip ui-chip-late">Taken</span>
-                                        <span class="text-[14.5px]">
-                                            by <a href="{{ route('admin.members.show', $item->user) }}" class="ui-link">{{ $item->user?->name ?? 'Unknown' }}</a>
-                                            <span class="font-mono text-[12px] text-ink-soft">since {{ $item->assigned_at?->format('d.m.Y') }}</span>
-                                        </span>
-                                        <form method="POST" action="{{ route('admin.costumes.items.unassign', $item) }}">
-                                            @csrf
-                                            <button type="submit" class="ui-btn-ghost ui-btn-sm">Take back</button>
-                                        </form>
-                                    @else
-                                        <span class="ui-chip ui-chip-good">Available</span>
-                                    @endif
-                                </div>
+                                <span class="ui-chip {{ $item->assigned_to ? 'ui-chip-late' : 'ui-chip-good' }} shrink-0">{{ $item->assigned_to ? 'Taken' : 'Available' }}</span>
                             </div>
+
+                            @if($item->assigned_to)
+                                <div class="mt-3 flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+                                    <p class="min-w-0 text-[14.5px]">
+                                        by <a href="{{ route('admin.members.show', $item->user) }}" class="ui-link">{{ $item->user?->name ?? 'Unknown' }}</a>
+                                        <span class="whitespace-nowrap font-mono text-[12px] text-ink-soft">since {{ $item->assigned_at?->format('d.m.Y') }}</span>
+                                    </p>
+                                    <form method="POST" action="{{ route('admin.costumes.items.unassign', $item) }}">
+                                        @csrf
+                                        <button type="submit" class="ui-btn-ghost ui-btn-sm">Take back</button>
+                                    </form>
+                                </div>
+                            @endif
 
                             {{-- pilna vēsture; atvērta uzreiz, ja meklēja tieši šo kodu --}}
                             <details class="mt-3 border-t border-line-soft pt-3" @if($loop->first && $items->count() <= 3) open @endif>

@@ -57,45 +57,49 @@
             <thead class="border-b border-line text-ink-soft">
                 <tr>
                     @if($sets->isNotEmpty())
-                        <th class="w-10 px-4 py-3">
+                        <th class="w-10 px-3 py-3 md:px-4">
                             <input type="checkbox" aria-label="Tick all students" x-data
                                 x-on:change="document.querySelectorAll('input[form=bulk-set][name^=user_ids]').forEach(cb => cb.checked = $el.checked)"
                                 class="rounded border-line-strong text-brand focus:ring-brand/30">
                         </th>
                     @endif
-                    <th class="px-4 py-3 font-mono text-[11.5px] font-normal uppercase tracking-[0.1em]">Name</th>
-                    <th class="px-4 py-3 font-mono text-[11.5px] font-normal uppercase tracking-[0.1em]">Email</th>
+                    <th class="px-3 py-3 md:px-4 font-mono text-[11.5px] font-normal uppercase tracking-[0.1em]">Name</th>
+                    {{-- telefonā e-pasts un komplekts ir zem vārda, tāpēc to kolonnas rāda tikai platākā ekrānā --}}
+                    <th class="hidden px-3 py-3 md:px-4 font-mono text-[11.5px] font-normal uppercase tracking-[0.1em] md:table-cell">Email</th>
                     @if($sets->isNotEmpty())
-                        <th class="px-4 py-3 font-mono text-[11.5px] font-normal uppercase tracking-[0.1em]">Set</th>
+                        <th class="hidden px-3 py-3 md:px-4 font-mono text-[11.5px] font-normal uppercase tracking-[0.1em] md:table-cell">Set</th>
                     @endif
-                    <th class="px-4 py-3 font-mono text-[11.5px] font-normal uppercase tracking-[0.1em]">Actions</th>
+                    <th class="px-3 py-3 md:px-4 text-right font-mono text-[11.5px] font-normal uppercase tracking-[0.1em] md:text-left">Actions</th>
                 </tr>
             </thead>
             <tbody>
                 @forelse($members as $member)
                     <tr class="border-t border-line">
                         @if($sets->isNotEmpty())
-                            <td class="px-4 py-3">
+                            <td class="px-3 py-3 md:px-4">
                                 <input type="checkbox" form="bulk-set" name="user_ids[]" value="{{ $member->id }}" aria-label="Tick {{ $member->name }}"
                                     class="rounded border-line-strong text-brand focus:ring-brand/30">
                             </td>
                         @endif
-                        <td class="px-4 py-3 text-ink">
+                        <td class="min-w-0 px-3 py-3 md:px-4 text-ink">
                             {{ $member->name }}
                             @if($member->invite_email_failed_at)
-                                <span class="ui-chip ui-chip-late ml-1.5">
+                                <span class="ui-chip ui-chip-late mt-1 md:ml-1.5 md:mt-0">
                                     Invite not delivered
                                 </span>
                             @endif
+                            <p class="mt-0.5 break-all text-xs text-ink-soft md:hidden">
+                                {{ $member->email }}@if($sets->isNotEmpty()) · {{ $setNames[$member->pivot->costume_set_id] ?? 'no set' }}@endif
+                            </p>
                         </td>
-                        <td class="px-4 py-3 text-ink-muted">{{ $member->email }}</td>
+                        <td class="hidden px-3 py-3 md:px-4 text-ink-muted md:table-cell">{{ $member->email }}</td>
                         @if($sets->isNotEmpty())
-                            <td class="px-4 py-3 text-ink-muted">
+                            <td class="hidden px-3 py-3 md:px-4 text-ink-muted md:table-cell">
                                 {{ $setNames[$member->pivot->costume_set_id] ?? '—' }}
                             </td>
                         @endif
-                        <td class="px-4 py-3">
-                            <div class="flex flex-wrap items-center gap-2">
+                        <td class="px-3 py-3 md:px-4">
+                            <div class="flex flex-col items-end gap-2 md:flex-row md:flex-wrap md:items-center">
                             <a href="{{ route('admin.members.show', $member) }}"
                                 class="ui-btn-ghost ui-btn-sm">
                                 View
