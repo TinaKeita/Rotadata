@@ -12,7 +12,7 @@ class CostumeController extends Controller
     // parāda dalībniekam piešķirtās tērpu vienības konkrētajā grupā
     public function index(Group $group)
     {
-        abort_unless(auth()->user()->inGroup($group), 403);
+        $this->authorize('viewAsMember', $group);
 
         $items = auth()->user()
             ->assignedCostumeItems()
@@ -50,7 +50,7 @@ class CostumeController extends Controller
     // students pats pamet grupu – konts vienmēr paliek, tikai piederība šai grupai izzūd
     public function leave(Group $group)
     {
-        abort_unless(auth()->user()->inGroup($group), 403);
+        $this->authorize('leave', $group);
 
         $itemsHeld = auth()->user()
             ->assignedCostumeItems()

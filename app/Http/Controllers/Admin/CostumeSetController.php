@@ -26,8 +26,7 @@ class CostumeSetController extends Controller
 
     public function update(Request $request, CostumeSet $costumeSet)
     {
-        $this->authorizeSet($costumeSet);
-        abort_if($costumeSet->built_in, 403, 'Built-in sets cannot be renamed.');
+        $this->authorize('update', $costumeSet);
 
         $validated = $request->validateWithBag('costumeSet'.$costumeSet->id, [
             'set_name' => ['required', 'string', 'max:60', Rule::unique('costume_sets', 'name')->where('group_id', $costumeSet->group_id)->ignore($costumeSet->id)],
@@ -41,22 +40,12 @@ class CostumeSetController extends Controller
     // dzēšot komplektu, tā tērpi kļūst kopīgi un studentiem komplekts tiek noņemts (nullOnDelete)
     public function destroy(CostumeSet $costumeSet)
     {
-        $this->authorizeSet($costumeSet);
-        abort_if($costumeSet->built_in, 403, 'Built-in sets cannot be deleted.');
+        $this->authorize('delete', $costumeSet);
 
         $name = $costumeSet->name;
         $costumeSet->delete();
 
         return redirect()->route('admin.group.settings')
             ->with('success', "Set “{$name}” deleted. Its costumes are now shared, and its students have no set.");
-    }
-
-    // komplektu drīkst mainīt tikai tās grupas skolotājs, kurai tas pieder
-    private function authorizeSet(CostumeSet $costumeSet): void
-    {
-        abort_unless(
-            auth()->user()->adminGroups()->whereKey($costumeSet->group_id)->exists(),
-            403
-        );
     }
 }

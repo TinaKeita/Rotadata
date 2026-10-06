@@ -161,7 +161,7 @@ class GroupTransferController extends Controller
     private function incoming(string $token): GroupTransfer
     {
         $transfer = GroupTransfer::with(['group', 'fromUser', 'toUser'])->where('token', $token)->firstOrFail();
-        abort_unless((int) $transfer->to_user_id === (int) auth()->id(), 403, 'This request was sent to another teacher.');
+        $this->authorize('respond', $transfer);
 
         return $transfer;
     }

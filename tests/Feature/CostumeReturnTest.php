@@ -98,6 +98,27 @@ class CostumeReturnTest extends TestCase
         $this->assertSame($this->marta->id, $this->item->fresh()->assigned_to);
     }
 
+    // cits skolotājs nedrīkst pārdēvēt vai dzēst šīs grupas komplektu
+    public function test_another_teacher_cannot_change_this_groups_sets(): void
+    {
+        $set = $this->group->costumeSets()->create(['name' => 'Muzikanti']);
+
+        $this->actingAs($this->otherTeacher);
+        $this->patch(route('admin.costume-sets.update', $set), ['set_name' => 'Cits'])->assertRedirect(route('dashboard'));
+        $this->delete(route('admin.costume-sets.destroy', $set))->assertRedirect(route('dashboard'));
+
+        $this->assertSame('Muzikanti', $set->fresh()->name);
+    }
+
+    // students neredz un nevar pamest grupu, kurā nav
+    public function test_student_cannot_open_or_leave_a_group_they_are_not_in(): void
+    {
+        $otherGroup = $this->otherTeacher->adminGroups()->first();
+
+        $this->actingAs($this->marta)->get(route('members.costumes.index', $otherGroup))->assertRedirect(route('dashboard'));
+        $this->actingAs($this->marta)->post(route('members.costumes.leave', $otherGroup))->assertRedirect(route('dashboard'));
+    }
+
     public function test_students_cannot_open_teacher_pages(): void
     {
         $this->actingAs($this->marta)->get(route('admin.dashboard'))->assertRedirect(route('dashboard'));

@@ -400,8 +400,10 @@ class ConcertReadinessTest extends TestCase
         $this->assertSame(['Girls', 'Boys'], $this->group->costumeSets()->pluck('name')->all());
 
         $this->actingAs($this->teacher);
-        $this->delete(route('admin.costume-sets.destroy', $this->girls))->assertRedirect(route('dashboard'));
-        $this->patch(route('admin.costume-sets.update', $this->boys), ['set_name' => 'Puiši'])->assertRedirect(route('dashboard'));
+        $this->delete(route('admin.costume-sets.destroy', $this->girls))
+            ->assertRedirect(route('dashboard'))->assertSessionHas('error', 'Built-in sets cannot be deleted.');
+        $this->patch(route('admin.costume-sets.update', $this->boys), ['set_name' => 'Puiši'])
+            ->assertRedirect(route('dashboard'))->assertSessionHas('error', 'Built-in sets cannot be renamed.');
 
         $this->post(route('admin.costume-sets.store'), ['set_name' => 'Musicians'])->assertSessionHas('success');
         $this->assertSame(['Girls', 'Boys', 'Musicians'], $this->group->costumeSets()->pluck('name')->all());

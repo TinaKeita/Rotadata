@@ -8,12 +8,6 @@ use Illuminate\Auth\Access\Response;
 
 class EventPolicy
 {
-    // studenti drīkst skatīt sava grupas koncertu, skolotājs — tikai savas grupas
-    public function view(User $user, Event $event): bool
-    {
-        return $user->ownsGroup($event->group) || $user->inGroup($event->group);
-    }
-
     // notikušus koncertus vairs nevar mainīt – tie paliek vēsturei un sezonas atskaitei
     public function update(User $user, Event $event): Response
     {
