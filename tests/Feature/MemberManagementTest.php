@@ -53,6 +53,8 @@ class MemberManagementTest extends TestCase
     // jauns e-pasts – izveido kontu ar pagaidu paroli un nosūta uzaicinājumu
     public function test_teacher_adds_new_students(): void
     {
+        $this->actingAs($this->teacher)->get(route('admin.members.create'))->assertOk();
+
         $this->actingAs($this->teacher)->post(route('admin.members.store'), [
             'members' => [
                 ['name' => 'Marta', 'email' => 'marta@example.com'],

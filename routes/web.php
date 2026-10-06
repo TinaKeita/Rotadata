@@ -4,6 +4,7 @@ use App\Http\Controllers\Admin\CostumeController as AdminCostumeController;
 use App\Http\Controllers\Admin\EventController as AdminEventController;
 use App\Http\Controllers\Admin\GroupController as AdminGroupController;
 use App\Http\Controllers\Admin\MemberController as AdminMemberController;
+use App\Http\Controllers\Admin\MemberInviteController as AdminMemberInviteController;
 use App\Http\Controllers\Member\CostumeController as MemberCostumeController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ScanController;
@@ -99,18 +100,22 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::resource('costumes', AdminCostumeController::class)
         ->only(['index', 'create', 'store', 'show', 'edit', 'update', 'destroy']);
 
-    // Dalībnieki (studenti)
-    Route::post('/members/{member}/resend-invite', [AdminMemberController::class, 'resendInvite'])
+    // Dalībnieku pievienošana un uzaicinājumi
+    Route::get('/members/create', [AdminMemberInviteController::class, 'create'])->name('members.create');
+    Route::post('/members', [AdminMemberInviteController::class, 'store'])->name('members.store');
+    Route::post('/members/{member}/resend-invite', [AdminMemberInviteController::class, 'resendInvite'])
         ->name('members.resend-invite');
     // skolotājs paroli jau iedevis citādi – noņem "uzaicinājums nav piegādāts" brīdinājumu
-    Route::post('/members/{member}/dismiss-invite', [AdminMemberController::class, 'dismissInvite'])
+    Route::post('/members/{member}/dismiss-invite', [AdminMemberInviteController::class, 'dismissInvite'])
         ->name('members.dismiss-invite');
+
+    // Dalībnieki (studenti)
     // skolotājs izsniedz studentam izvēlētā tērpa nākamo brīvo vienību
     Route::post('/members/{user}/hand-out', [AdminMemberController::class, 'handOut'])->name('members.hand-out');
     // viena vai vairāku studentu tērpu komplekta maiņa
     Route::patch('/members/set', [AdminMemberController::class, 'updateSet'])->name('members.set');
     Route::resource('members', AdminMemberController::class)
-        ->only(['index', 'create', 'store', 'show', 'destroy'])
+        ->only(['index', 'show', 'destroy'])
         ->parameters(['members' => 'user']);
     // nesen izņemta dalībnieka atjaunošana vai galīga dzēšana (30 dienu logs, tāpat kā grupām)
     Route::post('/members/{user}/restore', [AdminMemberController::class, 'restore'])
