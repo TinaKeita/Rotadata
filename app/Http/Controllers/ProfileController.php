@@ -8,6 +8,7 @@ use App\Models\Group;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Redirect;
 use Illuminate\View\View;
 
@@ -60,18 +61,21 @@ class ProfileController extends Controller
 
         // atbrīvo visas turētās tērpu vienības un aizver atvērtos vēstures ierakstus –
         // tāpat kā skolotāja veiktai dalībnieka izņemšanai (MemberController::destroy)
-        foreach ($user->assignedCostumeItems as $item) {
-            $item->release($user, 'removed');
-        }
-
         // notikušie koncerti saglabā studentu savā skaitā
         Event::snapshotFinished();
 
-        Auth::logout();
+        // tērpu atbrīvošana un konta dzēšana notiek kopā vai nemaz
+        DB::transaction(function () use ($user) {
+            foreach ($user->assignedCostumeItems as $item) {
+                $item->release($user, 'removed');
+            }
 
-        // null nozīmē "dzēsa pats" – šādu kontu skolotājs nevar ne atjaunot, ne iztīrīt
-        $user->update(['deactivated_with_group_id' => null]);
-        $user->delete();
+            // null nozīmē "dzēsa pats" – šādu kontu skolotājs nevar ne atjaunot, ne iztīrīt
+            $user->update(['deactivated_with_group_id' => null]);
+            $user->delete();
+        });
+
+        Auth::logout();
 
         $request->session()->invalidate();
         $request->session()->regenerateToken();

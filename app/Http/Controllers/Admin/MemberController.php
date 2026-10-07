@@ -8,6 +8,7 @@ use App\Models\Event;
 use App\Models\Group;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 
@@ -144,15 +145,18 @@ class MemberController extends Controller
         // skolotāju kontus nekad nedzēšam, un students var būt arī citās grupās -> abos gadījumos tikai
         // atsaistam NO ŠĪS grupas, konts un pārējās grupas/tiesības paliek neskartas
         if ($user->hasRole('admin') || $user->memberGroups()->count() > 1) {
-            $heldFromThisGroup = $user->assignedCostumeItems()
-                ->whereHas('costume', fn ($query) => $query->where('group_id', $adminGroup->id))
-                ->get();
+            // tērpu atbrīvošana un atsaistīšana notiek kopā vai nemaz
+            DB::transaction(function () use ($user, $adminGroup) {
+                $heldFromThisGroup = $user->assignedCostumeItems()
+                    ->whereHas('costume', fn ($query) => $query->where('group_id', $adminGroup->id))
+                    ->get();
 
-            foreach ($heldFromThisGroup as $item) {
-                $item->release(auth()->user(), 'left_group');
-            }
+                foreach ($heldFromThisGroup as $item) {
+                    $item->release(auth()->user(), 'left_group');
+                }
 
-            $adminGroup->members()->detach($user->id);
+                $adminGroup->members()->detach($user->id);
+            });
 
             // students uzzina par izņemšanu (tāpat kā par pievienošanu); e-pasta kļūme darbību neaptur
             rescue(fn () => Mail::to($user->email)->send(new MemberRemovedMail($user, $adminGroup->name)));
@@ -165,14 +169,16 @@ class MemberController extends Controller
 
         // vienīgā grupa un nav skolotājs -> konta mīkstā dzēšana (atbrīvo VISAS vienības un aizver atvērtos vēstures ierakstus)
         // datubāzes ārējā atslēga arī iztīra assigned_to, bet vēstures ieraksts citādi paliktu "vēl neatdots"
-        foreach ($user->assignedCostumeItems as $item) {
-            $item->release(auth()->user(), 'removed');
-        }
+        DB::transaction(function () use ($user, $adminGroup) {
+            foreach ($user->assignedCostumeItems as $item) {
+                $item->release(auth()->user(), 'removed');
+            }
 
-        // skolotāja veikta dzēšana tagad ir atgriezeniska, tāpat kā grupas dzēšana –
-        // atzīmē, kuras grupas dēļ konts deaktivizēts, lai to varētu vēlāk atjaunot
-        $user->update(['deactivated_with_group_id' => $adminGroup->id]);
-        $user->delete();
+            // skolotāja veikta dzēšana tagad ir atgriezeniska, tāpat kā grupas dzēšana –
+            // atzīmē, kuras grupas dēļ konts deaktivizēts, lai to varētu vēlāk atjaunot
+            $user->update(['deactivated_with_group_id' => $adminGroup->id]);
+            $user->delete();
+        });
 
         $purgeDate = now()->addDays(Group::PURGE_AFTER_DAYS)->format('d.m.Y');
 
@@ -193,8 +199,10 @@ class MemberController extends Controller
         // koncerti, kas notika, kamēr students bija izņemts, viņu savā skaitā neieskaita
         Event::snapshotFinished();
 
-        $user->restore();
-        $user->update(['deactivated_with_group_id' => null]);
+        DB::transaction(function () use ($user) {
+            $user->restore();
+            $user->update(['deactivated_with_group_id' => null]);
+        });
 
         return redirect()->route('admin.members.index')
             ->with('success', "“{$name}” restored and added back to your group.");

@@ -8,6 +8,7 @@ use App\Models\Costume;
 use App\Models\CostumeItem;
 use App\Models\Event;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
@@ -129,8 +130,10 @@ class CostumeController extends Controller
         Event::snapshotFinished();
 
         // mīkstā dzēšana – vienība pazūd no inventāra, bet tās izsniegšanas vēsture paliek
-        $item->delete();
-        $costume->update(['quantity' => $costume->items()->count()]);
+        DB::transaction(function () use ($item, $costume) {
+            $item->delete();
+            $costume->update(['quantity' => $costume->items()->count()]);
+        });
 
         return back()->with('success', "Item {$code} deleted.");
     }
@@ -183,15 +186,20 @@ class CostumeController extends Controller
         // notikušie koncerti saglabā savu gatavību, pirms tērps pazūd no inventāra
         Event::snapshotFinished();
 
-        if ($costume->image) {
-            Storage::disk('public')->delete($costume->image);
-            $costume->image = null;
-        }
+        $image = $costume->image;
 
-        // mīkstā dzēšana tērpam un vienībām – izsniegšanas vēsture paliek
-        $costume->items()->delete();
-        $costume->save();
-        $costume->delete();
+        // mīkstā dzēšana tērpam un vienībām kopā – izsniegšanas vēsture paliek
+        DB::transaction(function () use ($costume) {
+            $costume->image = null;
+            $costume->items()->delete();
+            $costume->save();
+            $costume->delete();
+        });
+
+        // failu dzēš tikai pēc veiksmīgas saglabāšanas datubāzē
+        if ($image) {
+            Storage::disk('public')->delete($image);
+        }
 
         return redirect()->route('admin.costumes.index')->with('success', "Costume “{$costume->name}” deleted.");
     }

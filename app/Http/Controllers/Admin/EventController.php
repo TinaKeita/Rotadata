@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Event;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class EventController extends Controller
 {
@@ -38,18 +39,23 @@ class EventController extends Controller
 
         $validated = $this->validated($request, $group->id, null);
 
-        $event = Event::create([
-            'group_id' => $group->id,
-            'title' => $validated['title'],
-            'starts_at' => $validated['starts_at'],
-            'location' => $validated['location'],
-            'notes' => $validated['notes'],
-            'created_by' => auth()->id(),
-        ]);
+        // koncerts ar tērpiem, neapmeklētājiem un papildu tērpiem tiek saglabāts kopā – nepaliek pusizveidots koncerts
+        $event = DB::transaction(function () use ($group, $validated, $request) {
+            $event = Event::create([
+                'group_id' => $group->id,
+                'title' => $validated['title'],
+                'starts_at' => $validated['starts_at'],
+                'location' => $validated['location'],
+                'notes' => $validated['notes'],
+                'created_by' => auth()->id(),
+            ]);
 
-        $this->syncCostumes($event, $request);
-        $this->syncAbsences($event, $request);
-        $this->syncExtras($event, $request);
+            $this->syncCostumes($event, $request);
+            $this->syncAbsences($event, $request);
+            $this->syncExtras($event, $request);
+
+            return $event;
+        });
 
         return redirect()->route('admin.events.index')->with('success', "Concert “{$event->title}” added.");
     }
@@ -73,16 +79,19 @@ class EventController extends Controller
 
         $validated = $this->validated($request, $event->group_id, $event);
 
-        $event->update([
-            'title' => $validated['title'],
-            'starts_at' => $validated['starts_at'],
-            'location' => $validated['location'],
-            'notes' => $validated['notes'],
-        ]);
+        // izmaiņas tiek saglabātas visas kopā vai nemaz
+        DB::transaction(function () use ($event, $validated, $request) {
+            $event->update([
+                'title' => $validated['title'],
+                'starts_at' => $validated['starts_at'],
+                'location' => $validated['location'],
+                'notes' => $validated['notes'],
+            ]);
 
-        $this->syncCostumes($event, $request);
-        $this->syncAbsences($event, $request);
-        $this->syncExtras($event, $request);
+            $this->syncCostumes($event, $request);
+            $this->syncAbsences($event, $request);
+            $this->syncExtras($event, $request);
+        });
 
         return redirect()->route('admin.events.index')->with('success', "Concert “{$event->title}” updated.");
     }

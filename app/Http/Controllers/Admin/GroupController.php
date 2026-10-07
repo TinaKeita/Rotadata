@@ -7,6 +7,7 @@ use App\Mail\GroupDeletionMail;
 use App\Models\Event;
 use App\Models\Group;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
@@ -117,10 +118,13 @@ class GroupController extends Controller
         // notikušie koncerti saglabā savus dalībniekus, pirms viņi tiek deaktivizēti
         Event::snapshotFinished();
 
-        // izdzēstu grupu vairs nevar nodot – neatbildētais pieprasījums tiek atcelts
-        $group->transfers()->where('status', 'pending')->update(['status' => 'cancelled', 'responded_at' => now()]);
+        // pieprasījuma atcelšana, dalībnieku deaktivizēšana un grupas dzēšana notiek kopā vai nenotiek nemaz
+        $result = DB::transaction(function () use ($group) {
+            // izdzēstu grupu vairs nevar nodot – neatbildētais pieprasījums tiek atcelts
+            $group->transfers()->where('status', 'pending')->update(['status' => 'cancelled', 'responded_at' => now()]);
 
-        $result = $group->softDeleteWithMembers();
+            return $group->softDeleteWithMembers();
+        });
 
         // e-pastus sūta pēc atbildes atgriešanas, lai skolotāja klikšķis ir tūlītējs
         defer(function () use ($result, $groupName, $purgeDate) {
@@ -153,7 +157,8 @@ class GroupController extends Controller
         // koncerti, kas notika, kamēr dalībnieki bija deaktivizēti, viņus savā skaitā neieskaita
         Event::snapshotFinished();
 
-        $reactivated = $group->restoreWithMembers();
+        // grupa un tās dalībnieki tiek atjaunoti kopā vai nemaz
+        $reactivated = DB::transaction(fn () => $group->restoreWithMembers());
 
         defer(function () use ($reactivated, $groupName) {
             foreach ($reactivated as $member) {

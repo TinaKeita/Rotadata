@@ -9,6 +9,7 @@ use App\Models\Event;
 use App\Models\Group;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Password;
@@ -128,11 +129,13 @@ class MemberInviteController extends Controller
             return ['status' => 'skipped', 'message' => "“{$user->name}” is already in this group."];
         }
 
-        if (! $user->hasRole('member')) {
-            $user->assignRole('member');
-        }
+        DB::transaction(function () use ($user, $group, $setId) {
+            if (! $user->hasRole('member')) {
+                $user->assignRole('member');
+            }
 
-        $group->members()->attach($user->id, ['costume_set_id' => $setId]);
+            $group->members()->attach($user->id, ['costume_set_id' => $setId]);
+        });
 
         rescue(fn () => Mail::to($user->email)->send(new MemberAddedMail($user, $group->name)));
 
@@ -145,15 +148,20 @@ class MemberInviteController extends Controller
     {
         $tempPassword = Str::random(12);
 
-        $member = User::create([
-            'name' => $validated['name'],
-            'email' => $validated['email'],
-            'password' => Hash::make($tempPassword),
-            'must_change_password' => true, // pagaidu parole der tikai pirmajai pieslēgšanās reizei
-        ]);
+        // konts, loma un dalība top kopā; e-pastu sūta tikai pēc tam, kad viss ir saglabāts
+        $member = DB::transaction(function () use ($validated, $group, $setId, $tempPassword) {
+            $member = User::create([
+                'name' => $validated['name'],
+                'email' => $validated['email'],
+                'password' => Hash::make($tempPassword),
+                'must_change_password' => true, // pagaidu parole der tikai pirmajai pieslēgšanās reizei
+            ]);
 
-        $member->assignRole('member');
-        $group->members()->attach($member->id, ['costume_set_id' => $setId]);
+            $member->assignRole('member');
+            $group->members()->attach($member->id, ['costume_set_id' => $setId]);
+
+            return $member;
+        });
 
         if ($this->sendInvite($member, $group->name, $tempPassword)) {
             return ['status' => 'created', 'name' => $member->name, 'email' => $member->email];

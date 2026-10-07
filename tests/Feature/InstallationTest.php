@@ -38,6 +38,29 @@ class InstallationTest extends TestCase
         $this->assertSame(['Folkloras kopa'], $user->adminGroups()->pluck('name')->all());
     }
 
+    // ja reģistrācija pusceļā neizdodas (šeit – nav lomu), konts netiek izveidots un e-pastu var izmantot atkārtoti
+    public function test_failed_registration_leaves_no_half_created_account(): void
+    {
+        $this->withoutExceptionHandling();
+
+        try {
+            $this->post('/register', [
+                'name' => 'Ilze Bērziņa',
+                'email' => 'ilze@example.com',
+                'group_name' => 'Folkloras kopa',
+                'password' => 'Jauna-Parole-123',
+                'password_confirmation' => 'Jauna-Parole-123',
+            ]);
+            $this->fail('Registration without roles should fail.');
+        } catch (\Spatie\Permission\Exceptions\RoleDoesNotExist) {
+            // sagaidāms
+        }
+
+        $this->assertDatabaseMissing('users', ['email' => 'ilze@example.com']);
+        $this->assertSame(0, Group::count());
+        $this->assertGuest();
+    }
+
     // setup izveido storage saiti, un augšupielādētā tērpa attēla adrese ved caur to
     public function test_uploaded_costume_image_is_served_from_public_storage(): void
     {

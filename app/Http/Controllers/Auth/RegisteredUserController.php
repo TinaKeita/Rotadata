@@ -10,6 +10,7 @@ use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules;
 use Illuminate\View\View;
@@ -36,19 +37,24 @@ class RegisteredUserController extends Controller
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
         ]);
 
-        $user = User::create([
-            'name' => $request->name,
-            'email' => $request->email,
-            'password' => Hash::make($request->password),
-        ]);
+        // konts, loma un grupa top kopā – ja kāds solis neizdodas, nepaliek pusizveidots konts ar aizņemtu e-pastu
+        $user = DB::transaction(function () use ($request) {
+            $user = User::create([
+                'name' => $request->name,
+                'email' => $request->email,
+                'password' => Hash::make($request->password),
+            ]);
 
-        $user->assignRole('admin');
+            $user->assignRole('admin');
 
-        // izveido grupu un sasaista to ar administratoru
-        $group = Group::create([
-            'name' => $request->group_name,
-            'admin_id' => $user->id
-        ]);
+            // izveido grupu un sasaista to ar administratoru
+            Group::create([
+                'name' => $request->group_name,
+                'admin_id' => $user->id,
+            ]);
+
+            return $user;
+        });
 
         event(new Registered($user));
         Auth::login($user);
