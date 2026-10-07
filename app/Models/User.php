@@ -112,6 +112,12 @@ class User extends Authenticatable
         return $this->belongsToMany(Group::class, 'group_user')->withPivot('costume_set_id');
     }
 
+    // uzaicinājumi pievienoties citu skolotāju grupām
+    public function groupInvitations()
+    {
+        return $this->hasMany(GroupInvitation::class);
+    }
+
     // grupa, kuras dēļ šis konts tika deaktivizēts (grupas dzēšana vai skolotāja veikta izņemšana)
     public function deactivatedFromGroup()
     {

@@ -11,6 +11,26 @@
         </a>
     </div>
 
+    {{-- uzaicināts, bet vēl nav izvēlējies savu paroli – līdz tam tērpus neizsniedz un koncertos neskaita --}}
+    @if($user->must_change_password && ! $user->invite_email_failed_at)
+        <div class="ui-alert ui-alert-warn mb-5 flex flex-wrap items-center justify-between gap-3">
+            <span>
+                @if($user->temporaryPasswordExpired())
+                    {{ $user->name }}'s invite expired before they signed in.
+                @else
+                    {{ $user->name }} hasn't signed in yet.
+                @endif
+                Until they set their own password they don't count for concerts and can't be handed costumes.
+            </span>
+            <form action="{{ route('admin.members.resend-invite', $user) }}" method="POST">
+                @csrf
+                <button type="submit" class="ui-btn-ghost ui-btn-sm">
+                    Resend invite
+                </button>
+            </form>
+        </div>
+    @endif
+
     {{-- uzaicinājuma e-pasts neizdevās nosūtīt – ļauj mēģināt vēlreiz --}}
     @if($user->invite_email_failed_at)
         <div class="ui-alert ui-alert-warn mb-5 flex flex-wrap items-center justify-between gap-3">
@@ -90,7 +110,9 @@
     {{-- skolotājs izsniedz tērpu pats (bez QR skenēšanas): tiek dota nākamā brīvā vienība --}}
     <div id="hand-out" class="ui-card mt-5 max-w-2xl scroll-mt-24">
         <h3 class="ui-eyebrow">Hand out a costume</h3>
-        @if($costumes->isEmpty())
+        @if($user->must_change_password)
+            <p class="mt-2 text-sm text-ink-soft">Available once {{ $user->name }} has signed in and set their own password.</p>
+        @elseif($costumes->isEmpty())
             <p class="mt-2 text-sm text-ink-soft">Your group has no costumes yet.</p>
         @else
             <form method="POST" action="{{ route('admin.members.hand-out', $user) }}" class="mt-3 flex flex-wrap items-center gap-2">

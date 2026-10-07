@@ -27,7 +27,7 @@ class GroupActivity
             'itemsOut'      => $out,
             'available'     => max(0, $total - $out),
             'utilisation'   => $total > 0 ? (int) round($out / $total * 100) : 0,
-            'memberCount'   => $this->group->members()->count(),
+            'memberCount'   => $this->group->activeMembers()->count(),
             'equippedCount' => CostumeItem::whereIn('id', $this->itemIds)
                 ->whereNotNull('assigned_to')
                 ->distinct()

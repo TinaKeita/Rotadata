@@ -63,6 +63,9 @@ class MemberController extends Controller
         // students var būt citā šī skolotāja grupā – izsniegt drīkst tikai atvērtās grupas dalībniekam
         abort_unless($user->inGroup($adminGroup), 422, "That member isn't in the group you have open.");
 
+        // uzaicināts, bet vēl nav izvēlējies savu paroli – tērpus vēl nevar izsniegt
+        abort_if($user->must_change_password, 422, "{$user->name} hasn't signed in yet. Costumes can be handed out once they've set their own password.");
+
         $validated = $request->validate([
             'item_id' => ['required', 'integer'],
         ]);
@@ -97,9 +100,14 @@ class MemberController extends Controller
                 ->get()
             : collect();
 
+        // esošiem kontiem nosūtīti uzaicinājumi, uz kuriem vēl nav atbildēts
+        $invitations = $adminGroup
+            ? $adminGroup->invitations()->open()->with('user')->latest()->get()
+            : collect();
+
         $sets = $adminGroup?->costumeSets ?? collect();
 
-        return view('admin.members.index', compact('members', 'trashedMembers', 'sets'));
+        return view('admin.members.index', compact('members', 'trashedMembers', 'invitations', 'sets'));
     }
 
     public function show(User $user)
@@ -158,8 +166,11 @@ class MemberController extends Controller
                 $adminGroup->members()->detach($user->id);
             });
 
-            // students uzzina par izņemšanu (tāpat kā par pievienošanu); e-pasta kļūme darbību neaptur
-            rescue(fn () => Mail::to($user->email)->send(new MemberRemovedMail($user, $adminGroup->name)));
+            // students uzzina par izņemšanu (tāpat kā par pievienošanu); e-pasta kļūme darbību neaptur.
+            // Uzaicinātais, kurš vēl nav pieslēdzies, citus e-pastus kā uzaicinājumu nesaņem
+            if (! $user->must_change_password) {
+                rescue(fn () => Mail::to($user->email)->send(new MemberRemovedMail($user, $adminGroup->name)));
+            }
 
             $reason = $user->hasRole('admin') ? "they're a teacher" : "they're still in other groups";
 
@@ -182,7 +193,9 @@ class MemberController extends Controller
 
         $purgeDate = now()->addDays(Group::PURGE_AFTER_DAYS)->format('d.m.Y');
 
-        rescue(fn () => Mail::to($user->email)->send(new MemberRemovedMail($user, $adminGroup->name, $purgeDate)));
+        if (! $user->must_change_password) {
+            rescue(fn () => Mail::to($user->email)->send(new MemberRemovedMail($user, $adminGroup->name, $purgeDate)));
+        }
 
         return redirect()->route('admin.members.index')
             ->with('success', "Member “{$name}” deleted. Their costumes have been released. You can restore the account until {$purgeDate}.");

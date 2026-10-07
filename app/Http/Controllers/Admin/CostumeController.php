@@ -142,7 +142,7 @@ class CostumeController extends Controller
             ->get();
 
         // studenti, kuriem skolotājs var izsniegt brīvu vienību
-        $members = $costume->group->members()->orderBy('name')->get();
+        $members = $costume->group->activeMembers()->orderBy('name')->get();
 
         return view('admin.costumes.show', compact('costume', 'items', 'members'));
     }
@@ -219,9 +219,9 @@ class CostumeController extends Controller
             'user_id' => ['required', 'integer'],
         ]);
 
-        // izsniegt drīkst tikai šīs grupas dalībniekam
-        $student = $group->members()->whereKey($validated['user_id'])->first();
-        abort_if(is_null($student), 422, 'That student is not in this group.');
+        // izsniegt drīkst tikai šīs grupas dalībniekam, kurš jau izvēlējies savu paroli
+        $student = $group->activeMembers()->whereKey($validated['user_id'])->first();
+        abort_if(is_null($student), 422, "That student is not in this group or hasn't signed in yet.");
 
         try {
             $item->assignTo($student, auth()->user());

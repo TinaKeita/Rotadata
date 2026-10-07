@@ -65,10 +65,21 @@ class GroupTransferTest extends TestCase
             ->assertOk()
             ->json())->pluck('name')->all();
 
-        $this->assertContains('Jānis Ozols', $names);
         $this->assertContains('Jana Kalna', $names);
         $this->assertNotContains('Janka Students', $names);
         $this->assertNotContains('Ilze Bērziņa', $names);
+
+        // pēc precīza e-pasta atrod, bet atbildē e-pasts ir aizklāts
+        $this->actingAs($this->ilze)
+            ->getJson(route('admin.group.transfer.teachers', ['q' => 'janis@example.com']))
+            ->assertOk()
+            ->assertExactJson([['id' => $this->janis->id, 'name' => 'Jānis Ozols', 'email' => 'j***@example.com']]);
+
+        // ar e-pasta daļu citu skolotāju adreses nevar izvilkt
+        $this->actingAs($this->ilze)
+            ->getJson(route('admin.group.transfer.teachers', ['q' => 'example.com']))
+            ->assertOk()
+            ->assertExactJson([]);
     }
 
     public function test_request_needs_correct_password(): void

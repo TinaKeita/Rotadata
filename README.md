@@ -6,7 +6,7 @@ Costume inventory for folk dance and music groups. Teachers keep track of what t
 
 **For teachers**
 - **Costumes:** add each costume once with a quantity. Rotadata gives every item its own code (e.g. `KRE-03`) and a printable QR label.
-- **Students:** add a whole class at once by name and email. Each student gets a sign-in invite by email.
+- **Students:** add a whole group at once by name and email. New students get a sign-in invite by email; people who already have an account get an invite to accept.
 - **Sets:** sort students and costumes into sets such as "Girls" and "Boys", so each student is only asked for the costumes they need.
 - **Concerts:** plan a concert, tick who is performing and add extra costumes for soloists. The dashboard shows who is still missing what.
 - **Hand out and take back:** teachers can do this without scanning, and every item keeps a full history.
@@ -18,6 +18,19 @@ Costume inventory for folk dance and music groups. Teachers keep track of what t
 **For students**
 - Scan a QR label to take that costume, or take it over from a classmate.
 - See their own costumes, history and concert readiness, and return items from their list.
+
+## Accounts and access
+
+**Anyone can register as a teacher, on purpose.** Rotadata is for any dance or music group, including hobby groups and clubs with no school behind them, so there is no invite code, school domain or approval step. Registering gives you your own empty group and nothing else. You get no access to other groups, students or costumes.
+
+Because sign-up is open, the things a teacher account can do to *other* people are limited:
+
+- **New students join by setting their own password.** Adding a new email creates the account and sends a temporary password, valid for 7 days. Until they sign in and choose their own password, they are only *invited*: they can't be handed costumes, don't count towards concerts, and get no other emails from Rotadata. An invite that runs out can be resent from the student's profile.
+- **Existing accounts accept or decline.** If the email already belongs to a Rotadata account (another group's student, or another teacher), nobody is added straight away. The person gets an invite on their dashboard and by email, and joins only if they press **Accept**. Until then the teacher can't see their account. Unanswered invites expire after 7 days, and the teacher can cancel them from the members page.
+- **Daily limit.** A teacher can send at most 60 invites in 24 hours, counting new accounts and invites to existing ones. That covers a whole group in one go but stops anyone using Rotadata to send email to lots of strangers.
+- **Handover search shows no full emails.** When handing a group to another teacher, you search by name or by their exact email address. Results show a masked address (`j***@example.com`), so teachers' contact details can't be collected.
+- **Passwords are only changed by their owner,** through the "Forgot password" email link. Teachers never see or set a student's password.
+- **Takeovers are visible.** When a student takes over a costume from a classmate, the teacher sees it on the dashboard and the previous holder gets an email, so a takeover that wasn't agreed can be undone.
 
 ## Built with
 

@@ -40,6 +40,13 @@ class Group extends Model
         return $this->belongsToMany(User::class, 'group_user')->withPivot('costume_set_id');
     }
 
+    // dalībnieki, kuri jau izvēlējušies savu paroli. Kamēr students lieto skolotāja doto pagaidu paroli,
+    // viņš ir tikai uzaicināts: nesaņem tērpus, neskaitās koncertos un nesaņem citus e-pastus kā uzaicinājumu
+    public function activeMembers()
+    {
+        return $this->members()->where('users.must_change_password', false);
+    }
+
     public function costumeSets()
     {
         // vispirms "Girls", tad "Boys", tad skolotāja pievienotie pēc nosaukuma
@@ -63,6 +70,12 @@ class Group extends Model
     public function transfers()
     {
         return $this->hasMany(GroupTransfer::class);
+    }
+
+    // esošiem kontiem nosūtītie uzaicinājumi pievienoties šai grupai
+    public function invitations()
+    {
+        return $this->hasMany(GroupInvitation::class);
     }
 
     // visas šīs grupas tērpu vienības (caur tērpiem)

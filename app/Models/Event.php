@@ -182,7 +182,7 @@ class Event extends Model
     {
         $absentIds = $this->absentees()->pluck('users.id');
 
-        $students = $this->group->members()
+        $students = $this->group->activeMembers()
             ->whereNotIn('users.id', $absentIds)
             ->orderBy('name')
             ->get();

@@ -87,6 +87,15 @@
                                 <span class="ui-chip ui-chip-late mt-1 md:ml-1.5 md:mt-0">
                                     Invite not delivered
                                 </span>
+                            @elseif($member->temporaryPasswordExpired())
+                                <span class="ui-chip ui-chip-late mt-1 md:ml-1.5 md:mt-0">
+                                    Invite expired
+                                </span>
+                            @elseif($member->must_change_password)
+                                {{-- uzaicināts, bet vēl nav pieslēdzies – neskaitās koncertos un nesaņem tērpus --}}
+                                <span class="ui-chip mt-1 md:ml-1.5 md:mt-0">
+                                    Not signed in yet
+                                </span>
                             @endif
                             <p class="mt-0.5 break-all text-xs text-ink-soft md:hidden">
                                 {{ $member->email }}@if($sets->isNotEmpty()) · {{ $setNames[$member->pivot->costume_set_id] ?? 'no set' }}@endif
@@ -105,7 +114,7 @@
                                 View
                             </a>
 
-                            @if($member->invite_email_failed_at && $member->must_change_password)
+                            @if($member->must_change_password)
                                 <form action="{{ route('admin.members.resend-invite', $member) }}" method="POST">
                                     @csrf
                                     <button type="submit" class="ui-btn-ghost ui-btn-sm">
@@ -149,6 +158,30 @@
             </tbody>
         </table>
     </div>
+
+    @if($invitations->isNotEmpty())
+        {{-- esošiem kontiem nosūtīti uzaicinājumi – dalībnieki kļūst tikai pēc pieņemšanas --}}
+        <div class="ui-card mt-6">
+            <h3 class="ui-eyebrow">Pending invites ({{ $invitations->count() }})</h3>
+            <p class="ui-help mt-1">These people already have a Rotadata account. They join once they accept the invite.</p>
+
+            <ul class="mt-3 space-y-2">
+                @foreach($invitations as $invitation)
+                    <li class="flex flex-wrap items-center justify-between gap-3 border-t border-line pt-2 first:border-t-0 first:pt-0">
+                        <div class="min-w-0">
+                            <p class="font-medium text-ink">{{ $invitation->user->name }}</p>
+                            <p class="ui-help break-all">{{ $invitation->user->email }} &middot; open until {{ $invitation->expires_at->format('d.m.Y') }}</p>
+                        </div>
+                        <form method="POST" action="{{ route('admin.invitations.cancel', $invitation) }}">
+                            @csrf
+                            @method('DELETE')
+                            <button type="submit" class="ui-btn-ghost ui-btn-sm">Cancel invite</button>
+                        </form>
+                    </li>
+                @endforeach
+            </ul>
+        </div>
+    @endif
 
     @if($trashedMembers->isNotEmpty())
         {{-- nesen izņemti dalībnieki – vēl var atjaunot 30 dienu laikā --}}

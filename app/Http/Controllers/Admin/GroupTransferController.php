@@ -33,9 +33,10 @@ class GroupTransferController extends Controller
         // % un _ ir parasti simboli, nevis SQL aizstājējzīmes – citādi ar "%%" varētu izvilkt visus skolotājus
         $like = '%'.str_replace(['!', '%', '_'], ['!!', '!%', '!_'], $q).'%';
 
+        // meklē pēc vārda vai pēc precīza e-pasta – ar e-pasta daļu nevar izvilkt citu skolotāju adreses
         $teachers = User::role('admin')
             ->whereKeyNot(auth()->id())
-            ->where(fn ($w) => $w->whereRaw("name LIKE ? ESCAPE '!'", [$like])->orWhereRaw("email LIKE ? ESCAPE '!'", [$like]))
+            ->where(fn ($w) => $w->whereRaw("name LIKE ? ESCAPE '!'", [$like])->orWhereRaw('lower(email) = ?', [mb_strtolower($q)]))
             ->orderBy('name')
             ->limit(8)
             ->get();
@@ -43,8 +44,17 @@ class GroupTransferController extends Controller
         return response()->json($teachers->map(fn (User $t) => [
             'id' => $t->id,
             'name' => $t->name,
-            'email' => $t->email,
+            'email' => self::maskEmail($t->email),
         ])->values());
+    }
+
+    // "janis@example.com" -> "j***@example.com": pietiek, lai atšķirtu divus vienāda vārda skolotājus,
+    // bet pilnu adresi reģistrējies svešinieks neuzzina
+    public static function maskEmail(string $email): string
+    {
+        [$local, $domain] = array_pad(explode('@', $email, 2), 2, '');
+
+        return mb_substr($local, 0, 1).'***@'.$domain;
     }
 
     // nosūta pieprasījumu saņēmējam (skolotājs apstiprina ar savu paroli)

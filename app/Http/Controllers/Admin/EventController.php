@@ -26,7 +26,7 @@ class EventController extends Controller
         abort_if(is_null($group), 403, 'You do not have a group yet.');
 
         $costumes = $group->costumes()->with('costumeSet')->withCount('items')->get();
-        $members = $group->members()->orderBy('name')->get();
+        $members = $group->activeMembers()->orderBy('name')->get();
         $sets = $group->costumeSets;
 
         return view('admin.events.create', compact('costumes', 'members', 'sets'));
@@ -66,7 +66,7 @@ class EventController extends Controller
         $this->authorize('update', $event);
 
         $costumes = $event->group->costumes()->with('costumeSet')->withCount('items')->get();
-        $members = $event->group->members()->orderBy('name')->get();
+        $members = $event->group->activeMembers()->orderBy('name')->get();
         $sets = $event->group->costumeSets;
         $event->load(['absentees', 'studentCostumes']);
 
@@ -165,7 +165,7 @@ class EventController extends Controller
 
         $attending = collect($request->input('attending_ids', []))->map(fn ($id) => (int) $id);
 
-        $absentIds = $event->group->members()
+        $absentIds = $event->group->activeMembers()
             ->pluck('users.id')
             ->reject(fn ($id) => $attending->contains((int) $id))
             ->values()
@@ -182,7 +182,7 @@ class EventController extends Controller
             return;
         }
 
-        $memberIds = $event->group->members()->pluck('users.id')->map(fn ($id) => (int) $id);
+        $memberIds = $event->group->activeMembers()->pluck('users.id')->map(fn ($id) => (int) $id);
 
         $rows = collect($request->input('extras', []))
             ->filter(fn ($r) => $memberIds->contains((int) ($r['user_id'] ?? 0)))

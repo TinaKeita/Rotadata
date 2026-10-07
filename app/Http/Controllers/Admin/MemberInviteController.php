@@ -3,10 +3,11 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Mail\MemberAddedMail;
+use App\Mail\GroupInvitationMail;
 use App\Mail\MemberWelcomeMail;
 use App\Models\Event;
 use App\Models\Group;
+use App\Models\GroupInvitation;
 use App\Models\User;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Http\Request;
@@ -14,11 +15,17 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Password;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
 
-// studentu pievienošana grupai (jauni konti vai esoši) un uzaicinājumu atkārtota sūtīšana
+// studentu uzaicināšana grupai (jauni konti ar pagaidu paroli vai uzaicinājums esošam kontam) un uzaicinājumu atkārtota sūtīšana
 class MemberInviteController extends Controller
 {
+    // cik uzaicinājumu (jaunu kontu vai uzaicinājumu esošiem kontiem – katrs nozīmē e-pastu kādam citam) viens skolotājs
+    // drīkst nosūtīt 24 stundās – pietiek visai deju kopai uzreiz, bet reģistrācija ir publiska, tāpēc aplikāciju
+    // nevar izmantot surogātpasta sūtīšanai
+    public const INVITES_PER_DAY = 60;
+
     // forma jauna lietotāja pievienošanai
     public function create()
     {
@@ -60,46 +67,57 @@ class MemberInviteController extends Controller
         Event::snapshotFinished();
 
         $created = 0;
-        $attached = 0;
+        $invited = 0;
         $skipped = [];
         $emailFailed = 0;
+        $limitKey = 'member-invites:'.auth()->id();
 
         foreach ($validated['members'] as $row) {
-            // ja šāds konts jau pastāv, pievieno to grupai, nevis veido jaunu
+            if (RateLimiter::tooManyAttempts($limitKey, self::INVITES_PER_DAY)) {
+                $skipped[] = "“{$row['email']}” — you've sent ".self::INVITES_PER_DAY.' invites today, the daily limit. Try again tomorrow.';
+
+                continue;
+            }
+
+            // ja šāds konts jau pastāv, tam nosūta uzaicinājumu, nevis veido jaunu kontu
             $existing = User::withTrashed()->whereRaw('lower(email) = ?', [$row['email']])->first();
 
             $result = $existing
-                ? $this->attachExisting($existing, $adminGroup, $setId)
+                ? $this->inviteExisting($existing, $adminGroup, $setId)
                 : $this->createAndInvite($row, $adminGroup, $setId);
+
+            if (in_array($result['status'], ['created', 'created_email_failed', 'invited'], true)) {
+                RateLimiter::hit($limitKey, 60 * 60 * 24);
+            }
 
             if ($result['status'] === 'created') {
                 $created++;
             } elseif ($result['status'] === 'created_email_failed') {
                 $created++;
                 $emailFailed++;
-            } elseif ($result['status'] === 'attached') {
-                $attached++;
+            } elseif ($result['status'] === 'invited') {
+                $invited++;
             } else {
                 $skipped[] = $result['message'];
             }
         }
 
         return redirect()->route('admin.members.index')
-            ->with($this->summaryFlash($created, $attached, $skipped, $emailFailed));
+            ->with($this->summaryFlash($created, $invited, $skipped, $emailFailed));
     }
 
     // apkopo visu rindu iznākumus vienā, salasāmā paziņojumā
-    private function summaryFlash(int $created, int $attached, array $skipped, int $emailFailed): array
+    private function summaryFlash(int $created, int $invited, array $skipped, int $emailFailed): array
     {
         $parts = [];
         if ($created > 0) {
-            $parts[] = "{$created} new ".Str::plural('account', $created).' created and invited';
+            $parts[] = "Added {$created} new ".Str::plural('account', $created).' — they join once they sign in and set their own password.';
         }
-        if ($attached > 0) {
-            $parts[] = "{$attached} existing ".Str::plural('account', $attached).' added';
+        if ($invited > 0) {
+            $parts[] = "Invited {$invited} existing ".Str::plural('account', $invited).' — they join once they accept.';
         }
 
-        $message = $parts ? ('Added '.implode(', ', $parts).'.') : 'No members were added.';
+        $message = $parts ? implode(' ', $parts) : 'No members were added.';
 
         if ($skipped) {
             $message .= "\nSkipped: ".implode('; ', $skipped);
@@ -109,13 +127,14 @@ class MemberInviteController extends Controller
             $message .= "\nCouldn't email {$emailFailed} ".Str::plural('student', $emailFailed).' — use “Resend invite” on their profile once email works.';
         }
 
-        $level = ($created + $attached === 0) ? 'error' : (($skipped || $emailFailed) ? 'warning' : 'success');
+        $level = ($created + $invited === 0) ? 'error' : (($skipped || $emailFailed) ? 'warning' : 'success');
 
         return [$level => $message];
     }
 
-    // pievieno esošu kontu skolotāja grupai un paziņo par to e-pastā (bez paroles)
-    private function attachExisting(User $user, Group $group, ?int $setId = null): array
+    // esošu kontu grupai uzreiz nepievieno – nosūta uzaicinājumu, ko lietotājs pats pieņem vai noraida.
+    // Kamēr tas nav pieņemts, skolotājs kontu neredz un tērpus izsniegt nevar
+    private function inviteExisting(User $user, Group $group, ?int $setId = null): array
     {
         if ($user->trashed()) {
             return ['status' => 'skipped', 'message' => "“{$user->email}” belongs to a deactivated account and can’t be added right now."];
@@ -127,25 +146,43 @@ class MemberInviteController extends Controller
         }
 
         if ($group->members()->whereKey($user->id)->exists()) {
-            return ['status' => 'skipped', 'message' => "“{$user->name}” is already in this group."];
+            return ['status' => 'skipped', 'message' => "“{$user->email}” is already in this group."];
         }
 
-        // divi vienlaicīgi pieprasījumi var abi iziet pārbaudi augstāk – dubultu dalību aptur datubāzes unikālā atslēga
-        try {
-            DB::transaction(function () use ($user, $group, $setId) {
-                if (! $user->hasRole('member')) {
-                    $user->assignRole('member');
-                }
-
-                $group->members()->attach($user->id, ['costume_set_id' => $setId]);
-            });
-        } catch (UniqueConstraintViolationException) {
-            return ['status' => 'skipped', 'message' => "“{$user->name}” is already in this group."];
+        if ($group->invitations()->open()->where('user_id', $user->id)->exists()) {
+            return ['status' => 'skipped', 'message' => "“{$user->email}” has already been invited and hasn't answered yet."];
         }
 
-        rescue(fn () => Mail::to($user->email)->send(new MemberAddedMail($user, $group->name)));
+        // viens ieraksts katram cilvēkam katrā grupā – iepriekš noraidīts vai beidzies uzaicinājums tiek atjaunots
+        $invitation = GroupInvitation::updateOrCreate(
+            ['group_id' => $group->id, 'user_id' => $user->id],
+            [
+                'invited_by' => auth()->id(),
+                'costume_set_id' => $setId,
+                'status' => 'pending',
+                'expires_at' => now()->addDays(GroupInvitation::EXPIRES_AFTER_DAYS),
+                'responded_at' => null,
+            ],
+        );
 
-        return ['status' => 'attached', 'name' => $user->name, 'email' => $user->email];
+        // students, kurš vēl nav izvēlējies savu paroli, citus e-pastus kā pirmo uzaicinājumu nesaņem –
+        // šo uzaicinājumu viņš ieraudzīs savā sākumlapā pēc pieslēgšanās
+        if (! $user->must_change_password) {
+            rescue(fn () => Mail::to($user->email)->send(new GroupInvitationMail($user, $invitation->load(['group', 'inviter']))));
+        }
+
+        return ['status' => 'invited', 'name' => $user->name, 'email' => $user->email];
+    }
+
+    // skolotājs atsauc vēl neatbildētu uzaicinājumu
+    public function cancelInvitation(GroupInvitation $invitation)
+    {
+        abort_unless($invitation->group && auth()->user()->ownsGroup($invitation->group), 403);
+
+        GroupInvitation::whereKey($invitation->id)->where('status', 'pending')
+            ->update(['status' => 'cancelled', 'responded_at' => now()]);
+
+        return back()->with('success', "Invitation for {$invitation->user->name} cancelled.");
     }
 
     // izveido jaunu kontu ar pagaidu paroli un nosūta uzaicinājuma e-pastu
@@ -162,7 +199,7 @@ class MemberInviteController extends Controller
             $existing = User::withTrashed()->whereRaw('lower(email) = ?', [$validated['email']])->first();
 
             return $existing
-                ? $this->attachExisting($existing, $group, $setId)
+                ? $this->inviteExisting($existing, $group, $setId)
                 : ['status' => 'skipped', 'message' => "“{$validated['email']}” could not be added — please try again."];
         }
 

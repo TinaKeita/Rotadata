@@ -126,15 +126,16 @@ class GroupController extends Controller
             return $group->softDeleteWithMembers();
         });
 
-        // e-pastus sūta pēc atbildes atgriešanas, lai skolotāja klikšķis ir tūlītējs
+        // e-pastus sūta pēc atbildes atgriešanas, lai skolotāja klikšķis ir tūlītējs.
+        // Uzaicinātie, kuri vēl nav pieslēgušies, citus e-pastus kā uzaicinājumu nesaņem
         defer(function () use ($result, $groupName, $purgeDate) {
-            foreach ($result['deactivated'] as $member) {
+            foreach ($result['deactivated']->reject->must_change_password as $member) {
                 rescue(fn () => Mail::to($member->email)->send(
                     new GroupDeletionMail($member, $groupName, GroupDeletionMail::DEACTIVATED, $purgeDate)
                 ));
             }
 
-            foreach ($result['removed'] as $member) {
+            foreach ($result['removed']->reject->must_change_password as $member) {
                 rescue(fn () => Mail::to($member->email)->send(
                     new GroupDeletionMail($member, $groupName, GroupDeletionMail::REMOVED)
                 ));
@@ -161,7 +162,7 @@ class GroupController extends Controller
         $reactivated = DB::transaction(fn () => $group->restoreWithMembers());
 
         defer(function () use ($reactivated, $groupName) {
-            foreach ($reactivated as $member) {
+            foreach ($reactivated->reject->must_change_password as $member) {
                 rescue(fn () => Mail::to($member->email)->send(
                     new GroupDeletionMail($member, $groupName, GroupDeletionMail::RESTORED)
                 ));

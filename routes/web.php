@@ -65,6 +65,12 @@ Route::middleware('auth')->group(function () {
     // students pats pamet grupu – konts vienmēr paliek, mainās tikai piederība šai grupai
     Route::post('/members/{group}/leave', [MemberCostumeController::class, 'leave'])
         ->name('members.costumes.leave');
+
+    // uzaicinājums pievienoties grupai – pieņem vai noraida pats uzaicinātais
+    Route::post('/invitations/{invitation}/accept', [App\Http\Controllers\GroupInvitationController::class, 'accept'])
+        ->name('invitations.accept');
+    Route::post('/invitations/{invitation}/decline', [App\Http\Controllers\GroupInvitationController::class, 'decline'])
+        ->name('invitations.decline');
 });
 
 /*
@@ -102,6 +108,8 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::post('/members/{member}/resend-invite', [AdminMemberInviteController::class, 'resendInvite'])
         ->name('members.resend-invite');
     // skolotājs paroli jau iedevis citādi – noņem "uzaicinājums nav piegādāts" brīdinājumu
+    Route::delete('/invitations/{invitation}', [AdminMemberInviteController::class, 'cancelInvitation'])
+        ->name('invitations.cancel');
     Route::post('/members/{member}/dismiss-invite', [AdminMemberInviteController::class, 'dismissInvite'])
         ->name('members.dismiss-invite');
 

@@ -14,6 +14,8 @@
 
     <div>
         <div>
+            {{-- skolotājs var būt uzaicināts arī cita skolotāja grupā --}}
+            @include('partials.group-invitations')
 
             @if(is_null($group))
                 <p class="mb-2 font-mono text-[11.5px] uppercase tracking-[0.1em] text-ink-soft">{{ now()->format('l, j F') }}</p>

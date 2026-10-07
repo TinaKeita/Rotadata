@@ -7,7 +7,7 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
 use Illuminate\Queue\SerializesModels;
 
-// paziņo studentam, ka skolotājs viņu izņēmis no grupas (pretstats MemberAddedMail)
+// paziņo studentam, ka skolotājs viņu izņēmis no grupas (pretstats GroupInvitationMail)
 class MemberRemovedMail extends Mailable
 {
     use Queueable, SerializesModels;

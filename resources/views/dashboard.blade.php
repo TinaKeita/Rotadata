@@ -21,6 +21,8 @@
     </x-slot>
 
     <div class="space-y-6">
+        @include('partials.group-invitations')
+
         {{-- nākamais koncerts, kurā students piedalās: kas jau ir un kas vēl jāpaņem --}}
         @if($nextConcert)
             @php

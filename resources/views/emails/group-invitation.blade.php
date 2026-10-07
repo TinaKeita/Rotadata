@@ -10,7 +10,7 @@
 
 	{{-- priekšskatījuma teksts iesūtnē --}}
 	<div style="display:none; max-height:0; overflow:hidden; opacity:0;">
-		You've been added to a new group. Sign in with your usual password.
+		{{ $invitation->inviter?->name ?? 'A teacher' }} invited you to join {{ $invitation->group->name }}.
 	</div>
 
 	<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#f4f2ee;">
@@ -33,18 +33,22 @@
 								Hi {{ $user->name }},
 							</p>
 							<p style="margin:0 0 24px; font-size:15px; line-height:1.6; color:#555555;">
-								A teacher added you to the group <strong>{{ $groupName }}</strong> in Rotadata. Sign in
-								with your usual password to see its costume inventory — nothing else about your account
-								has changed.
+								<strong>{{ $invitation->inviter?->name ?? 'A teacher' }}</strong> invited you to join the group
+								<strong>{{ $invitation->group->name }}</strong> in Rotadata. Sign in with your usual password
+								to accept or decline. Until you accept, you're not part of the group and the teacher can't
+								see your account.
+							</p>
+							<p style="margin:0 0 24px; font-size:15px; line-height:1.6; color:#555555;">
+								The invitation is open until <strong>{{ $invitation->expires_at->format('d.m.Y') }}</strong>.
 							</p>
 
 							{{-- poga --}}
 							<table role="presentation" cellpadding="0" cellspacing="0">
 								<tr>
 									<td style="background-color:#4f6150; border-radius:8px;">
-										<a href="{{ route('login') }}" target="_blank"
+										<a href="{{ route('dashboard') }}" target="_blank"
 											style="display:inline-block; padding:12px 28px; font-size:15px; font-weight:600; color:#ffffff; text-decoration:none;">
-											Sign in
+											See the invitation
 										</a>
 									</td>
 								</tr>
@@ -52,7 +56,7 @@
 
 							<p style="margin:28px 0 0; font-size:13px; line-height:1.6; color:#999999;">
 								If the button doesn't work, open this link:<br>
-								<a href="{{ route('login') }}" style="color:#4f6150; word-break:break-all;">{{ route('login') }}</a>
+								<a href="{{ route('dashboard') }}" style="color:#4f6150; word-break:break-all;">{{ route('dashboard') }}</a>
 							</p>
 						</td>
 					</tr>
@@ -61,7 +65,7 @@
 					<tr>
 						<td style="padding:20px 32px; background-color:#faf9f6; border-top:1px solid #eeece6;">
 							<p style="margin:0; font-size:12px; line-height:1.6; color:#a0a0a0;">
-								If you weren't expecting this email, you can safely ignore it.<br>
+								If you don't know this teacher, decline the invitation or simply ignore this email.<br>
 								Rotadata — costume inventory management
 							</p>
 						</td>

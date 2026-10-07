@@ -42,7 +42,7 @@ class SeasonReportController extends Controller
                 ->map(fn ($set) => [
                     'name' => $set->name,
                     'costumes' => $set->costumes_count,
-                    'students' => $group->members()->wherePivot('costume_set_id', $set->id)->count(),
+                    'students' => $group->activeMembers()->wherePivot('costume_set_id', $set->id)->count(),
                 ]),
         ]);
     }
