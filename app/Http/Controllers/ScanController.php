@@ -3,15 +3,20 @@
 namespace App\Http\Controllers;
 
 use App\Exceptions\CostumeItemUnavailableException;
+use App\Mail\ItemTakenOverMail;
 use App\Models\CostumeItem;
 use App\Models\User;
+use App\Notifications\ItemTakenOverNotification;
 use Illuminate\Auth\Events\Lockout;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
+
+use function Illuminate\Support\defer;
 
 class ScanController extends Controller
 {
@@ -163,10 +168,20 @@ class ScanController extends Controller
         $this->authorize('takeOver', $item);
 
         try {
-            $item->transferTo(Auth::user());
+            $previousHolder = $item->transferTo(Auth::user());
         } catch (CostumeItemUnavailableException) {
             // stāvoklis mainījies starplaikā (piem. turētājs pats to atdeva) – show() izlems, ko rādīt tālāk
             return redirect("/scan/{$code}");
+        }
+
+        // pārņemšana nenotiek klusi: skolotājs redz to panelī, iepriekšējais turētājs saņem e-pastu
+        // (ja tā nebija norunāta nodošana, skolotājs vienību var atdot atpakaļ)
+        if ($previousHolder) {
+            $taker = Auth::user();
+
+            $item->costume->group?->admin?->notify(new ItemTakenOverNotification($item, $previousHolder, $taker));
+
+            defer(fn () => rescue(fn () => Mail::to($previousHolder->email)->send(new ItemTakenOverMail($previousHolder, $item, $taker))));
         }
 
         return view('scan.success', compact('item'));

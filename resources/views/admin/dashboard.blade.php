@@ -22,7 +22,12 @@
                 {{-- paziņojumi (piem. students pametis grupu) paliek redzami arī bez grupas --}}
                 @foreach($notifications as $n)
                     <div class="mb-3 flex flex-wrap items-center justify-between gap-3 rounded-[14px] border border-line bg-surface px-5 py-4 text-[15px]">
-                        <span><strong class="font-semibold">{{ $n->data['student_name'] }}</strong> left {{ $n->data['group_name'] }}
+                        <span>
+                            @if($n->type === \App\Notifications\ItemTakenOverNotification::class)
+                                <strong class="font-semibold">{{ $n->data['to_name'] }}</strong> took over {{ $n->data['item_code'] }} from {{ $n->data['from_name'] }}
+                            @else
+                                <strong class="font-semibold">{{ $n->data['student_name'] }}</strong> left {{ $n->data['group_name'] }}
+                            @endif
                             <span class="font-mono text-[12px] text-ink-soft">· {{ $n->created_at->diffForHumans() }}</span></span>
                         <form method="POST" action="{{ route('admin.notifications.dismiss', $n->id) }}">
                             @csrf
@@ -133,6 +138,10 @@
                                                 <p class="text-[15.5px]"><span class="font-semibold">{{ $row['notification']->data['student_name'] }}</span> <span class="text-ink-muted">left {{ $row['notification']->data['group_name'] }}</span></p>
                                                 <p class="mt-0.5 font-mono text-[12px] text-ink-soft">{{ $row['notification']->created_at->diffForHumans() }}</p>
                                                 @break
+                                            @case('takeover')
+                                                <p class="text-[15.5px]"><span class="font-semibold">{{ $row['notification']->data['to_name'] }}</span> <span class="text-ink-muted">took over {{ $row['notification']->data['item_code'] }} ({{ $row['notification']->data['costume_name'] }}) from {{ $row['notification']->data['from_name'] }}</span></p>
+                                                <p class="mt-0.5 font-mono text-[12px] text-ink-soft">{{ $row['notification']->created_at->diffForHumans() }}</p>
+                                                @break
                                             @case('transfer')
                                                 <p class="text-[15.5px]"><span class="font-semibold">{{ $row['transfer']->fromUser->name }}</span> <span class="text-ink-muted">wants to hand you “{{ $row['transfer']->group->name }}”</span></p>
                                                 <p class="mt-0.5 font-mono text-[12px] text-ink-soft">open until {{ $row['transfer']->expires_at->format('d.m.Y') }}</p>
@@ -178,6 +187,15 @@
                                                 <form method="POST" action="{{ route('admin.notifications.dismiss', $row['notification']->id) }}">
                                                     @csrf
                                                     <button type="submit" class="{{ $pill }}">Dismiss</button>
+                                                </form>
+                                                @break
+                                            @case('takeover')
+                                                {{-- ja nodošana nebija norunāta, tērpa lapā vienību var paņemt atpakaļ un izsniegt iepriekšējam turētājam --}}
+                                                <span class="rounded-full px-2.5 py-0.5 font-mono text-[12px] {{ $softChip }}">Takeover</span>
+                                                <a href="{{ route('admin.costumes.show', $row['notification']->data['costume_id']) }}" class="{{ $pill }}">View item</a>
+                                                <form method="POST" action="{{ route('admin.notifications.dismiss', $row['notification']->id) }}">
+                                                    @csrf
+                                                    <button type="submit" class="rounded-full px-3 py-1.5 text-[13px] font-medium text-ink-soft hover:text-ink">Dismiss</button>
                                                 </form>
                                                 @break
                                             @case('transfer')

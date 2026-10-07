@@ -129,6 +129,29 @@ class ScanFlowTest extends TestCase
         $this->assertSame(1, $this->item->assignments()->whereNull('returned_at')->count());
     }
 
+    // pārņemšana nenotiek klusi: skolotājs redz to panelī, iepriekšējais turētājs saņem e-pastu
+    public function test_takeover_notifies_the_teacher_and_the_previous_holder(): void
+    {
+        \Illuminate\Support\Facades\Mail::fake();
+        $this->item->assignTo($this->marta, $this->marta);
+
+        $this->actingAs($this->roberts)->post($this->scanUrl('/takeover'))->assertViewIs('scan.success');
+
+        $teacher = $this->group->admin;
+        $notification = $teacher->unreadNotifications()->firstOrFail();
+        $this->assertSame(\App\Notifications\ItemTakenOverNotification::class, $notification->type);
+        $this->assertSame($this->marta->name, $notification->data['from_name']);
+        $this->assertSame($this->roberts->name, $notification->data['to_name']);
+
+        \Illuminate\Support\Facades\Mail::assertSent(\App\Mail\ItemTakenOverMail::class,
+            fn ($mail) => $mail->hasTo('marta@example.com') && $mail->takenBy->is($this->roberts));
+
+        $this->actingAs($teacher)->get(route('admin.dashboard'))
+            ->assertOk()
+            ->assertSee("took over {$this->item->code}")
+            ->assertSee('View item');
+    }
+
     public function test_outsider_cannot_take_over(): void
     {
         $this->item->assignTo($this->marta, $this->marta);

@@ -69,15 +69,18 @@ class CostumeItem extends Model
     }
 
     // nodod vienību citam dalībniekam: aizver pašreizējo vēstures ierakstu un uzreiz atver jaunu
-    // vecais ieraksts tiek atzīmēts ar 'transfer', lai vēsturē redzams, ka tā bija nodošana, nevis atdošana
-    public function transferTo(User $to): void
+    // vecais ieraksts tiek atzīmēts ar 'transfer', lai vēsturē redzams, ka tā bija nodošana, nevis atdošana.
+    // Atgriež iepriekšējo turētāju – nolasītu bloķētajā rindā, tātad to, no kura vienība tiešām pārņemta
+    public function transferTo(User $to): ?User
     {
-        DB::transaction(function () use ($to) {
+        $previousId = DB::transaction(function () use ($to) {
             $locked = self::whereKey($this->id)->lockForUpdate()->first();
 
             if (! $locked || is_null($locked->assigned_to) || (int) $locked->assigned_to === $to->id) {
                 throw new CostumeItemUnavailableException('This item is no longer available to take over.');
             }
+
+            $previousId = $locked->assigned_to;
 
             // viens laika zīmogs abiem ierakstiem – pēc tā panelī atpazīst, ka bija nodošana, nevis atsevišķa atdošana un paņemšana
             $now = now();
@@ -102,9 +105,13 @@ class CostumeItem extends Model
                 'assigned_at' => $now,
                 'assigned_by' => $to->id,
             ]);
+
+            return $previousId;
         });
 
         $this->refresh();
+
+        return User::find($previousId);
     }
 
     // atgriež vienību un aizver atvērto vēstures ierakstu

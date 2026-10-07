@@ -49,7 +49,8 @@ class ConcertReadinessTest extends TestCase
         }
 
         foreach (['Marta' => $this->girls->id, 'Roberts' => $this->boys->id, 'Anna' => $this->girls->id] as $name => $setId) {
-            $student = User::factory()->create(['name' => $name]);
+            // noteikts e-pasts – nejaušs varētu saturēt citu vārdu (piem. "robert") un sajaukt meklēšanas testu
+            $student = User::factory()->create(['name' => $name, 'email' => strtolower($name).'@example.com']);
             $student->assignRole('member');
             $this->group->members()->attach($student->id, ['costume_set_id' => $setId]);
             $this->students[$name] = $student;

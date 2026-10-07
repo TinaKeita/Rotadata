@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Event;
 use App\Models\Group;
+use App\Notifications\ItemTakenOverNotification;
 use App\Support\GroupActivity;
 use App\Support\Season;
 use Illuminate\Support\Collection;
@@ -117,9 +118,10 @@ class DashboardController extends Controller
             $rows[] = ['type' => 'invite', 'student' => $member];
         }
 
-        // students pametis grupu
+        // students pametis grupu vai pārņēmis cita studenta tērpa vienību
         foreach ($notifications as $notification) {
-            $rows[] = ['type' => 'left', 'notification' => $notification];
+            $type = $notification->type === ItemTakenOverNotification::class ? 'takeover' : 'left';
+            $rows[] = ['type' => $type, 'notification' => $notification];
         }
 
         // sezonas noslēgums – laiks eksportēt atskaiti (no maija līdz augusta beigām)
