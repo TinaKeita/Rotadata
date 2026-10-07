@@ -8,6 +8,7 @@ use App\Mail\MemberWelcomeMail;
 use App\Models\Event;
 use App\Models\Group;
 use App\Models\User;
+use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -129,13 +130,18 @@ class MemberInviteController extends Controller
             return ['status' => 'skipped', 'message' => "“{$user->name}” is already in this group."];
         }
 
-        DB::transaction(function () use ($user, $group, $setId) {
-            if (! $user->hasRole('member')) {
-                $user->assignRole('member');
-            }
+        // divi vienlaicīgi pieprasījumi var abi iziet pārbaudi augstāk – dubultu dalību aptur datubāzes unikālā atslēga
+        try {
+            DB::transaction(function () use ($user, $group, $setId) {
+                if (! $user->hasRole('member')) {
+                    $user->assignRole('member');
+                }
 
-            $group->members()->attach($user->id, ['costume_set_id' => $setId]);
-        });
+                $group->members()->attach($user->id, ['costume_set_id' => $setId]);
+            });
+        } catch (UniqueConstraintViolationException) {
+            return ['status' => 'skipped', 'message' => "“{$user->name}” is already in this group."];
+        }
 
         rescue(fn () => Mail::to($user->email)->send(new MemberAddedMail($user, $group->name)));
 
@@ -148,8 +154,30 @@ class MemberInviteController extends Controller
     {
         $tempPassword = Str::random(12);
 
-        // konts, loma un dalība top kopā; e-pastu sūta tikai pēc tam, kad viss ir saglabāts
-        $member = DB::transaction(function () use ($validated, $group, $setId, $tempPassword) {
+        // konts, loma un dalība top kopā; e-pastu sūta tikai pēc tam, kad viss ir saglabāts.
+        // Ja cits skolotājs šo e-pastu izveidoja mirkli agrāk, transakcija tiek atcelta un esošais konts tiek pievienots
+        try {
+            $member = $this->createMember($validated, $group, $setId, $tempPassword);
+        } catch (UniqueConstraintViolationException) {
+            $existing = User::withTrashed()->whereRaw('lower(email) = ?', [$validated['email']])->first();
+
+            return $existing
+                ? $this->attachExisting($existing, $group, $setId)
+                : ['status' => 'skipped', 'message' => "“{$validated['email']}” could not be added — please try again."];
+        }
+
+        if ($this->sendInvite($member, $group->name, $tempPassword)) {
+            return ['status' => 'created', 'name' => $member->name, 'email' => $member->email];
+        }
+
+        // skolotājs pagaidu paroli neredz – students to saņem tikai e-pastā vai vēlāk ar "Resend invite" saiti
+        return ['status' => 'created_email_failed', 'name' => $member->name, 'email' => $member->email];
+    }
+
+    // jauns konts ar lomu un dalību grupā – vienā transakcijā
+    private function createMember(array $validated, Group $group, ?int $setId, string $tempPassword): User
+    {
+        return DB::transaction(function () use ($validated, $group, $setId, $tempPassword) {
             $member = User::create([
                 'name' => $validated['name'],
                 'email' => $validated['email'],
@@ -162,13 +190,6 @@ class MemberInviteController extends Controller
 
             return $member;
         });
-
-        if ($this->sendInvite($member, $group->name, $tempPassword)) {
-            return ['status' => 'created', 'name' => $member->name, 'email' => $member->email];
-        }
-
-        // skolotājs pagaidu paroli neredz – students to saņem tikai e-pastā vai vēlāk ar "Resend invite" saiti
-        return ['status' => 'created_email_failed', 'name' => $member->name, 'email' => $member->email];
     }
 
     // uzaicinājums nav pienācis – nosūta saiti, ar kuru dalībnieks pats izvēlas paroli.

@@ -65,15 +65,20 @@ class GroupTransferController extends Controller
             throw ValidationException::withMessages(['to_user_id' => 'Choose an existing teacher account.'])->errorBag('transfer');
         }
 
-        // vienlaikus tikai viens atvērts pieprasījums – iepriekšējo atceļ
-        $group->transfers()->where('status', 'pending')->update(['status' => 'cancelled', 'responded_at' => now()]);
+        // vienlaikus tikai viens atvērts pieprasījums – iepriekšējā atcelšana un jaunā izveide notiek kopā,
+        // ar bloķētu grupas rindu, lai divi vienlaicīgi pieprasījumi neatstātu divus atvērtus
+        $transfer = DB::transaction(function () use ($group, $recipient) {
+            Group::whereKey($group->id)->lockForUpdate()->firstOrFail();
 
-        $transfer = $group->transfers()->create([
-            'from_user_id' => auth()->id(),
-            'to_user_id' => $recipient->id,
-            'token' => Str::random(48),
-            'expires_at' => now()->addDays(GroupTransfer::EXPIRES_AFTER_DAYS),
-        ]);
+            $group->transfers()->where('status', 'pending')->update(['status' => 'cancelled', 'responded_at' => now()]);
+
+            return $group->transfers()->create([
+                'from_user_id' => auth()->id(),
+                'to_user_id' => $recipient->id,
+                'token' => Str::random(48),
+                'expires_at' => now()->addDays(GroupTransfer::EXPIRES_AFTER_DAYS),
+            ]);
+        });
 
         $sent = rescue(fn () => Mail::to($recipient->email)->send(new GroupTransferRequestMail($transfer, $this->impact($group))) || true, false);
 
@@ -90,7 +95,12 @@ class GroupTransferController extends Controller
     {
         $group = $this->ownGroup();
 
-        $group->transfers()->where('status', 'pending')->update(['status' => 'cancelled', 'responded_at' => now()]);
+        // ar bloķētu grupas rindu – atcelšana nevar notikt vienlaikus ar pieņemšanu
+        DB::transaction(function () use ($group) {
+            Group::whereKey($group->id)->lockForUpdate()->firstOrFail();
+
+            $group->transfers()->where('status', 'pending')->update(['status' => 'cancelled', 'responded_at' => now()]);
+        });
 
         return redirect()->route('admin.group.settings')->with('success', 'Handover request cancelled.');
     }
@@ -115,18 +125,25 @@ class GroupTransferController extends Controller
 
         $me = auth()->user();
 
-        $group = $transfer->group;
+        // pārbaudes atkārto transakcijā ar bloķētām rindām (vispirms grupa, tad pieprasījums) – divi vienlaicīgi
+        // pieņemšanas, atcelšanas vai jauna pieprasījuma klikšķi gaida viens otru, nevis abi iziet pārbaudes
+        $group = DB::transaction(function () use ($transfer, $me) {
+            $group = Group::whereKey($transfer->group_id)->lockForUpdate()->first();
+            $locked = GroupTransfer::whereKey($transfer->id)->lockForUpdate()->firstOrFail();
 
-        // nosūtītājam joprojām jābūt grupas skolotājam (piem. nav nodevis kādam citam starplaikā)
-        abort_unless($group && (int) $group->admin_id === (int) $transfer->from_user_id, 410, 'This group has changed hands in the meantime.');
+            abort_unless($group && $locked->status === 'pending' && $locked->expires_at->isFuture(), 410, 'This handover request is no longer open.');
 
-        DB::transaction(function () use ($transfer, $group, $me) {
+            // nosūtītājam joprojām jābūt grupas skolotājam (piem. nav nodevis kādam citam starplaikā)
+            abort_unless((int) $group->admin_id === (int) $locked->from_user_id, 410, 'This group has changed hands in the meantime.');
+
             // ja saņēmējs bija šīs grupas dalībnieks, tagad viņš ir tās skolotājs
             $group->members()->detach($me->id);
 
             $group->update(['admin_id' => $me->id]);
 
-            $transfer->update(['status' => 'accepted', 'responded_at' => now()]);
+            $locked->update(['status' => 'accepted', 'responded_at' => now()]);
+
+            return $group;
         });
 
         rescue(fn () => Mail::to($transfer->fromUser->email)->send(new GroupTransferResultMail($transfer->fresh(['group', 'fromUser', 'toUser']), true)));
@@ -143,7 +160,13 @@ class GroupTransferController extends Controller
         $transfer = $this->incoming($token);
         abort_unless($transfer->isOpen(), 410, 'This request is no longer open.');
 
-        $transfer->update(['status' => 'declined', 'responded_at' => now()]);
+        // atkārto pārbaudi ar bloķētu rindu – pieprasījums nevar tikt reizē pieņemts un noraidīts
+        DB::transaction(function () use ($transfer) {
+            $locked = GroupTransfer::whereKey($transfer->id)->lockForUpdate()->firstOrFail();
+            abort_unless($locked->status === 'pending', 410, 'This request is no longer open.');
+
+            $locked->update(['status' => 'declined', 'responded_at' => now()]);
+        });
 
         rescue(fn () => Mail::to($transfer->fromUser->email)->send(new GroupTransferResultMail($transfer->fresh(['group', 'fromUser', 'toUser']), false)));
 

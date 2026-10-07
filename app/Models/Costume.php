@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
@@ -45,27 +46,33 @@ class Costume extends Model
     // pievieno tērpam jaunas vienības ar QR kodu un turpina salasāmo kodu numerāciju
     public function addItems(int $count): void
     {
-        $prefix = $this->code_prefix ?: static::makeCodePrefix($this->name, $this->group_id, $this->id);
+        // viss notiek vienā transakcijā ar bloķētu tērpa rindu – divi vienlaicīgi pieprasījumi gaida viens otru,
+        // tāpēc nevar nolasīt vienu un to pašu pēdējo numuru un izveidot vienādus kodus
+        DB::transaction(function () use ($count) {
+            $locked = static::whereKey($this->id)->lockForUpdate()->firstOrFail();
 
-        // pēdējais izmantotais numurs (piem. BRU-05 -> 5), lai jaunās vienības turpinātu virkni –
-        // ieskaitot izdzēstās vienības, jo to kodi paliek vēsturē un ir unikāli tērpa ietvaros
-        $lastNumber = $this->items()->withTrashed()
-            ->pluck('code')
-            ->map(fn ($code) => (int) Str::afterLast((string) $code, '-'))
-            ->max() ?? 0;
+            $prefix = $locked->code_prefix ?: static::makeCodePrefix($this->name, $this->group_id, $this->id);
 
-        for ($i = 1; $i <= $count; $i++) {
-            $this->items()->create([
-                'qr_code' => Str::uuid(),
-                'code' => sprintf('%s-%02d', $prefix, $lastNumber + $i),
-                'assigned_to' => null,
+            // pēdējais izmantotais numurs (piem. BRU-05 -> 5), lai jaunās vienības turpinātu virkni –
+            // ieskaitot izdzēstās vienības, jo to kodi paliek vēsturē un ir unikāli tērpa ietvaros
+            $lastNumber = $this->items()->withTrashed()
+                ->pluck('code')
+                ->map(fn ($code) => (int) Str::afterLast((string) $code, '-'))
+                ->max() ?? 0;
+
+            for ($i = 1; $i <= $count; $i++) {
+                $this->items()->create([
+                    'qr_code' => Str::uuid(),
+                    'code' => sprintf('%s-%02d', $prefix, $lastNumber + $i),
+                    'assigned_to' => null,
+                ]);
+            }
+
+            $this->update([
+                'code_prefix' => $prefix,
+                'quantity' => $this->items()->count(),
             ]);
-        }
-
-        $this->update([
-            'code_prefix' => $prefix,
-            'quantity' => $this->items()->count(),
-        ]);
+        });
     }
 
     // izveido īsu, cilvēkam salasāmu prefiksu, kas ir unikāls grupas ietvaros

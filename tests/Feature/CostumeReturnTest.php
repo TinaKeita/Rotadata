@@ -78,6 +78,21 @@ class CostumeReturnTest extends TestCase
         $this->assertSame('admin', $this->item->assignments()->first()->return_note);
     }
 
+    // divas novecojušas tērpa kopijas (kā divi vienlaicīgi pieprasījumi) pievieno vienības – kodi neatkārtojas
+    public function test_adding_items_twice_at_once_gives_unique_codes(): void
+    {
+        $first = Costume::findOrFail($this->costume->id);
+        $second = Costume::findOrFail($this->costume->id);
+
+        $first->addItems(2);
+        $second->addItems(2);
+
+        $codes = $this->costume->items()->pluck('code')->sort()->values()->all();
+
+        $this->assertSame(['KRE-01', 'KRE-02', 'KRE-03', 'KRE-04', 'KRE-05'], $codes);
+        $this->assertSame(5, $this->costume->fresh()->quantity);
+    }
+
     public function test_handed_out_item_cannot_be_deleted(): void
     {
         $this->actingAs($this->teacher)->delete(route('admin.costumes.items.destroy', $this->item))
