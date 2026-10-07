@@ -43,7 +43,7 @@ class ConcertReadinessTest extends TestCase
 
         // Krekls ir kopīgs, Vainags tikai meitenēm, Veste tikai puišiem
         foreach (['Krekls' => null, 'Vainags' => $this->girls->id, 'Veste' => $this->boys->id] as $name => $setId) {
-            $costume = Costume::create(['name' => $name, 'quantity' => 0, 'group_id' => $this->group->id, 'costume_set_id' => $setId]);
+            $costume = Costume::create(['name' => $name, 'group_id' => $this->group->id, 'costume_set_id' => $setId]);
             $costume->addItems(3);
             $this->costumes[$name] = $costume;
         }
@@ -118,6 +118,21 @@ class ConcertReadinessTest extends TestCase
     }
 
     #[\PHPUnit\Framework\Attributes\Group('core')]
+    // inventāra daudzums ir reālais vienību skaits – izdzēsta vienība uzreiz parādās kā iztrūkums
+    public function test_shortfall_follows_the_real_item_count(): void
+    {
+        $krekls = fn () => $this->freshEvent()->costumeReadiness()->firstWhere('costume.id', $this->costumes['Krekls']->id);
+
+        $this->assertSame(3, $krekls()['total']);
+        $this->assertSame(0, $krekls()['shortfall']);
+
+        $this->actingAs($this->teacher)
+            ->delete(route('admin.costumes.items.destroy', $this->costumes['Krekls']->items()->first()));
+
+        $this->assertSame(2, $krekls()['total']);
+        $this->assertSame(1, $krekls()['shortfall']);
+    }
+
     public function test_dashboard_lists_what_needs_the_teacher(): void
     {
         $this->give('Roberts', 'Krekls');

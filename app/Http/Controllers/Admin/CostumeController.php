@@ -47,7 +47,6 @@ class CostumeController extends Controller
         $costume = Costume::create([
             'name' => $validated['name'],
             'costume_set_id' => $validated['costume_set_id'] ?? null,
-            'quantity' => 0,
             'image' => $request->hasFile('image') ? $request->file('image')->store('costumes', 'public') : null,
             'group_id' => $group->id,
         ]);
@@ -125,15 +124,11 @@ class CostumeController extends Controller
         }
 
         $code = $item->code;
-        $costume = $item->costume;
 
         Event::snapshotFinished();
 
         // mīkstā dzēšana – vienība pazūd no inventāra, bet tās izsniegšanas vēsture paliek
-        DB::transaction(function () use ($item, $costume) {
-            $item->delete();
-            $costume->update(['quantity' => $costume->items()->count()]);
-        });
+        $item->delete();
 
         return back()->with('success', "Item {$code} deleted.");
     }

@@ -92,7 +92,7 @@ class MemberManagementTest extends TestCase
     public function test_removing_a_student_deactivates_and_restore_brings_them_back(): void
     {
         $marta = $this->student($this->group);
-        $costume = Costume::create(['name' => 'Krekls', 'quantity' => 0, 'group_id' => $this->group->id]);
+        $costume = Costume::create(['name' => 'Krekls', 'group_id' => $this->group->id]);
         $costume->addItems(1);
         $item = $costume->items()->firstOrFail();
         $item->assignTo($marta, $this->teacher);
@@ -200,7 +200,7 @@ class MemberManagementTest extends TestCase
     public function test_teacher_cannot_hand_out_to_someone_outside_the_open_group(): void
     {
         $groupB = Group::create(['name' => 'Deju kopa', 'admin_id' => $this->teacher->id]);
-        $costume = Costume::create(['name' => 'Svārki', 'quantity' => 0, 'group_id' => $groupB->id]);
+        $costume = Costume::create(['name' => 'Svārki', 'group_id' => $groupB->id]);
         $costume->addItems(1);
         $item = $costume->items()->firstOrFail();
 

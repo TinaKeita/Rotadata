@@ -68,7 +68,7 @@
                     <span class="min-w-0 flex-1">
                         <span class="block text-sm font-medium text-ink">
                             {{ $costume->name }}
-                            <span class="font-normal text-ink-soft">· {{ $costume->quantity }} in stock · {{ $costume->costumeSet?->name ? $costume->costumeSet->name.' only' : 'shared' }}</span>
+                            <span class="font-normal text-ink-soft">· {{ $costume->items_count }} in stock · {{ $costume->costumeSet?->name ? $costume->costumeSet->name.' only' : 'shared' }}</span>
                         </span>
                         <div class="mt-1 flex flex-wrap gap-2">
                             <input type="text" name="costume_notes[{{ $costume->id }}]" value="{{ $costumeNotes[$costume->id] ?? '' }}"

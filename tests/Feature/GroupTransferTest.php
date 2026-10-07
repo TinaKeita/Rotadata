@@ -32,7 +32,7 @@ class GroupTransferTest extends TestCase
         $this->ilze = User::factory()->create(['name' => 'Ilze Bērziņa']);
         $this->ilze->assignRole('admin');
         $this->group = Group::create(['name' => 'Folkloras kopa', 'admin_id' => $this->ilze->id]);
-        $costume = Costume::create(['name' => 'Krekls', 'quantity' => 0, 'group_id' => $this->group->id]);
+        $costume = Costume::create(['name' => 'Krekls', 'group_id' => $this->group->id]);
         $costume->addItems(2);
 
         // Jānis reģistrējās – viņam ir tukša grupa no reģistrācijas

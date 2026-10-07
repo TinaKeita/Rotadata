@@ -32,7 +32,7 @@ class ScanFlowTest extends TestCase
         $teacher->assignRole('admin');
         $this->group = Group::create(['name' => 'Folkloras kopa', 'admin_id' => $teacher->id]);
 
-        $costume = Costume::create(['name' => 'Krekls', 'quantity' => 0, 'group_id' => $this->group->id]);
+        $costume = Costume::create(['name' => 'Krekls', 'group_id' => $this->group->id]);
         $costume->addItems(1);
         $this->item = $costume->items()->firstOrFail();
 

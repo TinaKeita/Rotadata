@@ -16,7 +16,6 @@ class Costume extends Model
         'name',
         'code_prefix',
         'image',
-        'quantity',
         'group_id',
         'costume_set_id',
     ];
@@ -68,10 +67,7 @@ class Costume extends Model
                 ]);
             }
 
-            $this->update([
-                'code_prefix' => $prefix,
-                'quantity' => $this->items()->count(),
-            ]);
+            $this->update(['code_prefix' => $prefix]);
         });
     }
 

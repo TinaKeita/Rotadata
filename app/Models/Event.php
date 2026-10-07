@@ -29,7 +29,9 @@ class Event extends Model
     // nepieciešamie tērpu veidi šim koncertam (neobligāti, pievienojami vēlāk)
     public function costumes()
     {
+        // items_count – cik vienību tērpam ir inventārā (vienīgais daudzuma avots)
         return $this->belongsToMany(Costume::class, 'event_costume')
+            ->withCount('items')
             ->withPivot('note')
             ->withTimestamps();
     }
@@ -100,7 +102,7 @@ class Event extends Model
                 'id' => $c->id,
                 'name' => $c->name,
                 'costume_set_id' => $c->costume_set_id,
-                'quantity' => $c->quantity,
+                'items_count' => $c->items_count,
                 'note' => $c->pivot?->note,
             ])->values()->all(),
             'general_ids' => $data['general']->pluck('id')->all(),
@@ -152,7 +154,11 @@ class Event extends Model
         });
 
         $costumes = collect($snapshot['costumes'])->map(function (array $row) {
-            $costume = (new Costume)->forceFill(collect($row)->except('note')->all());
+            // vecākās fotogrāfijās daudzums saglabāts kā "quantity"
+            $costume = (new Costume)->forceFill([
+                ...collect($row)->except(['note', 'quantity'])->all(),
+                'items_count' => $row['items_count'] ?? $row['quantity'] ?? 0,
+            ]);
             $costume->exists = true;
             $costume->setRelation('pivot', (new \Illuminate\Database\Eloquent\Relations\Pivot)->forceFill(['note' => $row['note'] ?? null]));
 
@@ -189,7 +195,7 @@ class Event extends Model
         // visiem vajadzīgie tērpi + tie, kas vajadzīgi tikai kā papildu tērpi
         $general = $this->costumes;
         $extraOnlyIds = $extraRows->pluck('costume_id')->map(fn ($id) => (int) $id)->unique()->diff($general->pluck('id'));
-        $costumes = $general->concat(Costume::whereIn('id', $extraOnlyIds)->orderBy('name')->get())->values();
+        $costumes = $general->concat(Costume::withCount('items')->whereIn('id', $extraOnlyIds)->orderBy('name')->get())->values();
 
         // studenta id => [tērpa id => cik vienību rokās]
         $holdingRows = $this->holdingsAt
@@ -275,7 +281,7 @@ class Event extends Model
                 $assigned += min($need, $data['holdings'][$student->id][$costume->id] ?? 0);
             }
 
-            $total = $costume->quantity; // cik vienību šim tērpam vispār ir inventārā
+            $total = (int) $costume->items_count; // cik vienību šim tērpam vispār ir inventārā
 
             return [
                 'costume' => $costume,

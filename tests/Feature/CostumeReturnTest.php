@@ -41,7 +41,7 @@ class CostumeReturnTest extends TestCase
         $this->otherTeacher->assignRole('admin');
         Group::create(['name' => 'Cita grupa', 'admin_id' => $this->otherTeacher->id]);
 
-        $this->costume = Costume::create(['name' => 'Krekls', 'quantity' => 0, 'group_id' => $this->group->id]);
+        $this->costume = Costume::create(['name' => 'Krekls', 'group_id' => $this->group->id]);
         $this->costume->addItems(1);
         $this->item = $this->costume->items()->firstOrFail();
 
@@ -90,7 +90,7 @@ class CostumeReturnTest extends TestCase
         $codes = $this->costume->items()->pluck('code')->sort()->values()->all();
 
         $this->assertSame(['KRE-01', 'KRE-02', 'KRE-03', 'KRE-04', 'KRE-05'], $codes);
-        $this->assertSame(5, $this->costume->fresh()->quantity);
+        $this->assertSame(5, $this->costume->items()->count());
     }
 
     public function test_handed_out_item_cannot_be_deleted(): void

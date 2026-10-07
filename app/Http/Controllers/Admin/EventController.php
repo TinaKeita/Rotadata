@@ -25,7 +25,7 @@ class EventController extends Controller
         $group = auth()->user()->currentGroup();
         abort_if(is_null($group), 403, 'You do not have a group yet.');
 
-        $costumes = $group->costumes()->with('costumeSet')->get();
+        $costumes = $group->costumes()->with('costumeSet')->withCount('items')->get();
         $members = $group->members()->orderBy('name')->get();
         $sets = $group->costumeSets;
 
@@ -65,7 +65,7 @@ class EventController extends Controller
     {
         $this->authorize('update', $event);
 
-        $costumes = $event->group->costumes()->with('costumeSet')->get();
+        $costumes = $event->group->costumes()->with('costumeSet')->withCount('items')->get();
         $members = $event->group->members()->orderBy('name')->get();
         $sets = $event->group->costumeSets;
         $event->load(['absentees', 'studentCostumes']);

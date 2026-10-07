@@ -42,7 +42,7 @@ class SeasonReportHistoryTest extends TestCase
         $boys = $this->group->costumeSets()->where('name', 'Boys')->firstOrFail();
 
         foreach (['Krekls' => null, 'Vainags' => $girls->id] as $name => $setId) {
-            $costume = Costume::create(['name' => $name, 'quantity' => 0, 'group_id' => $this->group->id, 'costume_set_id' => $setId]);
+            $costume = Costume::create(['name' => $name, 'group_id' => $this->group->id, 'costume_set_id' => $setId]);
             $costume->addItems(3);
             $this->costumes[$name] = $costume;
         }
