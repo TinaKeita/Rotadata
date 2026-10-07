@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\ProfileUpdateRequest;
+use App\Models\Event;
 use App\Models\Group;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -63,8 +64,13 @@ class ProfileController extends Controller
             $item->release($user, 'removed');
         }
 
+        // notikušie koncerti saglabā studentu savā skaitā
+        Event::snapshotFinished();
+
         Auth::logout();
 
+        // null nozīmē "dzēsa pats" – šādu kontu skolotājs nevar ne atjaunot, ne iztīrīt
+        $user->update(['deactivated_with_group_id' => null]);
         $user->delete();
 
         $request->session()->invalidate();

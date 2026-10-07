@@ -18,6 +18,7 @@ class Event extends Model
 
     protected $casts = [
         'starts_at' => 'datetime',
+        'readiness_snapshot' => 'array',
     ];
 
     public function group()
@@ -29,7 +30,7 @@ class Event extends Model
     public function costumes()
     {
         return $this->belongsToMany(Costume::class, 'event_costume')
-            ->withPivot('note', 'target_count')
+            ->withPivot('note')
             ->withTimestamps();
     }
 
@@ -53,7 +54,8 @@ class Event extends Model
 
     /**
      * Šī koncerta kopija, kuras gatavība rēķināta pēc stāvokļa noteiktā brīdī (piem. koncerta dienā),
-     * nevis pēc šodienas. Studenti, komplekti un neapmeklētāji ir pašreizējie – vēsturē tie netiek glabāti.
+     * nevis pēc šodienas. Notikušam koncertam izmanto tā saglabāto "fotogrāfiju" (readiness_snapshot),
+     * lai vēlāk pievienoti vai aizgājuši studenti, komplektu maiņa un izdzēsti tērpi to nepārrakstītu.
      */
     public function asOf(\Illuminate\Support\Carbon $at): static
     {
@@ -62,6 +64,55 @@ class Event extends Model
         $copy->readinessCache = null;
 
         return $copy;
+    }
+
+    /**
+     * Saglabā gatavības "fotogrāfiju" visiem notikušajiem koncertiem, kuriem tās vēl nav.
+     * Izsauc ieplānotais uzdevums un darbības, kas maina dalībniekus, komplektus vai inventāru –
+     * lai pagātnes koncerts tiktu nofiksēts, pirms izmaiņa to ietekmē.
+     */
+    public static function snapshotFinished(): void
+    {
+        static::query()
+            ->whereNull('readiness_snapshot')
+            ->where('starts_at', '<', now())
+            ->whereHas('group')
+            ->with(['costumes', 'group'])
+            ->get()
+            ->each(fn (Event $event) => $event->takeSnapshot());
+    }
+
+    // nofiksē, kas koncerta dienā bija vajadzīgs un kas bija rokās (rokās esošo atjauno no izsniegšanas vēstures)
+    public function takeSnapshot(): void
+    {
+        $live = clone $this;
+        $live->holdingsAt = $this->starts_at;
+        $live->readinessCache = null;
+        $data = $live->liveReadinessData();
+
+        $snapshot = [
+            'students' => $data['students']->map(fn (User $s) => [
+                'id' => $s->id,
+                'name' => $s->name,
+                'costume_set_id' => self::setIdOf($s),
+            ])->values()->all(),
+            'costumes' => $data['costumes']->map(fn (Costume $c) => [
+                'id' => $c->id,
+                'name' => $c->name,
+                'costume_set_id' => $c->costume_set_id,
+                'quantity' => $c->quantity,
+                'note' => $c->pivot?->note,
+            ])->values()->all(),
+            'general_ids' => $data['general']->pluck('id')->all(),
+            'extras' => $data['extras']->all(),
+            'holdings' => $data['holdings']->all(),
+            'absent_count' => $data['absentCount'],
+        ];
+
+        // bez updated_at maiņas – koncerts pats nav mainīts
+        static::whereKey($this->id)->toBase()->update(['readiness_snapshot' => json_encode($snapshot)]);
+        $this->readiness_snapshot = $snapshot;
+        $this->syncOriginalAttribute('readiness_snapshot');
     }
 
     /**
@@ -75,6 +126,54 @@ class Event extends Model
             return $this->readinessCache;
         }
 
+        // notikuša koncerta vēsturiskais skats – no fotogrāfijas (ja tās vēl nav, nofiksē tagad)
+        if ($this->holdingsAt && $this->isPast()) {
+            if (is_null($this->readiness_snapshot)) {
+                $this->takeSnapshot();
+            }
+
+            return $this->readinessCache = $this->snapshotReadinessData($this->readiness_snapshot);
+        }
+
+        return $this->readinessCache = $this->liveReadinessData();
+    }
+
+    // atjauno readinessData() struktūru no saglabātās fotogrāfijas – modeļi tiek izveidoti atmiņā, ne no datubāzes
+    private function snapshotReadinessData(array $snapshot): array
+    {
+        $students = collect($snapshot['students'])->map(function (array $row) {
+            $student = (new User)->forceFill(['id' => $row['id'], 'name' => $row['name']]);
+            $student->exists = true;
+            $student->setRelation('pivot', (new \Illuminate\Database\Eloquent\Relations\Pivot)->forceFill([
+                'costume_set_id' => $row['costume_set_id'],
+            ]));
+
+            return $student;
+        });
+
+        $costumes = collect($snapshot['costumes'])->map(function (array $row) {
+            $costume = (new Costume)->forceFill(collect($row)->except('note')->all());
+            $costume->exists = true;
+            $costume->setRelation('pivot', (new \Illuminate\Database\Eloquent\Relations\Pivot)->forceFill(['note' => $row['note'] ?? null]));
+
+            return $costume;
+        });
+
+        $generalIds = array_map('intval', $snapshot['general_ids']);
+
+        return [
+            'students' => $students,
+            'general' => $costumes->filter(fn (Costume $c) => in_array($c->id, $generalIds, true))->values(),
+            'costumes' => $costumes,
+            'extras' => collect($snapshot['extras']),
+            'holdings' => collect($snapshot['holdings']),
+            'absentCount' => $snapshot['absent_count'],
+        ];
+    }
+
+    // gatavības dati no pašreizējā datubāzes stāvokļa (rokās esošais – šobrīd vai holdingsAt brīdī no vēstures)
+    private function liveReadinessData(): array
+    {
         $absentIds = $this->absentees()->pluck('users.id');
 
         $students = $this->group->members()
@@ -111,7 +210,7 @@ class Event extends Model
             ->groupBy('assigned_to')
             ->map(fn ($rows) => $rows->countBy(fn ($r) => (int) $r->costume_id)->all());
 
-        return $this->readinessCache = [
+        return [
             'students' => $students,
             'general' => $general,
             'costumes' => $costumes,

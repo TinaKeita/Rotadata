@@ -181,4 +181,33 @@ class GroupTransferTest extends TestCase
 
         $this->assertSame(['Otrā grupa'], $this->ilze->adminGroups()->pluck('name')->all());
     }
+
+    // nosūtītājs pēc pieprasījuma izdzēš grupu – saņēmēja panelis joprojām atveras un grupu pieņemt nevar
+    public function test_deleting_the_group_does_not_break_the_recipients_dashboard(): void
+    {
+        Mail::fake();
+        $transfer = $this->sendRequest();
+
+        $this->actingAs($this->ilze)->delete(route('admin.group.destroy'), [
+            'name' => $this->group->name,
+            'password' => 'password',
+        ]);
+        $this->assertSoftDeleted($this->group);
+
+        $this->actingAs($this->janis)->get(route('admin.dashboard'))->assertOk();
+
+        $this->actingAs($this->janis)->post(route('admin.group.transfer.accept', $transfer->token));
+        $this->assertSame($this->ilze->id, Group::withTrashed()->find($this->group->id)->admin_id);
+    }
+
+    // % un _ meklēšanā ir parasti simboli, nevis SQL aizstājējzīmes – ar tiem nevar izvilkt visus skolotājus
+    public function test_search_treats_wildcards_as_plain_text(): void
+    {
+        foreach (['%%', '__', '%_'] as $q) {
+            $this->actingAs($this->ilze)
+                ->getJson(route('admin.group.transfer.teachers', ['q' => $q]))
+                ->assertOk()
+                ->assertExactJson([]);
+        }
+    }
 }

@@ -122,6 +122,9 @@ class Group extends Model
         $this->restore();
 
         $reactivated = User::onlyTrashed()
+            // tikai tos, kurus deaktivizēja tieši šīs grupas dzēšana – paša dzēsts konts vai
+            // citas grupas skolotāja izņemts students paliek dzēsts
+            ->where('deactivated_with_group_id', $this->id)
             ->whereHas('memberGroups', fn ($query) => $query->whereKey($this->id))
             ->get();
 

@@ -140,8 +140,6 @@ class EventController extends Controller
         $sync = collect($ids)
             ->mapWithKeys(fn ($id) => [(int) $id => [
                 'note' => $notes[$id] ?? null,
-                // vajadzīgo skaitu vairs neievada ar roku – to nosaka dalībnieki un komplekti
-                'target_count' => null,
             ]])
             ->all();
 

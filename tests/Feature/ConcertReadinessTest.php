@@ -361,7 +361,6 @@ class ConcertReadinessTest extends TestCase
         ])->assertRedirect(route('admin.events.index'));
 
         $this->assertSame(1, $this->event->studentCostumes()->count());
-        $this->assertNull($this->event->costumes()->first()->pivot->target_count);
     }
 
     // sezonas atskaite: gatavība koncerta dienā tiek atjaunota no vēstures, nevis no šodienas stāvokļa

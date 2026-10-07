@@ -138,6 +138,17 @@ class ScanFlowTest extends TestCase
         $this->assertSame($this->marta->id, $this->item->fresh()->assigned_to);
     }
 
+    // publiskais QR neatklāj, kuram studentam vienība izsniegta – ne viesim, ne citas grupas dalībniekam
+    public function test_scan_page_does_not_reveal_the_holder_to_outsiders(): void
+    {
+        $this->marta->update(['name' => 'Marta Kalniņa']);
+        $this->item->assignTo($this->marta, $this->marta);
+
+        $this->get($this->scanUrl())->assertOk()->assertDontSee('Marta Kalniņa');
+
+        $this->actingAs($this->outsider)->get($this->scanUrl())->assertDontSee('Marta Kalniņa');
+    }
+
     // QR koda PNG lejupielāde ar salasāmo kodu faila nosaukumā
     public function test_qr_code_downloads_as_png_named_after_the_item(): void
     {

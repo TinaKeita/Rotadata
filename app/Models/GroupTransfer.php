@@ -40,14 +40,14 @@ class GroupTransfer extends Model
         return $this->belongsTo(User::class, 'to_user_id');
     }
 
-    // vēl gaida atbildi un nav beidzies termiņš
+    // vēl gaida atbildi, nav beidzies termiņš un grupa nav izdzēsta
     public function scopeOpen($query)
     {
-        return $query->where('status', 'pending')->where('expires_at', '>', now());
+        return $query->where('status', 'pending')->where('expires_at', '>', now())->whereHas('group');
     }
 
     public function isOpen(): bool
     {
-        return $this->status === 'pending' && $this->expires_at->isFuture();
+        return $this->status === 'pending' && $this->expires_at->isFuture() && $this->group !== null;
     }
 }

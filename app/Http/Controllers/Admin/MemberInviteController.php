@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Mail\MemberAddedMail;
 use App\Mail\MemberWelcomeMail;
+use App\Models\Event;
 use App\Models\Group;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -31,6 +32,11 @@ class MemberInviteController extends Controller
         $adminGroup = auth()->user()->currentGroup();
         abort_if(is_null($adminGroup), 403, 'You do not have a group yet.');
 
+        // e-pastu salīdzina bez lielo/mazo burtu atšķirības – "Marta@Example.COM" ir tas pats konts, kas "marta@example.com"
+        $request->merge(['members' => collect((array) $request->input('members', []))
+            ->map(fn ($row) => is_array($row) && isset($row['email']) ? [...$row, 'email' => Str::lower(trim((string) $row['email']))] : $row)
+            ->all()]);
+
         // pielāgo kļūdu ziņojumus, lai tajos būtu rindas numurs ("Row 2 email"), nevis "members.1.email"
         $attributes = [];
         foreach ((array) $request->input('members', []) as $i => $row) {
@@ -48,14 +54,17 @@ class MemberInviteController extends Controller
 
         $setId = $validated['costume_set_id'] ?? null;
 
+        // jauns dalībnieks pēc koncerta tajā nepiedalījās – notikušie koncerti tiek nofiksēti pirms pievienošanas
+        Event::snapshotFinished();
+
         $created = 0;
         $attached = 0;
         $skipped = [];
-        $needsManualPassword = [];
+        $emailFailed = 0;
 
         foreach ($validated['members'] as $row) {
             // ja šāds konts jau pastāv, pievieno to grupai, nevis veido jaunu
-            $existing = User::withTrashed()->where('email', $row['email'])->first();
+            $existing = User::withTrashed()->whereRaw('lower(email) = ?', [$row['email']])->first();
 
             $result = $existing
                 ? $this->attachExisting($existing, $adminGroup, $setId)
@@ -65,7 +74,7 @@ class MemberInviteController extends Controller
                 $created++;
             } elseif ($result['status'] === 'created_email_failed') {
                 $created++;
-                $needsManualPassword[] = "{$result['name']} ({$result['email']}): {$result['password']}";
+                $emailFailed++;
             } elseif ($result['status'] === 'attached') {
                 $attached++;
             } else {
@@ -74,11 +83,11 @@ class MemberInviteController extends Controller
         }
 
         return redirect()->route('admin.members.index')
-            ->with($this->summaryFlash($created, $attached, $skipped, $needsManualPassword));
+            ->with($this->summaryFlash($created, $attached, $skipped, $emailFailed));
     }
 
     // apkopo visu rindu iznākumus vienā, salasāmā paziņojumā
-    private function summaryFlash(int $created, int $attached, array $skipped, array $needsManualPassword): array
+    private function summaryFlash(int $created, int $attached, array $skipped, int $emailFailed): array
     {
         $parts = [];
         if ($created > 0) {
@@ -94,11 +103,11 @@ class MemberInviteController extends Controller
             $message .= "\nSkipped: ".implode('; ', $skipped);
         }
 
-        if ($needsManualPassword) {
-            $message .= "\nCouldn't email these — give the temporary password in person:\n".implode("\n", $needsManualPassword);
+        if ($emailFailed > 0) {
+            $message .= "\nCouldn't email {$emailFailed} ".Str::plural('student', $emailFailed).' — use “Resend invite” on their profile once email works.';
         }
 
-        $level = ($created + $attached === 0) ? 'error' : (($skipped || $needsManualPassword) ? 'warning' : 'success');
+        $level = ($created + $attached === 0) ? 'error' : (($skipped || $emailFailed) ? 'warning' : 'success');
 
         return [$level => $message];
     }
@@ -150,7 +159,8 @@ class MemberInviteController extends Controller
             return ['status' => 'created', 'name' => $member->name, 'email' => $member->email];
         }
 
-        return ['status' => 'created_email_failed', 'name' => $member->name, 'email' => $member->email, 'password' => $tempPassword];
+        // skolotājs pagaidu paroli neredz – students to saņem tikai e-pastā vai vēlāk ar "Resend invite" saiti
+        return ['status' => 'created_email_failed', 'name' => $member->name, 'email' => $member->email];
     }
 
     // uzaicinājums nav pienācis – nosūta saiti, ar kuru dalībnieks pats izvēlas paroli.
@@ -199,7 +209,7 @@ class MemberInviteController extends Controller
         }
     }
 
-    // skolotājs jau iedeva paroli citādi – noņem brīdinājumu par nepiegādāto uzaicinājumu
+    // skolotājs noņem brīdinājumu par nepiegādāto uzaicinājumu (piem. students jau saņēmis saiti citā veidā)
     public function dismissInvite(User $member)
     {
         $this->authorize('view', $member);

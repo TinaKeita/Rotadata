@@ -29,7 +29,8 @@
 		@endif
 		<div class="flex justify-between gap-4 px-4 py-3">
 			<dt class="text-ink-soft">Assigned to</dt>
-			<dd class="text-right font-medium text-ink">{{ $item->user?->name ?? 'Unknown' }}</dd>
+			{{-- svešiniekam turētāja vārdu neatklāj --}}
+			<dd class="text-right font-medium text-ink">{{ $canSeeHolder ? ($item->user?->name ?? 'Unknown') : 'A group member' }}</dd>
 		</div>
 		@if($item->assigned_at)
 			<div class="flex justify-between gap-4 px-4 py-3">

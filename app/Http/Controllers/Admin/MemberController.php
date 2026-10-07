@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Exceptions\CostumeItemUnavailableException;
 use App\Mail\MemberRemovedMail;
+use App\Models\Event;
 use App\Models\Group;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -31,6 +32,9 @@ class MemberController extends Controller
         // tikai šīs grupas dalībnieki – svešus id klusi ignorējam
         $ids = $adminGroup->members()->whereIn('users.id', $validated['user_ids'])->pluck('users.id');
 
+        // notikušie koncerti saglabā toreizējos komplektus
+        Event::snapshotFinished();
+
         foreach ($ids as $id) {
             $adminGroup->members()->updateExistingPivot($id, ['costume_set_id' => $validated['costume_set_id'] ?? null]);
         }
@@ -54,6 +58,9 @@ class MemberController extends Controller
 
         $adminGroup = auth()->user()->currentGroup();
         abort_if(is_null($adminGroup), 403, 'You do not have a group yet.');
+
+        // students var būt citā šī skolotāja grupā – izsniegt drīkst tikai atvērtās grupas dalībniekam
+        abort_unless($user->inGroup($adminGroup), 422, "That member isn't in the group you have open.");
 
         $validated = $request->validate([
             'item_id' => ['required', 'integer'],
@@ -81,11 +88,11 @@ class MemberController extends Controller
             ? $adminGroup->members()->with('roles')->withCount('memberGroups')->get()
             : collect();
 
-        // nesen izņemti dalībnieki, kuri jebkad bijuši šajā grupā – ne tikai tie, kam
-        // deactivated_with_group_id sakrīt (students var būt deaktivizēts citas grupas dēļ)
+        // nesen izņemti dalībnieki, kurus deaktivizēja tieši šīs grupas dēļ – paša dzēstus kontus
+        // un citas grupas dēļ deaktivizētus skolotājs neredz un neatjauno
         $trashedMembers = $adminGroup
             ? User::onlyTrashed()
-                ->whereHas('memberGroups', fn ($query) => $query->whereKey($adminGroup->id))
+                ->where('deactivated_with_group_id', $adminGroup->id)
                 ->get()
             : collect();
 
@@ -130,6 +137,9 @@ class MemberController extends Controller
         abort_if(is_null($adminGroup), 403);
 
         $name = $user->name;
+
+        // notikušie koncerti saglabā šo studentu savā skaitā
+        Event::snapshotFinished();
 
         // skolotāju kontus nekad nedzēšam, un students var būt arī citās grupās -> abos gadījumos tikai
         // atsaistam NO ŠĪS grupas, konts un pārējās grupas/tiesības paliek neskartas
@@ -179,6 +189,9 @@ class MemberController extends Controller
         $this->authorize('restore', $user);
 
         $name = $user->name;
+
+        // koncerti, kas notika, kamēr students bija izņemts, viņu savā skaitā neieskaita
+        Event::snapshotFinished();
 
         $user->restore();
         $user->update(['deactivated_with_group_id' => null]);

@@ -3,11 +3,14 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 class Costume extends Model
 {
+    use SoftDeletes;
+
     protected $fillable = [
         'name',
         'code_prefix',
@@ -44,8 +47,9 @@ class Costume extends Model
     {
         $prefix = $this->code_prefix ?: static::makeCodePrefix($this->name, $this->group_id, $this->id);
 
-        // pēdējais izmantotais numurs (piem. BRU-05 -> 5), lai jaunās vienības turpinātu virkni
-        $lastNumber = $this->items()
+        // pēdējais izmantotais numurs (piem. BRU-05 -> 5), lai jaunās vienības turpinātu virkni –
+        // ieskaitot izdzēstās vienības, jo to kodi paliek vēsturē un ir unikāli tērpa ietvaros
+        $lastNumber = $this->items()->withTrashed()
             ->pluck('code')
             ->map(fn ($code) => (int) Str::afterLast((string) $code, '-'))
             ->max() ?? 0;
@@ -75,7 +79,7 @@ class Costume extends Model
         $suffix = 2;
 
         while (
-            static::where('group_id', $groupId)
+            static::withTrashed()->where('group_id', $groupId)
                 ->where('code_prefix', $prefix)
                 ->when($ignoreId, fn ($query) => $query->whereKeyNot($ignoreId))
                 ->exists()

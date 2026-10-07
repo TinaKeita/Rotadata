@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\Costume;
 use App\Models\CostumeItem;
+use App\Models\CostumeItemAssignment;
 use App\Models\Group;
 use App\Models\User;
 use App\Notifications\StudentLeftGroupNotification;
@@ -138,5 +139,26 @@ class CostumeReturnTest extends TestCase
         $this->actingAs($this->marta)->post(route('members.costumes.leave', $this->group))->assertSessionHas('success');
         $this->assertFalse($this->marta->inGroup($this->group));
         Notification::assertSentTo($this->teacher, StudentLeftGroupNotification::class);
+    }
+
+    // visu tērpu nevar izdzēst, kamēr kāda tā vienība ir pie studenta – tāpat kā atsevišķu vienību
+    public function test_costume_with_handed_out_items_cannot_be_deleted(): void
+    {
+        $this->actingAs($this->teacher)->delete(route('admin.costumes.destroy', $this->costume))
+            ->assertSessionHas('error');
+
+        $this->assertModelExists($this->costume);
+        $this->assertSame($this->marta->id, $this->item->fresh()->assigned_to);
+        $this->assertSame(1, CostumeItemAssignment::where('costume_item_id', $this->item->id)->count());
+    }
+
+    // vienību izņemot no inventāra, tās izsniegšanas vēsture paliek
+    public function test_removed_item_keeps_its_history(): void
+    {
+        $this->item->release($this->teacher, 'admin');
+
+        $this->actingAs($this->teacher)->delete(route('admin.costumes.items.destroy', $this->item));
+
+        $this->assertSame(1, CostumeItemAssignment::where('costume_item_id', $this->item->id)->count());
     }
 }

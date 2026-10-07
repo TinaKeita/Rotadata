@@ -77,4 +77,27 @@ class MemberPasswordResetTest extends TestCase
         Notification::assertSentTo($this->student, ResetPasswordLinkNotification::class);
         $this->assertTrue(Hash::check('password', $this->student->fresh()->password));
     }
+
+    // skolotājs, kurš ir arī citas grupas dalībnieks, savu paroli atjauno pats ar e-pasta saiti
+    public function test_teacher_who_is_a_member_elsewhere_can_reset_own_password(): void
+    {
+        $janis = User::factory()->create(['email' => 'janis@example.com']);
+        $janis->assignRole(['admin', 'member']);
+        Group::create(['name' => 'Jāņa grupa', 'admin_id' => $janis->id]);
+        $this->ilze->adminGroups()->first()->members()->attach($janis->id);
+
+        $this->post(route('password.email'), ['email' => 'janis@example.com']);
+
+        Notification::assertSentTo($janis, ResetPasswordLinkNotification::class);
+    }
+
+    // students pameta savu pēdējo grupu – paroli joprojām var atjaunot pats
+    public function test_student_without_a_group_can_reset_password(): void
+    {
+        $this->ilze->adminGroups()->first()->members()->detach($this->student->id);
+
+        $this->post(route('password.email'), ['email' => 'anna@example.com']);
+
+        Notification::assertSentTo($this->student, ResetPasswordLinkNotification::class);
+    }
 }

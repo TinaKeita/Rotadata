@@ -30,11 +30,12 @@ class GroupTransferController extends Controller
             return response()->json([]);
         }
 
-        $like = '%'.$q.'%';
+        // % un _ ir parasti simboli, nevis SQL aizstājējzīmes – citādi ar "%%" varētu izvilkt visus skolotājus
+        $like = '%'.str_replace(['!', '%', '_'], ['!!', '!%', '!_'], $q).'%';
 
         $teachers = User::role('admin')
             ->whereKeyNot(auth()->id())
-            ->where(fn ($w) => $w->where('name', 'like', $like)->orWhere('email', 'like', $like))
+            ->where(fn ($w) => $w->whereRaw("name LIKE ? ESCAPE '!'", [$like])->orWhereRaw("email LIKE ? ESCAPE '!'", [$like]))
             ->orderBy('name')
             ->limit(8)
             ->get();

@@ -4,10 +4,13 @@ namespace App\Models;
 
 use App\Exceptions\CostumeItemUnavailableException;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\DB;
 
 class CostumeItem extends Model
 {
+    use SoftDeletes;
+
     protected $fillable = [
         'costume_id',
         'qr_code',
@@ -20,9 +23,10 @@ class CostumeItem extends Model
         'assigned_at' => 'datetime',
     ];
 
+    // ar izdzēstajiem tērpiem, lai vēsturē vienmēr redzams, kam vienība piederēja
     public function costume()
     {
-        return $this->belongsTo(Costume::class);
+        return $this->belongsTo(Costume::class)->withTrashed();
     }
 
     public function user()

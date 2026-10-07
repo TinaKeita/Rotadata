@@ -22,9 +22,10 @@ class CostumeItemAssignment extends Model
         'returned_at' => 'datetime',
     ];
 
+    // ar izdzēstajām vienībām – vēstures ieraksts paliek arī pēc vienības izņemšanas no inventāra
     public function item()
     {
-        return $this->belongsTo(CostumeItem::class, 'costume_item_id');
+        return $this->belongsTo(CostumeItem::class, 'costume_item_id')->withTrashed();
     }
 
     public function user()

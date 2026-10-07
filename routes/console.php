@@ -13,3 +13,6 @@ Schedule::command('groups:purge')->dailyAt('03:00');
 
 // katru dienu iztīra atsevišķi izņemtus dalībniekus, kas ir soft deleted ilgāk par atjaunošanas logu
 Schedule::command('members:purge')->dailyAt('03:05');
+
+// ik pēc 15 minūtēm nofiksē nupat notikušo koncertu gatavību, lai vēlākas izmaiņas grupā to nepārrakstītu
+Schedule::call(fn () => \App\Models\Event::snapshotFinished())->everyFifteenMinutes()->name('events:snapshot');

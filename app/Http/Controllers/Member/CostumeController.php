@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Member;
 
 use App\Http\Controllers\Controller;
 use App\Models\CostumeItem;
+use App\Models\Event;
 use App\Models\Group;
 use App\Notifications\StudentLeftGroupNotification;
 
@@ -61,6 +62,9 @@ class CostumeController extends Controller
             return back()->with('error',
                 "You still have {$itemsHeld} item(s) checked out from this group. Return them before leaving.");
         }
+
+        // notikušie koncerti saglabā studentu savā skaitā
+        Event::snapshotFinished();
 
         $group->members()->detach(auth()->id());
 

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Mail\GroupDeletionMail;
+use App\Models\Event;
 use App\Models\Group;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
@@ -113,6 +114,12 @@ class GroupController extends Controller
         $groupName = $group->name;
         $purgeDate = now()->addDays(Group::PURGE_AFTER_DAYS)->format('d.m.Y');
 
+        // notikušie koncerti saglabā savus dalībniekus, pirms viņi tiek deaktivizēti
+        Event::snapshotFinished();
+
+        // izdzēstu grupu vairs nevar nodot – neatbildētais pieprasījums tiek atcelts
+        $group->transfers()->where('status', 'pending')->update(['status' => 'cancelled', 'responded_at' => now()]);
+
         $result = $group->softDeleteWithMembers();
 
         // e-pastus sūta pēc atbildes atgriešanas, lai skolotāja klikšķis ir tūlītējs
@@ -142,6 +149,10 @@ class GroupController extends Controller
         $this->authorize('restore', $group);
 
         $groupName = $group->name;
+
+        // koncerti, kas notika, kamēr dalībnieki bija deaktivizēti, viņus savā skaitā neieskaita
+        Event::snapshotFinished();
+
         $reactivated = $group->restoreWithMembers();
 
         defer(function () use ($reactivated, $groupName) {

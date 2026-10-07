@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\CostumeSet;
+use App\Models\Event;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
@@ -43,6 +44,10 @@ class CostumeSetController extends Controller
         $this->authorize('delete', $costumeSet);
 
         $name = $costumeSet->name;
+
+        // notikušie koncerti saglabā toreizējos komplektus, pirms tie tiek noņemti
+        Event::snapshotFinished();
+
         $costumeSet->delete();
 
         return redirect()->route('admin.group.settings')

@@ -185,6 +185,10 @@ class ScanController extends Controller
             && ! $isHolder
             && Auth::user()->inGroup($item->costume->group);
 
-        return view('scan.assigned', compact('item', 'isHolder', 'canTakeOver'));
+        // QR birka ir publiska – turētāja vārdu redz tikai pats turētājs, grupas dalībnieki un grupas skolotājs
+        $canSeeHolder = $isHolder || $canTakeOver
+            || (Auth::check() && $item->costume->group && Auth::user()->ownsGroup($item->costume->group));
+
+        return view('scan.assigned', compact('item', 'isHolder', 'canTakeOver', 'canSeeHolder'));
     }
 }

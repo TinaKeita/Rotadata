@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Exceptions\CostumeItemUnavailableException;
 use App\Models\Costume;
 use App\Models\CostumeItem;
+use App\Models\Event;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -76,6 +77,9 @@ class CostumeController extends Controller
             'costume_set_id' => 'nullable|integer|exists:costume_sets,id,group_id,'.$costume->group_id,
         ]);
 
+        // notikušie koncerti saglabā toreizējo tērpa nosaukumu un komplektu
+        Event::snapshotFinished();
+
         // vecais foto jāizdzēš gan aizstājot, gan noņemot, lai nekrāj nelietotus failus krātuvē
         if ($request->hasFile('image')) {
             if ($costume->image) {
@@ -122,6 +126,9 @@ class CostumeController extends Controller
         $code = $item->code;
         $costume = $item->costume;
 
+        Event::snapshotFinished();
+
+        // mīkstā dzēšana – vienība pazūd no inventāra, bet tās izsniegšanas vēsture paliek
         $item->delete();
         $costume->update(['quantity' => $costume->items()->count()]);
 
@@ -166,10 +173,24 @@ class CostumeController extends Controller
     {
         $this->authorize('delete', $costume);
 
-        if ($costume->image) {
-            Storage::disk('public')->delete($costume->image);
+        // tāpat kā atsevišķu vienību – tērpu nevar izdzēst, kamēr kāda tā vienība ir pie studenta
+        $out = $costume->items()->whereNotNull('assigned_to')->count();
+
+        if ($out > 0) {
+            return back()->with('error', "“{$costume->name}” can't be deleted — {$out} of its items are still with members. Take them back first.");
         }
 
+        // notikušie koncerti saglabā savu gatavību, pirms tērps pazūd no inventāra
+        Event::snapshotFinished();
+
+        if ($costume->image) {
+            Storage::disk('public')->delete($costume->image);
+            $costume->image = null;
+        }
+
+        // mīkstā dzēšana tērpam un vienībām – izsniegšanas vēsture paliek
+        $costume->items()->delete();
+        $costume->save();
         $costume->delete();
 
         return redirect()->route('admin.costumes.index')->with('success', "Costume “{$costume->name}” deleted.");
