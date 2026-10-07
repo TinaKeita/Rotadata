@@ -47,6 +47,15 @@ class LoginRequest extends FormRequest
         if (Auth::attempt($this->only('email', 'password'), $this->boolean('remember'))) {
             RateLimiter::clear($this->throttleKey());
 
+            // novecojusi pagaidu parole vairs neder – students saņem jaunu saiti no skolotāja
+            if (Auth::user()->temporaryPasswordExpired()) {
+                Auth::guard('web')->logout();
+
+                throw ValidationException::withMessages([
+                    'email' => User::TEMPORARY_PASSWORD_EXPIRED_MESSAGE,
+                ]);
+            }
+
             return;
         }
 

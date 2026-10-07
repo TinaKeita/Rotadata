@@ -182,7 +182,8 @@ class MemberInviteController extends Controller
                 'name' => $validated['name'],
                 'email' => $validated['email'],
                 'password' => Hash::make($tempPassword),
-                'must_change_password' => true, // pagaidu parole der tikai pirmajai pieslēgšanās reizei
+                'must_change_password' => true, // pēc pirmās pieslēgšanās jāizvēlas sava parole
+                'temporary_password_expires_at' => now()->addDays(User::TEMPORARY_PASSWORD_DAYS),
             ]);
 
             $member->assignRole('member');

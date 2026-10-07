@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Exceptions\CostumeItemUnavailableException;
 use App\Models\CostumeItem;
+use App\Models\User;
 use Illuminate\Auth\Events\Lockout;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -60,6 +61,15 @@ class ScanController extends Controller
 
             throw ValidationException::withMessages([
                 'email' => __('auth.failed'),
+            ]);
+        }
+
+        // novecojusi pagaidu parole vairs neder – tāpat kā parastajā pieslēgšanās lapā
+        if (Auth::user()->temporaryPasswordExpired()) {
+            Auth::logout();
+
+            throw ValidationException::withMessages([
+                'email' => User::TEMPORARY_PASSWORD_EXPIRED_MESSAGE,
             ]);
         }
 

@@ -57,6 +57,55 @@ class MemberPasswordResetTest extends TestCase
         $this->assertFalse($this->student->must_change_password);
     }
 
+    // pagaidu parole der līdz termiņam; pēc tam pieslēgties ar to vairs nevar ne pieslēgšanās lapā, ne skenējot
+    public function test_temporary_password_stops_working_after_it_expires(): void
+    {
+        $this->student->update(['temporary_password_expires_at' => now()->addDay()]);
+
+        $this->post(route('login'), ['email' => 'anna@example.com', 'password' => 'password'])
+            ->assertRedirect();
+        $this->assertAuthenticatedAs($this->student);
+        $this->post(route('logout'));
+
+        $this->travel(2)->days();
+
+        $this->post(route('login'), ['email' => 'anna@example.com', 'password' => 'password'])
+            ->assertSessionHasErrors(['email' => User::TEMPORARY_PASSWORD_EXPIRED_MESSAGE]);
+        $this->assertGuest();
+
+        $costume = \App\Models\Costume::create(['name' => 'Krekls', 'group_id' => $this->student->memberGroups()->first()->id]);
+        $costume->addItems(1);
+        $item = $costume->items()->first();
+
+        $this->flushSession();
+
+        $this->post(route('scan.authenticate', $item->qr_code), ['email' => 'anna@example.com', 'password' => 'password'])
+            ->assertSessionHasErrors(['email' => User::TEMPORARY_PASSWORD_EXPIRED_MESSAGE]);
+        $this->assertGuest();
+    }
+
+    // jaunā skolotāja izveidotā kontā ir termiņš; pēc savas paroles izvēles termiņš vairs neattiecas
+    public function test_choosing_own_password_clears_the_expiry(): void
+    {
+        $this->actingAs($this->ilze)->post(route('admin.members.store'), [
+            'members' => [['name' => 'Jānis', 'email' => 'janis@example.com']],
+        ]);
+
+        $janis = User::where('email', 'janis@example.com')->firstOrFail();
+        $this->assertTrue($janis->temporary_password_expires_at->between(now()->addDays(6), now()->addDays(8)));
+
+        $this->actingAs($janis)->put(route('password.change.update'), [
+            'name' => 'Jānis',
+            'password' => 'Jauna-parole-123',
+            'password_confirmation' => 'Jauna-parole-123',
+        ]);
+
+        $janis->refresh();
+        $this->assertFalse($janis->must_change_password);
+        $this->assertNull($janis->temporary_password_expires_at);
+        $this->assertFalse($janis->temporaryPasswordExpired());
+    }
+
     // lapa neatklāj, vai šāds konts eksistē – atbilde ir tāda pati kā esošam kontam
     public function test_unknown_email_gets_the_same_answer(): void
     {

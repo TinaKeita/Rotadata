@@ -30,6 +30,7 @@ class ForcePasswordController extends Controller
             'name' => trim($validated['name']),
             'password' => Hash::make($validated['password']),
             'must_change_password' => false,
+            'temporary_password_expires_at' => null,
         ]);
 
         return redirect()->route('dashboard')->with('success', 'Password changed.');

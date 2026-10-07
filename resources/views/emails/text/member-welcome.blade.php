@@ -10,7 +10,7 @@ Your teacher set up an account for you to manage the costume inventory.
 Email: {!! $user->email !!}
 Temporary password: {!! $password !!}
 
-This password only works for your first sign-in. After that you'll be asked to set your own.
+This password works until {!! $user->temporary_password_expires_at?->format('d.m.Y') !!}. When you first sign in you'll be asked to set your own.
 
 Sign in here: {!! route('login', ['email' => $user->email]) !!}
 

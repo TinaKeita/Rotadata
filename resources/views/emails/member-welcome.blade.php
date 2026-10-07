@@ -54,7 +54,7 @@
 							</table>
 
 							<p style="margin:16px 0 28px; font-size:13px; line-height:1.6; color:#777777;">
-								This password only works for your first sign-in. After that you'll be asked to set your own.
+								This password works until {{ $user->temporary_password_expires_at?->format('d.m.Y') }}. When you first sign in you'll be asked to set your own.
 							</p>
 
 							@php

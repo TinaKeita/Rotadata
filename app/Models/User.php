@@ -13,6 +13,11 @@ class User extends Authenticatable
     /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasFactory, Notifiable; use HasRoles; use SoftDeletes;
 
+    // cik dienas der skolotāja izveidotā pagaidu parole
+    public const TEMPORARY_PASSWORD_DAYS = 7;
+
+    public const TEMPORARY_PASSWORD_EXPIRED_MESSAGE = 'Your temporary password has expired. Ask your teacher to resend your invite — the new email lets you choose your own password.';
+
     /**
      * The attributes that are mass assignable.
      *
@@ -23,6 +28,7 @@ class User extends Authenticatable
         'email',
         'password',
         'must_change_password',
+        'temporary_password_expires_at',
         'deactivated_with_group_id',
         'invite_email_failed_at',
     ];
@@ -48,8 +54,17 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'must_change_password' => 'boolean',
+            'temporary_password_expires_at' => 'datetime',
             'invite_email_failed_at' => 'datetime',
         ];
+    }
+
+    // konts joprojām lieto skolotāja doto pagaidu paroli, un tās termiņš ir beidzies
+    public function temporaryPasswordExpired(): bool
+    {
+        return $this->must_change_password
+            && $this->temporary_password_expires_at
+            && $this->temporary_password_expires_at->isPast();
     }
     // "Forgot password" saite Rotadata e-pasta noformējumā, nevis Laravel noklusējuma veidnē
     public function sendPasswordResetNotification($token): void
