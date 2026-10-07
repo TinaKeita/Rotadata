@@ -14,6 +14,14 @@ class EventStudentCostume extends Model
         'quantity',
     ];
 
+    // group_id ņem no koncerta – datubāzes ārējās atslēgas tad garantē, ka papildu tērps ir no tās pašas grupas
+    protected static function booted(): void
+    {
+        static::creating(function (EventStudentCostume $row) {
+            $row->group_id ??= Event::whereKey($row->event_id)->value('group_id');
+        });
+    }
+
     public function event()
     {
         return $this->belongsTo(Event::class);

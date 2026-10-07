@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\DB;
 
 // grupas tērpu komplekts (piem. "Meitenes") – nosaka, kuri koncerta tērpi studentam vajadzīgi
 class CostumeSet extends Model
@@ -19,6 +20,17 @@ class CostumeSet extends Model
     protected $casts = [
         'built_in' => 'boolean',
     ];
+
+    // dzēšot komplektu, tā tērpi kļūst kopīgi un dalībniekiem komplekts tiek noņemts. To dara šeit, nevis ar
+    // datubāzes "set null", jo saliktā ārējā atslēga (komplekts + grupa) neļauj dzēst komplektu, uz kuru kāds vēl atsaucas
+    protected static function booted(): void
+    {
+        static::deleting(function (CostumeSet $set) {
+            Costume::withTrashed()->where('costume_set_id', $set->id)->update(['costume_set_id' => null]);
+            DB::table('group_user')->where('costume_set_id', $set->id)->update(['costume_set_id' => null]);
+            GroupInvitation::where('costume_set_id', $set->id)->update(['costume_set_id' => null]);
+        });
+    }
 
     public function group()
     {

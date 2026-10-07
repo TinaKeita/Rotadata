@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\CostumeSet;
 use App\Models\Event;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 
 // tērpu komplektu pārvaldība grupas iestatījumos (piem. "Meitenes", "Puiši")
@@ -48,7 +49,8 @@ class CostumeSetController extends Controller
         // notikušie koncerti saglabā toreizējos komplektus, pirms tie tiek noņemti
         Event::snapshotFinished();
 
-        $costumeSet->delete();
+        // atsauču noņemšana (CostumeSet::booted) un komplekta dzēšana notiek kopā vai nemaz
+        DB::transaction(fn () => $costumeSet->delete());
 
         return redirect()->route('admin.group.settings')
             ->with('success', "Set “{$name}” deleted. Its costumes are now shared, and its students have no set.");

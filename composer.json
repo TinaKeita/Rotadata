@@ -1,9 +1,9 @@
 {
     "$schema": "https://getcomposer.org/schema.json",
-    "name": "laravel/laravel",
+    "name": "rotadata/rotadata",
     "type": "project",
-    "description": "The skeleton application for the Laravel framework.",
-    "keywords": ["laravel", "framework"],
+    "description": "Rotadata: costume inventory, QR hand-out and concert readiness for dance and music groups.",
+    "keywords": ["costumes", "inventory", "qr", "dance", "laravel"],
     "license": "MIT",
     "require": {
         "php": "^8.3",

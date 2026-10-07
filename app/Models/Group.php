@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 
 class Group extends Model
 {
@@ -156,6 +157,14 @@ class Group extends Model
     {
         User::onlyTrashed()->where('deactivated_with_group_id', $this->id)->forceDelete();
 
-        $this->forceDelete();
+        DB::transaction(function () {
+            // saliktās ārējās atslēgas (komplekts + grupa) neļauj dzēst komplektu, uz kuru kāds vēl atsaucas –
+            // atsauces noņem pirms grupas dzēšanas, lai kaskādes secība datubāzē nav svarīga
+            Costume::withTrashed()->where('group_id', $this->id)->update(['costume_set_id' => null]);
+            DB::table('group_user')->where('group_id', $this->id)->update(['costume_set_id' => null]);
+            $this->invitations()->update(['costume_set_id' => null]);
+
+            $this->forceDelete();
+        });
     }
 }

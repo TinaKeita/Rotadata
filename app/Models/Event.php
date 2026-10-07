@@ -31,6 +31,7 @@ class Event extends Model
     {
         // items_count – cik vienību tērpam ir inventārā (vienīgais daudzuma avots)
         return $this->belongsToMany(Costume::class, 'event_costume')
+            ->using(EventCostume::class)
             ->withCount('items')
             ->withPivot('note')
             ->withTimestamps();
