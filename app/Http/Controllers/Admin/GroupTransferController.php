@@ -203,7 +203,7 @@ class GroupTransferController extends Controller
     // ko saņēmējs pārņems – rāda e-pastā un pārskata lapā
     private function impact(Group $group): array
     {
-        $itemIds = $group->costumeItems()->pluck('id');
+        $itemIds = $group->costumeItems()->pluck('costume_items.id');
 
         return [
             'students' => $group->members()->count(),

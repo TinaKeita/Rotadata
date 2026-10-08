@@ -82,7 +82,7 @@ class SeasonReportController extends Controller
         $setNames = $group->costumeSets()->pluck('name', 'id');
 
         return CostumeItemAssignment::with('item.costume')
-            ->whereIn('costume_item_id', $group->costumeItems()->pluck('id'))
+            ->whereIn('costume_item_id', $group->costumeItems()->pluck('costume_items.id'))
             ->where('assigned_at', '<=', $asOf)
             ->where(fn ($q) => $q->whereNull('returned_at')->orWhere('returned_at', '>', $asOf))
             ->get()

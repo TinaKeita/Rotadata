@@ -42,10 +42,4 @@ class CostumeItemAssignment extends Model
     {
         return $this->belongsTo(User::class, 'returned_by');
     }
-
-    // vēl neatdotie ieraksti
-    public function scopeOpen($query)
-    {
-        return $query->whereNull('returned_at');
-    }
 }

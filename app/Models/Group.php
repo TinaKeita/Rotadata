@@ -79,10 +79,11 @@ class Group extends Model
         return $this->hasMany(GroupInvitation::class);
     }
 
-    // visas šīs grupas tērpu vienības (caur tērpiem)
+    // visas šīs grupas tērpu vienības (caur tērpiem); kolonnas jānorāda ar tabulas nosaukumu (piem. costume_items.id),
+    // jo vaicājums savieno costume_items ar costumes un abām ir kolonna "id"
     public function costumeItems()
     {
-        return CostumeItem::whereHas('costume', fn ($query) => $query->where('group_id', $this->id));
+        return $this->hasManyThrough(CostumeItem::class, Costume::class);
     }
 
     // datums, kad grupa tiks neatgriezeniski iztīrīta
