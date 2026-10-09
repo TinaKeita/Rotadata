@@ -6,7 +6,11 @@
         <meta name="csrf-token" content="{{ csrf_token() }}">
 
         <title>{{ config('app.name', 'Rotadata') }}</title>
+        <link rel="icon" href="{{ asset('favicon.ico') }}" sizes="48x48">
         <link rel="icon" type="image/svg+xml" href="{{ asset('favicon.svg') }}">
+        <link rel="icon" type="image/png" sizes="96x96" href="{{ asset('favicon-96x96.png') }}">
+        <link rel="icon" type="image/png" sizes="192x192" href="{{ asset('icon-192.png') }}">
+        <link rel="apple-touch-icon" href="{{ asset('apple-touch-icon.png') }}">
 
         {{-- tie paši Bunny Fonts fonti kā landing lapā --}}
         <link rel="preconnect" href="https://fonts.bunny.net">
