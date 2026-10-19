@@ -45,8 +45,8 @@ class EventController extends Controller
                 'group_id' => $group->id,
                 'title' => $validated['title'],
                 'starts_at' => $validated['starts_at'],
-                'location' => $validated['location'],
-                'notes' => $validated['notes'],
+                'location' => $validated['location'] ?? null,
+                'notes' => $validated['notes'] ?? null,
                 'created_by' => auth()->id(),
             ]);
 
@@ -84,8 +84,8 @@ class EventController extends Controller
             $event->update([
                 'title' => $validated['title'],
                 'starts_at' => $validated['starts_at'],
-                'location' => $validated['location'],
-                'notes' => $validated['notes'],
+                'location' => $validated['location'] ?? null,
+                'notes' => $validated['notes'] ?? null,
             ]);
 
             $this->syncCostumes($event, $request);

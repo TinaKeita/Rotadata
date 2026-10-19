@@ -19,7 +19,7 @@ class GroupTransferRequestMail extends Mailable
     public function build()
     {
         return $this->subject("{$this->transfer->fromUser->name} wants to hand you “{$this->transfer->group->name}”")
-            ->view('emails.group-transfer-request')
-            ->text('emails.text.group-transfer-request');
+            ->view('components.emails.group-transfer-request')
+            ->text('components.emails.text.group-transfer-request');
     }
 }

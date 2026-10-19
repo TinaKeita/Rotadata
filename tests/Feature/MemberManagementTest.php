@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Mail\GroupInvitationMail;
+use App\Mail\MemberRemovedMail;
 use App\Mail\MemberWelcomeMail;
 use App\Models\Costume;
 use App\Models\Group;
@@ -359,6 +360,18 @@ class MemberManagementTest extends TestCase
             ->post(route('admin.members.hand-out', $marta), ['item_id' => $item->id]);
 
         $this->assertNull($item->fresh()->assigned_to);
+    }
+
+    // izņemtais students saņem e-pastu; šī bija viņa vienīgā grupa, tāpēc e-pastā ir atjaunošanas termiņš
+    public function test_removed_student_gets_an_email(): void
+    {
+        $anna = $this->student($this->group);
+
+        $this->actingAs($this->teacher)
+            ->delete(route('admin.members.destroy', $anna))
+            ->assertRedirect(route('admin.members.index'));
+
+        Mail::assertSent(MemberRemovedMail::class, fn ($mail) => $mail->hasTo($anna->email) && $mail->restoreUntil !== null);
     }
 
     // viens un tas pats cilvēks grupā var būt tikai vienreiz – to garantē datubāze, ne tikai kods

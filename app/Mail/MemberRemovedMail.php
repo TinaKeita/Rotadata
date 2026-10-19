@@ -28,7 +28,7 @@ class MemberRemovedMail extends Mailable
     public function build()
     {
         return $this->subject("You've been removed from “{$this->groupName}”")
-            ->view('emails.member-removed')
-            ->text('emails.text.member-removed');
+            ->view('components.emails.member-removed')
+            ->text('components.emails.text.member-removed');
     }
 }

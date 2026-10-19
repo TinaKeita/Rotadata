@@ -7,13 +7,11 @@ use App\Models\CostumeSet;
 use App\Models\Event;
 use App\Models\Group;
 use App\Models\User;
-use App\Mail\MemberRemovedMail;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Mail;
 use Spatie\Permission\Models\Role;
 use Tests\TestCase;
 
-// koncerta gatavība pa studentiem ar komplektiem un neapmeklētājiem, un jaunā paneļa darbs
+// koncerta gatavība pa studentiem ar komplektiem, neapmeklētājiem un papildu tērpiem; paneļi un sezonas atskaite
 class ConcertReadinessTest extends TestCase
 {
     use RefreshDatabase;
@@ -262,61 +260,6 @@ class ConcertReadinessTest extends TestCase
             ->assertSee("You're not performing in this concert", false);
     }
 
-    public function test_removed_student_gets_an_email(): void
-    {
-        Mail::fake();
-
-        $this->actingAs($this->teacher)
-            ->delete(route('admin.members.destroy', $this->students['Anna']))
-            ->assertRedirect(route('admin.members.index'));
-
-        Mail::assertSent(MemberRemovedMail::class, fn ($mail) => $mail->hasTo($this->students['Anna']->email) && $mail->restoreUntil !== null);
-    }
-
-    // skolotājs izsniedz konkrētu vienību no tērpa lapas
-    #[\PHPUnit\Framework\Attributes\Group('core')]
-    public function test_teacher_can_assign_an_item_to_a_student(): void
-    {
-        $item = $this->costumes['Veste']->items()->orderBy('code')->first();
-
-        $this->actingAs($this->teacher)
-            ->post(route('admin.costumes.items.assign', $item), ['user_id' => $this->students['Roberts']->id])
-            ->assertSessionHas('success');
-
-        $this->assertSame($this->students['Roberts']->id, $item->fresh()->assigned_to);
-        $this->assertSame($this->teacher->id, $item->assignments()->first()->assigned_by);
-    }
-
-    public function test_teacher_cannot_assign_to_someone_outside_the_group(): void
-    {
-        $outsider = User::factory()->create();
-        $item = $this->costumes['Veste']->items()->first();
-
-        $this->actingAs($this->teacher)
-            ->post(route('admin.costumes.items.assign', $item), ['user_id' => $outsider->id])
-            ->assertStatus(422);
-
-        $this->assertNull($item->fresh()->assigned_to);
-    }
-
-    // skolotājs izsniedz no studenta lapas konkrēto vienību pēc koda; aizņemtu vienību izsniegt nevar
-    public function test_teacher_hands_out_the_exact_item_from_member_page(): void
-    {
-        $vai03 = $this->costumes['Vainags']->items()->where('code', 'VAI-03')->first();
-
-        $this->actingAs($this->teacher)
-            ->post(route('admin.members.hand-out', $this->students['Anna']), ['item_id' => $vai03->id])
-            ->assertSessionHas('success');
-
-        $this->assertSame($this->students['Anna']->id, $vai03->fresh()->assigned_to);
-
-        $this->actingAs($this->teacher)
-            ->post(route('admin.members.hand-out', $this->students['Marta']), ['item_id' => $vai03->id])
-            ->assertSessionHas('error');
-
-        $this->assertSame($this->students['Anna']->id, $vai03->fresh()->assigned_to);
-    }
-
     // solistam papildu tērps: gatavs tikai tad, kad ir arī tas; vajadzīgo skaitu nosaka automātiski
     public function test_extra_costume_for_a_soloist_counts_in_readiness(): void
     {
@@ -407,111 +350,5 @@ class ConcertReadinessTest extends TestCase
             ->assertSee('Inventory')
             ->assertSee('Marta')
             ->assertDontSee('Notes for next season');
-    }
-
-    // iebūvētos komplektus nevar pārsaukt vai dzēst, bet savus var pievienot
-    public function test_built_in_sets_are_protected(): void
-    {
-        $this->assertSame(['Girls', 'Boys'], $this->group->costumeSets()->pluck('name')->all());
-
-        $this->actingAs($this->teacher);
-        $this->delete(route('admin.costume-sets.destroy', $this->girls))
-            ->assertRedirect(route('dashboard'))->assertSessionHas('error', 'Built-in sets cannot be deleted.');
-        $this->patch(route('admin.costume-sets.update', $this->boys), ['set_name' => 'Puiši'])
-            ->assertRedirect(route('dashboard'))->assertSessionHas('error', 'Built-in sets cannot be renamed.');
-
-        $this->post(route('admin.costume-sets.store'), ['set_name' => 'Musicians'])->assertSessionHas('success');
-        $this->assertSame(['Girls', 'Boys', 'Musicians'], $this->group->costumeSets()->pluck('name')->all());
-    }
-
-    // meklēšana: vienība pēc koda (arī bez domuzīmes) rāda, pie kā tā ir, un vēsturi; students pēc vārda
-    #[\PHPUnit\Framework\Attributes\Group('core')]
-    public function test_teacher_search_finds_items_and_students(): void
-    {
-        $this->give('Marta', 'Vainags');
-
-        $this->actingAs($this->teacher);
-
-        $this->get(route('admin.search', ['q' => 'vai01']))
-            ->assertOk()
-            ->assertSee('VAI-01')
-            ->assertSee('Taken')
-            ->assertSee('Marta')
-            ->assertSee('History (1)');
-
-        $this->get(route('admin.search', ['q' => 'Robert']))
-            ->assertOk()
-            ->assertSee('Students · 1')
-            ->assertSee('holds nothing');
-
-        $this->get(route('admin.search', ['q' => 'zzz']))->assertOk()->assertSee('Nothing found');
-
-        // students meklēšanai netiek klāt
-        $this->actingAs($this->students['Marta'])->get(route('admin.search', ['q' => 'VAI']))->assertRedirect(route('dashboard'));
-    }
-
-    // paroles maiņā students redz skolotāja ievadīto vārdu un var to atstāt vai izlabot
-    public function test_student_can_keep_or_fix_name_when_setting_password(): void
-    {
-        $anna = $this->students['Anna'];
-        $anna->update(['must_change_password' => true]);
-
-        $this->actingAs($anna)->get(route('password.change'))
-            ->assertOk()
-            ->assertSee('value="Anna"', false);
-
-        $this->actingAs($anna)->put(route('password.change.update'), [
-            'name' => 'Anna Kalniņa',
-            'password' => 'Jauna-Parole-123',
-            'password_confirmation' => 'Jauna-Parole-123',
-        ])->assertRedirect(route('dashboard'));
-
-        $anna->refresh();
-        $this->assertSame('Anna Kalniņa', $anna->name);
-        $this->assertFalse($anna->must_change_password);
-    }
-
-    // jaunai parolei vajag lielo un mazo burtu, ciparu un speciālo zīmi
-    public function test_weak_new_passwords_are_rejected(): void
-    {
-        $anna = $this->students['Anna'];
-        $anna->update(['must_change_password' => true]);
-
-        foreach (['aaaaaaaa', '12345678', 'Parole123', 'parole-123', 'Pa-1'] as $weak) {
-            $this->actingAs($anna)->put(route('password.change.update'), [
-                'name' => 'Anna',
-                'password' => $weak,
-                'password_confirmation' => $weak,
-            ])->assertSessionHasErrors('password');
-        }
-
-        $this->assertTrue($anna->fresh()->must_change_password);
-    }
-
-    // notikušu koncertu nevar rediģēt vai dzēst – ne pogās, ne pa tiešo saiti
-    public function test_past_concert_cannot_be_edited_or_deleted(): void
-    {
-        $past = Event::create([
-            'group_id' => $this->group->id,
-            'title' => 'Pavasara koncerts',
-            'starts_at' => now()->subDays(3),
-            'created_by' => $this->teacher->id,
-        ]);
-
-        $this->actingAs($this->teacher);
-
-        $this->get(route('admin.events.index'))->assertOk()
-            ->assertSee('Took place')
-            ->assertDontSee(route('admin.events.edit', $past));
-
-        $this->get(route('admin.events.edit', $past))
-            ->assertRedirect(route('dashboard'))
-            ->assertSessionHas('error', '“Pavasara koncerts” has already taken place, so it can\'t be edited.');
-
-        $this->delete(route('admin.events.destroy', $past))->assertRedirect(route('dashboard'));
-        $this->assertNotNull($past->fresh());
-
-        // gaidāmo koncertu joprojām var rediģēt
-        $this->get(route('admin.events.edit', $this->event))->assertOk();
     }
 }

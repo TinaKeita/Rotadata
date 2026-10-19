@@ -22,7 +22,7 @@ class ItemTakenOverMail extends Mailable
     public function build()
     {
         return $this->subject("{$this->takenBy->name} took over {$this->item->code}")
-            ->view('emails.item-taken-over')
-            ->text('emails.text.item-taken-over');
+            ->view('components.emails.item-taken-over')
+            ->text('components.emails.text.item-taken-over');
     }
 }

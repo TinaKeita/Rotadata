@@ -7,6 +7,8 @@ use App\Mail\ItemTakenOverMail;
 use App\Models\CostumeItem;
 use App\Models\User;
 use App\Notifications\ItemTakenOverNotification;
+use BaconQrCode\Common\ErrorCorrectionLevel;
+use BaconQrCode\Encoder\Encoder;
 use Illuminate\Auth\Events\Lockout;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -14,7 +16,6 @@ use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
-use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
 use function Illuminate\Support\defer;
 
@@ -192,11 +193,41 @@ class ScanController extends Controller
     {
         $label = CostumeItem::where('qr_code', $code)->value('code') ?? $code;
 
-        $png = QrCode::format('png')->size(300)->generate(url('/scan/'.$code));
+        $png = $this->renderQrPng(url('/scan/'.$code), 300);
 
         return response($png)
             ->header('Content-Type', 'image/png')
             ->header('Content-Disposition', 'attachment; filename="qr-'.$label.'.png"');
+    }
+
+    // uzzīmē QR kodu kā PNG ar GD – bibliotēkas PNG režīmam vajag imagick paplašinājumu, kura bieži nav serverī
+    protected function renderQrPng(string $text, int $size): string
+    {
+        $matrix = Encoder::encode($text, ErrorCorrectionLevel::M(), Encoder::DEFAULT_BYTE_MODE_ECODING)->getMatrix();
+        $modules = $matrix->getWidth();
+        $quietZone = 4;
+        $scale = max(1, intdiv($size, $modules + 2 * $quietZone));
+        $offset = intdiv($size - $modules * $scale, 2);
+
+        $image = imagecreate($size, $size);
+        imagecolorallocate($image, 255, 255, 255);
+        $black = imagecolorallocate($image, 0, 0, 0);
+
+        for ($y = 0; $y < $modules; $y++) {
+            for ($x = 0; $x < $modules; $x++) {
+                if ($matrix->get($x, $y) === 1) {
+                    $left = $offset + $x * $scale;
+                    $top = $offset + $y * $scale;
+                    imagefilledrectangle($image, $left, $top, $left + $scale - 1, $top + $scale - 1, $black);
+                }
+            }
+        }
+
+        ob_start();
+        imagepng($image);
+        imagedestroy($image);
+
+        return ob_get_clean();
     }
 
     // parāda jau izsniegtas vienības lapu kopā ar norādi, vai skenētājs to var pārņemt sev

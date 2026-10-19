@@ -23,7 +23,7 @@ class GroupTransferResultMail extends Mailable
             : "{$this->transfer->toUser->name} declined “{$this->transfer->group->name}”";
 
         return $this->subject($subject)
-            ->view('emails.group-transfer-result')
-            ->text('emails.text.group-transfer-result');
+            ->view('components.emails.group-transfer-result')
+            ->text('components.emails.text.group-transfer-result');
     }
 }

@@ -18,8 +18,8 @@ class ResetPasswordLinkNotification extends ResetPassword
         return (new Mailable)
             ->to($notifiable->getEmailForPasswordReset())
             ->subject('Reset your Rotadata password')
-            ->view('emails.password-reset-link')
-            ->text('emails.text.password-reset-link')
+            ->view('components.emails.password-reset-link')
+            ->text('components.emails.text.password-reset-link')
             ->with([
                 'user' => $notifiable,
                 'url' => $url,

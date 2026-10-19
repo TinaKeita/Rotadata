@@ -149,4 +149,38 @@ class MemberPasswordResetTest extends TestCase
 
         Notification::assertSentTo($this->student, ResetPasswordLinkNotification::class);
     }
+
+    // paroles maiņā students redz skolotāja ievadīto vārdu un var to atstāt vai izlabot
+    public function test_student_can_keep_or_fix_name_when_setting_password(): void
+    {
+        $this->student->update(['name' => 'Anna']);
+
+        $this->actingAs($this->student)->get(route('password.change'))
+            ->assertOk()
+            ->assertSee('value="Anna"', false);
+
+        $this->actingAs($this->student)->put(route('password.change.update'), [
+            'name' => 'Anna Kalniņa',
+            'password' => 'Jauna-Parole-123',
+            'password_confirmation' => 'Jauna-Parole-123',
+        ])->assertRedirect(route('dashboard'));
+
+        $this->student->refresh();
+        $this->assertSame('Anna Kalniņa', $this->student->name);
+        $this->assertFalse($this->student->must_change_password);
+    }
+
+    // jaunai parolei vajag lielo un mazo burtu, ciparu un speciālo zīmi
+    public function test_weak_new_passwords_are_rejected(): void
+    {
+        foreach (['aaaaaaaa', '12345678', 'Parole123', 'parole-123', 'Pa-1'] as $weak) {
+            $this->actingAs($this->student)->put(route('password.change.update'), [
+                'name' => 'Anna',
+                'password' => $weak,
+                'password_confirmation' => $weak,
+            ])->assertSessionHasErrors('password');
+        }
+
+        $this->assertTrue($this->student->fresh()->must_change_password);
+    }
 }
